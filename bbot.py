@@ -76,7 +76,10 @@ GROQ_API_KEY = os.getenv("GROQ")
 groq_client = Groq(api_key=os.getenv("GROQ"))
 
 GROQ_MODELS = [
+    "qwen/qwen3-32b",
     "llama-3.1-8b-instant",
+    "meta-llama/llama-prompt-guard-2-86m",
+    "openai/gpt-oss-120b",
     "openai/gpt-oss-20b"
 ]
 
@@ -829,6 +832,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
