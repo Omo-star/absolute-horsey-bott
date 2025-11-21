@@ -89,10 +89,9 @@ GROQ_MODELS = [
 ]
 
 GITHUB_MODELS = [
-    "gpt-4.1",
     "gpt-4o-mini",
-    "phi-3-mini-128k-instruct",
-    "llama-3.1-70b-instruct",
+    "llama-3.3-70b-instruct",
+    "phi-4-mini-instruct",
 ]
 
 
@@ -111,12 +110,10 @@ OPENROUTER_MODELS = [
 ]
 
 NORMAL_CHAT_MODELS = [
-    "gemini-2.0-flash",          
-    "gemini-2.0-pro",            
-    "groq:qwen/qwen3-32b",     
-    "groq:llama-3.1-8b-instant",
-    "github:gpt-4o-mini",        
-    "github:phi-3-mini-128k-instruct"  
+    "gemini-2.0-flash",
+    "gemini-2.0-pro",
+    "github:gpt-4o-mini",
+    "github:llama-3.3-70b-instruct"
 ]
 
 class Roast500Error(Exception):
@@ -325,7 +322,7 @@ async def spice_openrouter(text: str):
         resp = await asyncio.get_event_loop().run_in_executor(
             None,
             lambda: openrouter_client.chat.completions.create(
-                model="microsoft/phi-3-mini-128k-instruct",
+                model="phi-4-mini-instruct",
                 messages=messages,
                 max_tokens=5,
                 temperature=0
@@ -819,6 +816,11 @@ async def bot_roast(msg, uid, mode):
     except Exception as e:
         log(f"[ERROR] Unhandled exception in bot_roast: {e}")
         return "My brain just lagged mid-roast. Try again."
+
+
+
+
+
 
 @bot.command()
 async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
