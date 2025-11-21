@@ -10,9 +10,6 @@ import re
 import time
 import datetime
 
-
-
-
 def log(*msg):
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     text = " ".join(str(x) for x in msg)
@@ -21,16 +18,11 @@ def log(*msg):
     else:
         print(f"[{timestamp}] {text}")
 
-
-
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-
-
 
 auto_roast = {}
 
@@ -39,19 +31,7 @@ failed_models = {}
 roast_mode = {}
 MAX_HISTORY = 10
 
-
-
-
-
 spice_cache = {}
-
-async def fast_spice(text):
-    if text in spice_cache:
-        return spice_cache[text]
-    score = await openrouter_ai_spice(text)
-    spice_cache[text] = score
-    return score
-
 
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -218,12 +198,42 @@ def calculate_spiciness(text: str) -> float:
     score = max(0, min(score, 100))
     return float(score)
 
+async def fast_spice(text: str) -> float:
+    if text in spice_cache:
+        return spice_cache[text]
+
+    score = await ai_spice(text)
+    spice_cache[text] = score
+    return score
 
 
+async def ai_spice(text: str) -> float:
+    try:
+        score = await spice_openrouter(text)
+        if score is not None:
+            return score
+    except Exception:
+        pass
 
+    # groq fallback
+    try:
+        score = await spice_groq(text)
+        if score is not None:
+            return score
+    except Exception:
+        pass
 
+    # gemini fallback
+    try:
+        score = await spice_gemini(text)
+        if score is not None:
+            return score
+    except Exception:
+        pass
 
-async def openrouter_ai_spice(text: str) -> float:
+    return calculate_spiciness(text)
+
+async def spice_openrouter(text: str):
     try:
         messages = [
             {
@@ -234,7 +244,7 @@ async def openrouter_ai_spice(text: str) -> float:
                     "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
                     "Only output a single integer number with no explanation."
                     "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
-
+                    "Output ONLY a number."
                 )
             },
             {"role": "user", "content": text}
@@ -250,18 +260,62 @@ async def openrouter_ai_spice(text: str) -> float:
             )
         )
 
-        raw_score = resp.choices[0].message.content.strip()
-        match = re.search(r"\d+", raw_score)
-        return float(match.group()) if match else 0.0
+        raw = resp.choices[0].message.content.strip()
+        num = re.search(r"\d+", raw)
+        return float(num.group()) if num else None
 
     except Exception as e:
-        log(f"[SPICE_AI] Failed to score roast: {e}")
-        return 0.0
+        log(f"[SPICE:OR] fail: {e}")
+        return None
+async def spice_groq(text: str):
+    try:
+        resp = groq_client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a roast-quality analyzer. "
+                        "Your job is to read a roast and score its intensity from 0 to 100. "
+                        "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
+                        "Only output a single integer number with no explanation."
+                        "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
+                    ),
+                },
+                {"role": "user", "content": text},
+            ],
+            max_tokens=5,
+            temperature=0,
+        )
 
+        raw = resp.choices[0].message["content"].strip()
+        num = re.search(r"\d+", raw)
+        return float(num.group()) if num else None
 
+    except Exception as e:
+        log(f"[SPICE:GROQ] fail: {e}")
+        return None
+async def spice_gemini(text: str):
+    if not gemini_client:
+        return None
 
+    try:
+        prompt = (
+            "You are a roast-quality analyzer. "
+            "Your job is to read a roast and score its intensity from 0 to 100. "
+            "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
+            "Only output a single integer number with no explanation."
+            "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
+        )
 
+        resp = gemini_client.generate_content(prompt + "\n\n" + text)
+        raw = resp.text.strip()
 
+        num = re.search(r"\d+", raw)
+        return float(num.group()) if num else None    
+    except Exception as e:
+        log(f"[SPICE:GEMINI] fail: {e}")
+        return None
 
 async def fetch_url(session, url, json_key=None, is_text=False):
     try:
@@ -826,6 +880,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
