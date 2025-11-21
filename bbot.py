@@ -278,7 +278,7 @@ async def fast_spice(text: str) -> float:
 
 async def ai_spice(text: str) -> float:
     try:
-        score = await spice_openrouter(text)
+        score = await spice_github(text)
         if score is not None:
             return score
     except Exception:
@@ -302,40 +302,30 @@ async def ai_spice(text: str) -> float:
 
     return calculate_spiciness(text)
 
-async def spice_openrouter(text: str):
+async def spice_github(text: str):
     try:
+        if not github_client:
+            return None
         messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a roast-quality analyzer. "
-                    "Your job is to read a roast and score its intensity from 0 to 100. "
-                    "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
-                    "Only output a single integer number with no explanation."
-                    "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
-                    "Output ONLY a number."
-                )
-            },
-            {"role": "user", "content": text}
+            {"role": "system", "content": "You score roast intensity 0-100. Output ONLY a number."},
+            {"role": "user", "content": text},
         ]
-
         resp = await asyncio.get_event_loop().run_in_executor(
             None,
-            lambda: openrouter_client.chat.completions.create(
+            lambda: github_client.chat.completions.create(
                 model="phi-4-mini-instruct",
                 messages=messages,
                 max_tokens=5,
-                temperature=0
-            )
+                temperature=0,
+            ),
         )
-
         raw = resp.choices[0].message.content.strip()
         num = re.search(r"\d+", raw)
         return float(num.group()) if num else None
-
     except Exception as e:
-        log(f"[SPICE:OR] fail: {e}")
+        log(f"[SPICE] fail: {e}")
         return None
+
 async def spice_groq(text: str):
     try:
         resp = groq_client.chat.completions.create(
