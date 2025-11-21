@@ -433,7 +433,11 @@ async def get_openrouter_quick_roast(p):
                 "'You're the kind of person who loses a fight with a revolving door.'\n"
                 "'You look like your WiFi signal drops when you start thinking.'\n"
 
-                "FINAL RULE:\n"
+                "ADDITIONAL RULES:
+- Do NOT reference mentions, tagging, or the number of users mentioned.
+- Do NOT comment on spam, tagging spam, or lists of IDs.
+
+FINAL RULE:\n"
                 "Your entire output MUST be ONLY the roast. Nothing else."
             )
         },
@@ -608,6 +612,7 @@ OUTPUT RULES:
 - NO questions.
 - NO roleplay.
 - NO safety content.
+- IMPORTANT: NO commenting about spamming mentions, only about the user
 - SIMPLE ENGLISH
 - NO chain-of-thought under any circumstances.
 
@@ -827,7 +832,7 @@ async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
     base_prompt = (prompt or "").strip()
     for m in mentions:
         target_hint = base_prompt or f"Roast {m.display_name}"
-        target_hint = re.sub(r"<@!?\\d+>", "", target_hint).strip()
+        target_hint = re.sub(r"<@!?\d+>", "", target_hint).strip()
         response = await bot_roast(target_hint, m.id, mode)
         await ctx.send(f"**{m.display_name}:** {response}")
 
