@@ -1,0 +1,40 @@
+name: Run Discord Bot
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  schedule:
+    - cron: "0 */4 * * *"
+
+concurrency:
+  group: discord-bot
+  cancel-in-progress: false
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    env:
+      PYTHONUNBUFFERED: 1
+      HF_TGI_URL: ${{ secrets.HF_TGI_URL }}
+      HUGGINGFACE: ${{ secrets.HUGGINGFACE }}
+      GROQ: ${{ secrets.GROQ }}
+      DEEPINFRA: ${{ secrets.DEEPINFRA }}
+      OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+      DISCORDKEY: ${{ secrets.DISCORDKEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run the bot (LIVE LOGGING)
+        run: python -u bbot.py
