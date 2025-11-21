@@ -17,8 +17,6 @@ jobs:
 
     env:
       PYTHONUNBUFFERED: 1
-      HF_TGI_URL: ${{ secrets.HF_TGI_URL }}
-      HUGGINGFACE: ${{ secrets.HUGGINGFACE }}
       GROQ: ${{ secrets.GROQ }}
       DEEPINFRA: ${{ secrets.DEEPINFRA }}
       OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
