@@ -76,7 +76,7 @@ GROQ_API_KEY = os.getenv("GROQ")
 groq_client = Groq(api_key=os.getenv("GROQ"))
 
 GROQ_MODELS = [
-    "gpt-3.5-turbo"
+    "openai/gpt-3.5-turbo"
 ]
 
 
@@ -833,4 +833,5 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
