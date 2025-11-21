@@ -827,7 +827,7 @@ async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
     base_prompt = (prompt or "").strip()
     for m in mentions:
         target_hint = base_prompt or f"Roast {m.display_name}"
-    target_hint = re.sub(r"<@!?\\d+>", "", target_hint).strip()
+        target_hint = re.sub(r"<@!?\\d+>", "", target_hint).strip()
         response = await bot_roast(target_hint, m.id, mode)
         await ctx.send(f"**{m.display_name}:** {response}")
 
