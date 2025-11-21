@@ -21,6 +21,7 @@ jobs:
       DEEPINFRA: ${{ secrets.DEEPINFRA }}
       OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
       DISCORDKEY: ${{ secrets.DISCORDKEY }}
+      GITHUB: ${{ secrets.GITHUB }}
 
     steps:
       - name: Checkout code
