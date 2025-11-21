@@ -82,6 +82,10 @@ GROQ_MODELS = [
     "openai/gpt-oss-20b"
 ]
 
+GEMINI_MODELS = [
+    "gemini-2.0-flash",
+    "gemini-2.0-pro",
+]
 
 hf_tgi_client = None
 
@@ -101,10 +105,6 @@ NORMAL_CHAT_MODELS = [
 
 class Roast500Error(Exception):
     pass
-
-
-
-
 
 def strip_reasoning(text):
     if not text:
@@ -826,6 +826,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
