@@ -95,11 +95,12 @@ OPENROUTER_MODELS = [
 ]
 
 NORMAL_CHAT_MODELS = [
-    "gemini-native",
-    "google/gemini-2.5-flash",
-    "meta-llama/llama-3-8b-instruct",
-    "microsoft/phi-3-mini-128k-instruct",
-    "meta-llama/llama-3.1-405b-instruct"
+    "gemini-2.0-flash",          
+    "gemini-2.0-pro",            
+    "groq:qwen/qwen3-32b",     
+    "groq:llama-3.1-8b-instant",
+    "github:gpt-4o-mini",        
+    "github:phi-3-mini-128k-instruct"  
 ]
 
 class Roast500Error(Exception):
@@ -119,20 +120,17 @@ def strip_reasoning(text):
 async def safe_completion(model, messages):
     loop = asyncio.get_event_loop()
 
-    if model.startswith("github:"):
-        if not github_client:
-            return None
-        actual_model = model.split("github:",1)[1]
-
+    # new prefix handling !
+    if model.startswith("groq:"):
+        actual = model.split("groq:", 1)[1]
         def call():
             try:
-                resp = github_client.chat.completions.create(
-                    model=actual_model,
+                resp = groq_client.chat.completions.create(
+                    model=actual,
                     messages=messages,
                     max_tokens=300,
                     temperature=1.1
                 )
-
                 class R: pass
                 r = R()
                 r.choices = [{
@@ -141,12 +139,33 @@ async def safe_completion(model, messages):
                     }
                 }]
                 return r
-
             except Exception as e:
-                log(f"[GITHUB ERROR:{actual_model}] {e}")
+                log(f"[GROQ ERROR:{actual}] {e}")
                 return None
+        return await asyncio.get_event_loop().run_in_executor(None, call)
 
-        return await loop.run_in_executor(None, call)
+    if model.startswith("github:"):
+        actual = model.split("github:", 1)[1]
+        def call():
+            try:
+                resp = github_client.chat.completions.create(
+                    model=actual,
+                    messages=messages,
+                    max_tokens=300,
+                    temperature=1.1
+                )
+                class R: pass
+                r = R()
+                r.choices = [{
+                    "message": {
+                        "content": resp.choices[0].message["content"]
+                    }
+                }]
+                return r
+            except Exception as e:
+                log(f"[GITHUB ERROR:{actual}] {e}")
+                return None
+        return await asyncio.get_event_loop().run_in_executor(None, call)
 
     # add gemini to models
     if model.startswith("gemini"):
@@ -948,6 +967,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
