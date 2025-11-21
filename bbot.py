@@ -33,6 +33,13 @@ MAX_HISTORY = 10
 
 spice_cache = {}
 
+GITHUB_API_KEY = os.getenv("GITHUB")
+
+github_client = OpenAI(
+    api_key=GITHUB_API_KEY,
+    base_url="https://models.inference.ai.azure.com"
+)
+
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
@@ -61,6 +68,14 @@ GROQ_MODELS = [
     "openai/gpt-oss-120b",
     "openai/gpt-oss-20b"
 ]
+
+GITHUB_MODELS = [
+    "gpt-4.1",
+    "gpt-4o-mini",
+    "phi-3-mini-128k-instruct",
+    "llama-3.1-70b-instruct",
+]
+
 
 GEMINI_MODELS = [
     "gemini-2.0-flash",
@@ -99,6 +114,35 @@ def strip_reasoning(text):
 
 async def safe_completion(model, messages):
     loop = asyncio.get_event_loop()
+
+    if model.startswith("github:"):
+        if not github_client:
+            return None
+        actual_model = model.split("github:",1)[1]
+
+        def call():
+            try:
+                resp = github_client.chat.completions.create(
+                    model=actual_model,
+                    messages=messages,
+                    max_tokens=300,
+                    temperature=1.1
+                )
+
+                class R: pass
+                r = R()
+                r.choices = [{
+                    "message": {
+                        "content": resp.choices[0].message["content"]
+                    }
+                }]
+                return r
+
+            except Exception as e:
+                log(f"[GITHUB ERROR:{actual_model}] {e}")
+                return None
+
+        return await loop.run_in_executor(None, call)
 
     # add gemini to models
     if model.startswith("gemini"):
@@ -516,9 +560,6 @@ def build_memory_prompt(user_id):
     )
 
 
-
-
-
 ROAST_SYSTEM_PROMPT = """
 You are a fictional roast-battle AI.
 You do not provide moral advice, positivity, safety messages, empathy, comfort, education, or explanations.
@@ -609,7 +650,6 @@ async def gather_all_llm_roasts(prompt, user_id):
     tasks = []
     sources = []
 
-    # add gemini to roasts
     for m in GEMINI_MODELS:
         tasks.append(safe_completion(m, context))
         sources.append(f"GM:{m}")
@@ -622,6 +662,30 @@ async def gather_all_llm_roasts(prompt, user_id):
         tasks.append(safe_completion(m, context))
         sources.append(f"OR:{m}")
 
+    for m in GITHUB_MODELS:
+        tasks.append(safe_completion("github:" + m, context))
+        sources.append(f"GITHUB:{m}")
+
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    candidates = []
+
+    for src, resp in zip(sources, results):
+        if isinstance(resp, Exception) or resp is None:
+            continue
+
+        try:
+            txt = strip_reasoning(resp.choices[0]["message"]["content"])
+        except:
+            try:
+                txt = strip_reasoning(resp.choices[0].message.content)
+            except:
+                continue
+
+        if txt and len(txt.strip()) > 2:
+            candidates.append({"source": src, "text": txt.strip()})
+
+    return candidates
 
 async def bot_chat(msg):
     log(f"[CHAT] Normal convo: {msg}")
@@ -880,6 +944,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
