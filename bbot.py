@@ -76,7 +76,8 @@ GROQ_API_KEY = os.getenv("GROQ")
 groq_client = Groq(api_key=os.getenv("GROQ"))
 
 GROQ_MODELS = [
-    "openai/gpt-3.5-turbo"
+    "llama-3.1-8b-instant",
+    "openai/gpt-oss-20b"
 ]
 
 
@@ -85,12 +86,7 @@ hf_tgi_client = None
 HUGGINGFACE_MODELS = []
 
 OPENROUTER_MODELS = [
-    "meta-llama/llama-3.1-405b-instruct",
-    "anthropic/claude-3.5-sonnet",
-    "anthropic/claude-3-haiku",
-    "mistralai/mistral-large",
-    "google/gemini-2.5-flash",
-    "microsoft/phi-3-mini-128k-instruct"
+    "openai/gpt-3.5-turbo"
 ]
 
 NORMAL_CHAT_MODELS = [
@@ -833,5 +829,6 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
