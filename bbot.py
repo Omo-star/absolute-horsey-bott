@@ -216,7 +216,7 @@ async def safe_completion(model, messages):
 
     def call_or():
         try:
-            resp = openrouter_client.chat.completions.create(
+            resp = github_client.chat.completions.create(
                 model=model,
                 messages=messages,
                 max_tokens=300,
