@@ -51,7 +51,7 @@ if not GITHUB_API_KEY:
 else:
     github_client = OpenAI(
         api_key=GITHUB_API_KEY,
-        base_url="https://models.github.ai/api/v1",
+        base_url="https://models.inference.ai.azure.com",
         default_headers={
             "Authorization": f"Bearer {GITHUB_API_KEY}",
             "X-Github-Api-Version": "2022-11-28",
@@ -342,7 +342,7 @@ async def spice_openrouter(text: str):
 async def spice_groq(text: str):
     try:
         resp = groq_client.chat.completions.create(
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",
             messages=[
                 {
                     "role": "system",
@@ -820,11 +820,6 @@ async def bot_roast(msg, uid, mode):
         log(f"[ERROR] Unhandled exception in bot_roast: {e}")
         return "My brain just lagged mid-roast. Try again."
 
-
-
-
-
-
 @bot.command()
 async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
     mode = roast_mode.get(ctx.author.id, "deep")
@@ -956,4 +951,5 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
