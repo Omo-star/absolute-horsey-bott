@@ -33,16 +33,31 @@ MAX_HISTORY = 10
 
 spice_cache = {}
 
-GITHUB_API_KEY = os.getenv("GITHUB")
 
-# hopeful fix? dummy key
+GITHUB_API_KEY = (
+    os.getenv("GITHUB_TOKEN")
+    or os.getenv("GITHUB_API_KEY")
+    or os.getenv("GITHUB")
+    or ""
+)
+
+# hopeful fix? dummy key for OpenAI client libs that expect this env var
 if "OPENAI_API_KEY" not in os.environ:
     os.environ["OPENAI_API_KEY"] = "unused_dummy_key"
 
-github_client = OpenAI(
-    api_key=GITHUB_API_KEY,
-    base_url="https://models.inference.ai.azure.com"
-)
+if not GITHUB_API_KEY:
+    log("[AUTH] Missing GitHub token — GitHub models will return 401.")
+    github_client = None
+else:
+    github_client = OpenAI(
+        api_key=GITHUB_API_KEY,
+        base_url="https://models.github.ai/api/v1",
+        default_headers={
+            "Authorization": f"Bearer {GITHUB_API_KEY}",
+            "X-Github-Api-Version": "2022-11-28",
+            "Accept": "application/vnd.github+json"
+        }
+    )
 
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -87,6 +102,7 @@ GEMINI_MODELS = [
 ]
 
 hf_tgi_client = None
+HF_TGI_URL = os.getenv("HF_TGI_URL")
 
 HUGGINGFACE_MODELS = []
 
@@ -117,6 +133,24 @@ def strip_reasoning(text):
     return text.strip()
 
 
+def make_chat_response(text):
+    class Message:
+        pass
+    msg = Message()
+    msg.content = text
+
+    class Choice:
+        pass
+    choice = Choice()
+    choice.message = msg
+
+    class Resp:
+        pass
+    resp = Resp()
+    resp.choices = [choice]
+    return resp
+
+
 async def safe_completion(model, messages):
     loop = asyncio.get_event_loop()
 
@@ -131,20 +165,16 @@ async def safe_completion(model, messages):
                     max_tokens=300,
                     temperature=1.1
                 )
-                class R: pass
-                r = R()
-                r.choices = [{
-                    "message": {
-                        "content": resp.choices[0].message["content"]
-                    }
-                }]
-                return r
+                return make_chat_response(resp.choices[0].message.content)
             except Exception as e:
                 log(f"[GROQ ERROR:{actual}] {e}")
                 return None
-        return await asyncio.get_event_loop().run_in_executor(None, call)
+        return await loop.run_in_executor(None, call)
 
     if model.startswith("github:"):
+        if github_client is None:
+            log("[GITHUB] Skipping GitHub model — no valid API key.")
+            return None
         actual = model.split("github:", 1)[1]
         def call():
             try:
@@ -154,14 +184,7 @@ async def safe_completion(model, messages):
                     max_tokens=300,
                     temperature=1.1
                 )
-                class R: pass
-                r = R()
-                r.choices = [{
-                    "message": {
-                        "content": resp.choices[0].message["content"]
-                    }
-                }]
-                return r
+                return make_chat_response(resp.choices[0].message.content)
             except Exception as e:
                 log(f"[GITHUB ERROR:{actual}] {e}")
                 return None
@@ -174,15 +197,7 @@ async def safe_completion(model, messages):
         try:
             user_input = "\n".join(m["content"] for m in messages if m["role"] == "user")
             resp = gemini_client.generate_content(user_input)
-
-            class R: pass
-            r = R()
-            r.choices = [{
-                "message": {
-                    "content": resp.text
-                }
-            }]
-            return r
+            return make_chat_response(resp.text)
         except Exception as e:
             log(f"[GEMINI ERROR] {e}")
             return None
@@ -196,20 +211,10 @@ async def safe_completion(model, messages):
                     max_tokens=300,
                     temperature=1.1
                 )
-
-                class R: pass
-                r = R()
-                r.choices = [{
-                    "message": {
-                        "content": resp.choices[0].message["content"]
-                    }
-                }]
-                return r
-
+                return make_chat_response(resp.choices[0].message.content)
             except Exception as e:
                 log(f"[GROQ ERROR:{model}] {e}")
                 return None
-
         return await loop.run_in_executor(None, call)
 
     def call_or():
@@ -355,7 +360,7 @@ async def spice_groq(text: str):
             temperature=0,
         )
 
-        raw = resp.choices[0].message["content"].strip()
+        raw = resp.choices[0].message.content.strip()
         num = re.search(r"\d+", raw)
         return float(num.group()) if num else None
 
@@ -696,18 +701,13 @@ async def gather_all_llm_roasts(prompt, user_id):
     for src, resp in zip(sources, results):
         if isinstance(resp, Exception) or resp is None:
             continue
-
         try:
-            txt = strip_reasoning(resp.choices[0]["message"]["content"])
-        except:
-            try:
-                txt = strip_reasoning(resp.choices[0].message.content)
-            except:
-                continue
-
+            txt = strip_reasoning(resp.choices[0].message.content)
+        except Exception as e:
+            log(f"[LLM] parse fail from {src}: {e}")
+            continue
         if txt and len(txt.strip()) > 2:
             candidates.append({"source": src, "text": txt.strip()})
-
     return candidates
 
 async def bot_chat(msg):
@@ -827,13 +827,6 @@ async def bot_roast(msg, uid, mode):
 
 @bot.command()
 async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
-    """
-    Multi-target roast.
-    Usage:
-      !roast @User
-      !roast @User @User2
-      !roast @User something they said
-    """
     mode = roast_mode.get(ctx.author.id, "deep")
     bot_id = bot.user.id if bot.user else None
     mentions = [m for m in ctx.message.mentions if bot_id is None or m.id != bot_id]
@@ -853,10 +846,6 @@ async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
 
 @bot.command()
 async def data(ctx, target: discord.Member = None):
-    """
-    One-shot deep roast of a tagged user (debug / fun).
-    Usage: !data @User
-    """
     if target is None:
         await ctx.send("Tag someone to roast. Example: `!data @User`.")
         return
@@ -967,13 +956,4 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
-
-
-
-
-
-
-
-
-
 
