@@ -216,13 +216,13 @@ async def safe_completion(model, messages):
 
     def call_or():
         try:
-            resp = github_client.chat.completions.create(
+            resp = openrouter_client.chat.completions.create(
                 model=model,
                 messages=messages,
                 max_tokens=300,
                 temperature=1.2
             )
-            return resp
+            return make_chat_response(resp.choices[0].message.content)
         except Exception as e:
             if "500" in str(e):
                 raise Roast500Error()
@@ -230,7 +230,7 @@ async def safe_completion(model, messages):
             return None
 
     try:
-        return await loop.run_in_executor(None, call_or)
+        return await loop.run_in_executor(None, call_or)(None, call_or)
     except Roast500Error:
         raise
 
