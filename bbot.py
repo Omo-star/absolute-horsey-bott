@@ -35,6 +35,10 @@ spice_cache = {}
 
 GITHUB_API_KEY = os.getenv("GITHUB")
 
+# hopeful fix? dummy key
+if "OPENAI_API_KEY" not in os.environ:
+    os.environ["OPENAI_API_KEY"] = "unused_dummy_key"
+
 github_client = OpenAI(
     api_key=GITHUB_API_KEY,
     base_url="https://models.inference.ai.azure.com"
@@ -944,6 +948,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
