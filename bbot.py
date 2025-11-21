@@ -78,7 +78,6 @@ groq_client = Groq(api_key=os.getenv("GROQ"))
 GROQ_MODELS = [
     "qwen/qwen3-32b",
     "llama-3.1-8b-instant",
-    "meta-llama/llama-prompt-guard-2-86m",
     "openai/gpt-oss-120b",
     "openai/gpt-oss-20b"
 ]
@@ -120,54 +119,71 @@ def strip_reasoning(text):
 
 async def safe_completion(model, messages):
     loop = asyncio.get_event_loop()
-    if model == "gemini-native":
+
+    # add gemini to models
+    if model.startswith("gemini"):
+        if not gemini_client:
+            return None
         try:
-            if not gemini_client:
-                return None
-            text = "\n".join(m["content"] for m in messages if m["role"] == "user")
-            log("[GEMINI] Calling gemini-2.0-flash with:", text); resp = gemini_client.generate_content(text)
+            user_input = "\n".join(m["content"] for m in messages if m["role"] == "user")
+            resp = gemini_client.generate_content(user_input)
+
             class R: pass
-            r = R(); r.choices=[type('o',(object,),{"message":type('m',(object,),{"content":resp.text})()})()]
+            r = R()
+            r.choices = [{
+                "message": {
+                    "content": resp.text
+                }
+            }]
             return r
         except Exception as e:
-            log(f"[GEMINI] Exception raised: {e}")
-            log(f"[GEMINI] ERROR {e}")
+            log(f"[GEMINI ERROR] {e}")
             return None
-    if model in OPENROUTER_MODELS or model in NORMAL_CHAT_MODELS:
-        client_to_use = openrouter_client
-    elif model in GROQ_MODELS:
-        client_to_use = groq_client
-    else:
-        client_to_use = openrouter_client
-    if model in NORMAL_CHAT_MODELS:
-        temp = 0.7
-    else:
-        temp = 1.25
-    INNER_TIMEOUT = 35
-    OUTER_TIMEOUT = 40
-    try:
-        resp = await asyncio.wait_for(
-            loop.run_in_executor(
-                None,
-                lambda: client_to_use.chat.completions.create(
+
+    if model in GROQ_MODELS:
+        def call():
+            try:
+                resp = groq_client.chat.completions.create(
                     model=model,
                     messages=messages,
-                    max_tokens=500,
-                    temperature=temp,
-                    timeout=INNER_TIMEOUT
-                ),
-            ),
-            timeout=OUTER_TIMEOUT
-        )
-        return resp
-    except Exception as e:
-        error_str = str(e)
-        if "500" in error_str or "<html" in error_str:
-            raise Roast500Error()
-        log(f"[LLM] {model} ERROR: {repr(e)}")
-        return None
+                    max_tokens=300,
+                    temperature=1.1
+                )
 
+                class R: pass
+                r = R()
+                r.choices = [{
+                    "message": {
+                        "content": resp.choices[0].message["content"]
+                    }
+                }]
+                return r
 
+            except Exception as e:
+                log(f"[GROQ ERROR:{model}] {e}")
+                return None
+
+        return await loop.run_in_executor(None, call)
+
+    def call_or():
+        try:
+            resp = openrouter_client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=300,
+                temperature=1.2
+            )
+            return resp
+        except Exception as e:
+            if "500" in str(e):
+                raise Roast500Error()
+            log(f"[OR ERROR:{model}] {e}")
+            return None
+
+    try:
+        return await loop.run_in_executor(None, call_or)
+    except Roast500Error:
+        raise
 
 
 
@@ -539,6 +555,11 @@ async def gather_all_llm_roasts(prompt, user_id):
     tasks = []
     sources = []
 
+    # add gemini to roasts
+    for m in GEMINI_MODELS:
+        tasks.append(safe_completion(m, context))
+        sources.append(f"GM:{m}")
+
     for m in GROQ_MODELS:
         tasks.append(safe_completion(m, context))
         sources.append(f"GROQ:{m}")
@@ -546,33 +567,6 @@ async def gather_all_llm_roasts(prompt, user_id):
     for m in OPENROUTER_MODELS:
         tasks.append(safe_completion(m, context))
         sources.append(f"OR:{m}")
-
-    for m in HUGGINGFACE_MODELS:
-        tasks.append(hf_completion(m, context))
-        sources.append(f"HF:{m}")
-
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    candidates = []
-    for src, resp in zip(sources, results):
-        if isinstance(resp, Exception) or resp is None:
-            continue
-
-        if src.startswith("HF:"):
-            txt = resp
-        else:
-            try:
-                txt = strip_reasoning(resp.choices[0].message.content)
-            except Exception:
-                continue
-
-        if txt and len(txt.strip()) > 2:
-            candidates.append({"source": src, "text": txt.strip()})
-
-    return candidates
-
-
-
 
 
 async def bot_chat(msg):
@@ -832,6 +826,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
