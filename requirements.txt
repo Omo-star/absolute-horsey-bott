@@ -1,0 +1,6 @@
+discord.py
+openai
+aiohttp
+huggingface_hub
+groq
+google.generativeai
