@@ -43,6 +43,8 @@ GITHUB_API_KEY = (
     or ""
 )
 
+openai_client = OpenAI(api_key=os.getenv("OPENAI"))
+
 # hopeful fix? dummy key for OpenAI client libs that expect this env var
 if "OPENAI_API_KEY" not in os.environ:
     os.environ["OPENAI_API_KEY"] = "unused_dummy_key"
@@ -85,6 +87,7 @@ GROQ_MODELS = [
     "llama-3.1-8b-instant",
     "openai/gpt-oss-120b",
     "openai/gpt-oss-20b",
+    "openai:gpt-4o-mini-roast"
 ]
 
 GITHUB_MODELS = [
@@ -110,6 +113,7 @@ NORMAL_CHAT_MODELS = [
     "gemini-2.0-pro",
     "github:gpt-4o-mini",
     "github:llama-3.3-70b-instruct",
+    "openai:gpt-4o-mini"
 ]
 
 
@@ -161,6 +165,25 @@ def make_chat_response(text):
 
 
 async def safe_completion(model, messages):
+    loop = asyncio.get_event_loop()
+
+    if model.startswith("openai:"):
+        actual = model.split("openai:", 1)[1]
+        def call():
+            try:
+                resp = openai_client.chat.completions.create(
+                    model=actual,
+                    messages=messages,
+                    max_tokens=300,
+                    temperature=1.1
+                )
+                return make_chat_response(resp.choices[0].message.content)
+            except Exception as e:
+                log(f"[OPENAI ERROR:{actual}] {e}")
+                return None
+        return await loop.run_in_executor(None, call)
+
+    # new prefix handling !(model, messages):
     loop = asyncio.get_event_loop()
 
     # new prefix handling !
@@ -238,7 +261,7 @@ async def safe_completion(model, messages):
             return None
 
     try:
-        return await loop.run_in_executor(None, call_or)(None, call_or)
+        return await loop.run_in_executor(None, call_or)
     except Roast500Error:
         raise
 
@@ -1176,11 +1199,3 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
-
-
-
-
-
-
-
-
