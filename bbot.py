@@ -9,14 +9,17 @@ import aiohttp
 import re
 import time
 import datetime
+from math import sqrt
+
 
 def log(*msg):
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     text = " ".join(str(x) for x in msg)
     if "<html" in text or "<!DOCTYPE" in text:
         print(f"[{timestamp}] [ERROR] HTML/500 Response detected (Log suppressed).")
     else:
         print(f"[{timestamp}] {text}")
+
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -32,7 +35,6 @@ roast_mode = {}
 MAX_HISTORY = 10
 
 spice_cache = {}
-
 
 GITHUB_API_KEY = (
     os.getenv("GITHUB_TOKEN")
@@ -55,10 +57,9 @@ else:
         default_headers={
             "Authorization": f"Bearer {GITHUB_API_KEY}",
             "X-Github-Api-Version": "2022-11-28",
-            "Accept": "application/vnd.github+json"
-        }
+            "Accept": "application/vnd.github+json",
+        },
     )
-
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
@@ -67,16 +68,14 @@ if GEMINI_API_KEY:
 else:
     gemini_client = None
 
-
 openrouter_client = OpenAI(
     api_key=os.getenv("OPENROUTER_KEY"),
     base_url="https://openrouter.ai/api/v1",
     default_headers={
         "HTTP-Referer": "https://example.com",
-        "X-Title": "Discord Roast Bot"
-    }
+        "X-Title": "Discord Roast Bot",
+    },
 )
-
 
 GROQ_API_KEY = os.getenv("GROQ")
 groq_client = Groq(api_key=os.getenv("GROQ"))
@@ -85,7 +84,7 @@ GROQ_MODELS = [
     "qwen/qwen3-32b",
     "llama-3.1-8b-instant",
     "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b"
+    "openai/gpt-oss-20b",
 ]
 
 GITHUB_MODELS = [
@@ -93,7 +92,6 @@ GITHUB_MODELS = [
     "llama-3.3-70b-instruct",
     "phi-4-mini-instruct",
 ]
-
 
 GEMINI_MODELS = [
     "gemini-2.0-flash",
@@ -105,44 +103,58 @@ HF_TGI_URL = os.getenv("HF_TGI_URL")
 
 HUGGINGFACE_MODELS = []
 
-OPENROUTER_MODELS = [
-    "openai/gpt-3.5-turbo"
-]
+OPENROUTER_MODELS = ["openai/gpt-3.5-turbo"]
 
 NORMAL_CHAT_MODELS = [
     "gemini-2.0-flash",
     "gemini-2.0-pro",
     "github:gpt-4o-mini",
-    "github:llama-3.3-70b-instruct"
+    "github:llama-3.3-70b-instruct",
 ]
+
 
 class Roast500Error(Exception):
     pass
+
 
 def strip_reasoning(text):
     if not text:
         return ""
     text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL | re.IGNORECASE)
-    text = re.sub(r"<thinking>.*?</thinking>", "", text, flags=re.DOTALL | re.IGNORECASE)
-    text = re.sub(r"<internal>.*?</internal>", "", text, flags=re.DOTALL | re.IGNORECASE)
-    text = re.sub(r"<reasoning>.*?</reasoning>", "", text, flags=re.DOTALL | re.IGNORECASE)
-    text = re.sub(r"^(Thought|Thinking|Reasoning|Internal):.*$", "", text, flags=re.IGNORECASE | re.MULTILINE)
+    text = re.sub(
+        r"<thinking>.*?</thinking>", "", text, flags=re.DOTALL | re.IGNORECASE
+    )
+    text = re.sub(
+        r"<internal>.*?</internal>", "", text, flags=re.DOTALL | re.IGNORECASE
+    )
+    text = re.sub(
+        r"<reasoning>.*?</reasoning>", "", text, flags=re.DOTALL | re.IGNORECASE
+    )
+    text = re.sub(
+        r"^(Thought|Thinking|Reasoning|Internal):.*$",
+        "",
+        text,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
     return text.strip()
 
 
 def make_chat_response(text):
     class Message:
         pass
+
     msg = Message()
     msg.content = text
 
     class Choice:
         pass
+
     choice = Choice()
     choice.message = msg
 
     class Resp:
         pass
+
     resp = Resp()
     resp.choices = [choice]
     return resp
@@ -154,18 +166,17 @@ async def safe_completion(model, messages):
     # new prefix handling !
     if model.startswith("groq:"):
         actual = model.split("groq:", 1)[1]
+
         def call():
             try:
                 resp = groq_client.chat.completions.create(
-                    model=actual,
-                    messages=messages,
-                    max_tokens=300,
-                    temperature=1.1
+                    model=actual, messages=messages, max_tokens=300, temperature=1.1
                 )
                 return make_chat_response(resp.choices[0].message.content)
             except Exception as e:
                 log(f"[GROQ ERROR:{actual}] {e}")
                 return None
+
         return await loop.run_in_executor(None, call)
 
     if model.startswith("github:"):
@@ -173,18 +184,17 @@ async def safe_completion(model, messages):
             log("[GITHUB] Skipping GitHub model — no valid API key.")
             return None
         actual = model.split("github:", 1)[1]
+
         def call():
             try:
                 resp = github_client.chat.completions.create(
-                    model=actual,
-                    messages=messages,
-                    max_tokens=300,
-                    temperature=1.1
+                    model=actual, messages=messages, max_tokens=300, temperature=1.1
                 )
                 return make_chat_response(resp.choices[0].message.content)
             except Exception as e:
                 log(f"[GITHUB ERROR:{actual}] {e}")
                 return None
+
         return await asyncio.get_event_loop().run_in_executor(None, call)
 
     # add gemini to models
@@ -192,7 +202,9 @@ async def safe_completion(model, messages):
         if not gemini_client:
             return None
         try:
-            user_input = "\n".join(m["content"] for m in messages if m["role"] == "user")
+            user_input = "\n".join(
+                m["content"] for m in messages if m["role"] == "user"
+            )
             resp = gemini_client.generate_content(user_input)
             return make_chat_response(resp.text)
         except Exception as e:
@@ -200,27 +212,23 @@ async def safe_completion(model, messages):
             return None
 
     if model in GROQ_MODELS:
+
         def call():
             try:
                 resp = groq_client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    max_tokens=300,
-                    temperature=1.1
+                    model=model, messages=messages, max_tokens=300, temperature=1.1
                 )
                 return make_chat_response(resp.choices[0].message.content)
             except Exception as e:
                 log(f"[GROQ ERROR:{model}] {e}")
                 return None
+
         return await loop.run_in_executor(None, call)
 
     def call_or():
         try:
             resp = openrouter_client.chat.completions.create(
-                model=model,
-                messages=messages,
-                max_tokens=300,
-                temperature=1.2
+                model=model, messages=messages, max_tokens=300, temperature=1.2
             )
             return make_chat_response(resp.choices[0].message.content)
         except Exception as e:
@@ -235,13 +243,40 @@ async def safe_completion(model, messages):
         raise
 
 
-
 INSULT_KEYWORDS = [
-    "idiot", "stupid", "dumb", "clown", "trash", "garbage", "loser", "beta",
-    "cringe", "moron", "fool", "disgrace", "pathetic", "nerd", "goofy",
-    "bottom", "npc", "bozo", "braindead", "clueless", "child", "kid",
-    "mid", "washed", "ugly", "rat", "worm", "gremlin", "die", "kill", "fat"
+    "idiot",
+    "stupid",
+    "dumb",
+    "clown",
+    "trash",
+    "garbage",
+    "loser",
+    "beta",
+    "cringe",
+    "moron",
+    "fool",
+    "disgrace",
+    "pathetic",
+    "nerd",
+    "goofy",
+    "bottom",
+    "npc",
+    "bozo",
+    "braindead",
+    "clueless",
+    "child",
+    "kid",
+    "mid",
+    "washed",
+    "ugly",
+    "rat",
+    "worm",
+    "gremlin",
+    "die",
+    "kill",
+    "fat",
 ]
+
 
 def calculate_spiciness(text: str) -> float:
     if not text:
@@ -266,6 +301,7 @@ def calculate_spiciness(text: str) -> float:
         score += 8
     score = max(0, min(score, 100))
     return float(score)
+
 
 async def fast_spice(text: str) -> float:
     if text in spice_cache:
@@ -302,12 +338,16 @@ async def ai_spice(text: str) -> float:
 
     return calculate_spiciness(text)
 
+
 async def spice_github(text: str):
     try:
         if not github_client:
             return None
         messages = [
-            {"role": "system", "content": "You score roast intensity 0-100. Output ONLY a number."},
+            {
+                "role": "system",
+                "content": "You score roast intensity 0-100. Output ONLY a number.",
+            },
             {"role": "user", "content": text},
         ]
         resp = await asyncio.get_event_loop().run_in_executor(
@@ -325,6 +365,7 @@ async def spice_github(text: str):
     except Exception as e:
         log(f"[SPICE] fail: {e}")
         return None
+
 
 async def spice_groq(text: str):
     try:
@@ -354,6 +395,8 @@ async def spice_groq(text: str):
     except Exception as e:
         log(f"[SPICE:GROQ] fail: {e}")
         return None
+
+
 async def spice_gemini(text: str):
     if not gemini_client:
         return None
@@ -371,10 +414,11 @@ async def spice_gemini(text: str):
         raw = resp.text.strip()
 
         num = re.search(r"\d+", raw)
-        return float(num.group()) if num else None    
+        return float(num.group()) if num else None
     except Exception as e:
         log(f"[SPICE:GEMINI] fail: {e}")
         return None
+
 
 async def fetch_url(session, url, json_key=None, is_text=False):
     try:
@@ -398,7 +442,7 @@ async def fetch_url(session, url, json_key=None, is_text=False):
 async def get_openrouter_quick_roast(prompt):
     messages = [
         {"role": "system", "content": ROAST_SYSTEM_PROMPT},
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": prompt},
     ]
     try:
         resp = await asyncio.get_event_loop().run_in_executor(
@@ -407,13 +451,14 @@ async def get_openrouter_quick_roast(prompt):
                 model="meta-llama/llama-3.1-405b-instruct",
                 messages=messages,
                 max_tokens=60,
-                temperature=1.25
-            )
+                temperature=1.25,
+            ),
         )
         return strip_reasoning(resp.choices[0].message.content)
     except Exception as e:
         log(f"[APIs] OpenRouter quick roast failed: {e}")
         return None
+
 
 async def fetch_vortex_roasts(session, content: str):
     url = "https://ai4free-vortex-3b-roast-api.hf.space/generate-roasts/"
@@ -426,7 +471,11 @@ async def fetch_vortex_roasts(session, content: str):
             data = await r.json()
             roasts = data.get("roasts")
             if isinstance(roasts, list):
-                return [x.strip() for x in roasts if isinstance(x, str) and len(x.strip()) > 3]
+                return [
+                    x.strip()
+                    for x in roasts
+                    if isinstance(x, str) and len(x.strip()) > 3
+                ]
             return None
     except Roast500Error:
         raise
@@ -440,11 +489,23 @@ async def gather_api_roasts(prompt):
     try:
         async with aiohttp.ClientSession() as session:
             tasks = [
-                fetch_url(session, "https://evilinsult.com/generate_insult.php?lang=en&type=json", "insult"),
-                fetch_url(session, "https://insult.mattbas.org/api/insult", is_text=True),
+                fetch_url(
+                    session,
+                    "https://evilinsult.com/generate_insult.php?lang=en&type=json",
+                    "insult",
+                ),
+                fetch_url(
+                    session, "https://insult.mattbas.org/api/insult", is_text=True
+                ),
                 fetch_url(session, "https://yoinsult.com/api/insult", "insult"),
-                fetch_url(session, "https://v2.jokeapi.dev/joke/Dark?type=single", "joke"),
-                fetch_url(session, f"https://roastedfish.ai/api/roast?text={prompt}", is_text=True),
+                fetch_url(
+                    session, "https://v2.jokeapi.dev/joke/Dark?type=single", "joke"
+                ),
+                fetch_url(
+                    session,
+                    f"https://roastedfish.ai/api/roast?text={prompt}",
+                    is_text=True,
+                ),
                 get_openrouter_quick_roast(prompt),
                 fetch_vortex_roasts(session, prompt),
             ]
@@ -472,13 +533,14 @@ async def gather_api_roasts(prompt):
         return []
 
 
-
-
 async def personality_meter(user_id, last_messages):
     try:
         payload = [
-            {"role": "system", "content": "Extract stable personality traits, tone patterns, and behaviors. Output JSON list only."},
-            {"role": "user", "content": "".join(last_messages)}
+            {
+                "role": "system",
+                "content": "Extract stable personality traits, tone patterns, and behaviors. Output JSON list only.",
+            },
+            {"role": "user", "content": "".join(last_messages)},
         ]
         resp = await asyncio.get_event_loop().run_in_executor(
             None,
@@ -486,8 +548,8 @@ async def personality_meter(user_id, last_messages):
                 model="microsoft/phi-3-mini-128k-instruct",
                 messages=payload,
                 max_tokens=80,
-                temperature=0
-            )
+                temperature=0,
+            ),
         )
         raw = resp.choices[0].message.content.strip()
         traits = re.findall(r"[a-zA-Z0-9\- ]+", raw)
@@ -495,11 +557,52 @@ async def personality_meter(user_id, last_messages):
     except Exception:
         return []
 
-user_long_memory = {}
 
-user_personas = {}
-user_keywords = {}
-user_tone = {}
+user_memory = {}
+
+
+def get_user_memory(uid):
+    if uid not in user_memory:
+        user_memory[uid] = {
+            "LF": {  
+                "slang": 0.0,
+                "formality": 0.0,
+                "emoji_rate": 0.0,
+                "all_caps_rate": 0.0,
+                "punct_energy": 0.0,
+                "avg_len": 0.0,
+                "msg_samples": [],
+            },
+            "EB": { 
+                "anger": 0.0,
+                "sadness": 0.0,
+                "hype": 0.0,
+                "chaos": 0.0,
+            },
+            "HP": { 
+                "dark": 0.0,
+                "mean": 0.0,
+                "petty": 0.0,
+                "simple": 0.0,
+                "goofy": 0.0,
+                "meta": 0.0,
+            },
+            "IS": {  
+                "bot_mentions": 0,
+                "roast_requests": 0,
+                "self_roasts": 0,
+                "escalation": 0.0,
+            },
+            "SPM": {  y
+                "embeddings": [],
+                "texts": [],  
+            },
+            "LTS": "", 
+            "msg_count": 0,
+            "last_summary_update": time.time(),
+        }
+    return user_memory[uid]
+
 
 def analyze_user_message(text):
     text = text.lower()
@@ -516,21 +619,26 @@ def analyze_user_message(text):
         traits.append("angry / loud")
     return traits
 
+
 def extract_keywords(text):
     words = re.findall(r"[a-zA-Z']{3,}", text.lower())
-    return [w for w in words if w not in ["the", "and", "you", "but", "are", "this", "that"]]
+    return [
+        w for w in words if w not in ["the", "and", "you", "but", "are", "this", "that"]
+    ]
 
-def build_memory_prompt(user_id):
-    traits = ", ".join(user_personas.get(user_id, [])) or "none"
-    keys = ", ".join(user_keywords.get(user_id, [])) or "none"
-    tone = user_tone.get(user_id, "neutral")
+
+def build_memory_prompt(uid):
+    mem = get_user_memory(uid)
+
+    summary = mem["LTS"] or "User has a neutral personality."
+
     return (
-        f"USER PROFILE MEMORY:\n"
-        f"- Traits noticed: {traits}\n"
-        f"- User vocabulary: {keys}\n"
-        f"- User tone style: {tone}\n\n"
-        f"Use these observations to make the roast more personal, "
-        f"but DO NOT mention them directly in your roast. Just use them subtly."
+        "USER BEHAVIOR PROFILE:\n"
+        f"- Long-term summary: {summary}\n"
+        f"- Humor Preferences: {mem['HP']}\n"
+        f"- Emotional Baseline: {mem['EB']}\n"
+        f"- Linguistic Style: {mem['LF']['slang']:.2f} slang, {mem['LF']['emoji_rate']:.2f} emoji use.\n"
+        "\nUse all of this subtly to make the roast more personal. Do NOT mention traits directly."
     )
 
 
@@ -601,6 +709,7 @@ FINAL RULE:
 Your reply MUST contain ONLY the roast. Nothing else.
 """
 
+
 async def hf_completion(model, messages):
     if not HF_TGI_URL or not hf_tgi_client:
         log("[HF-TGI] No HF_TGI_URL set.")
@@ -611,10 +720,7 @@ async def hf_completion(model, messages):
         def run_tgi():
             try:
                 resp = hf_tgi_client.chat.completions.create(
-                    model="tgi",
-                    messages=messages,
-                    max_tokens=200,
-                    temperature=1.15
+                    model="tgi", messages=messages, max_tokens=200, temperature=1.15
                 )
                 return resp.choices[0].message.content
             except Exception as e:
@@ -627,6 +733,7 @@ async def hf_completion(model, messages):
     except Exception as e:
         log(f"[HF-TGI] RUNTIME ERROR: {e}")
         return None
+
 
 async def gather_all_llm_roasts(prompt, user_id):
     context = [
@@ -670,6 +777,7 @@ async def gather_all_llm_roasts(prompt, user_id):
             candidates.append({"source": src, "text": txt.strip()})
     return candidates
 
+
 async def bot_chat(msg):
     log(f"[CHAT] Normal convo: {msg}")
     messages = [
@@ -678,18 +786,17 @@ async def bot_chat(msg):
             "content": (
                 "All instances of “you,” “your,” and “yours” ALWAYS and EXCLUSIVELY refer to YOU, the AI assistant. "
                 "All instances of “I,” “me,” “my,” and “mine” ALWAYS and EXCLUSIVELY refer to the user. "
-
                 "This rule overrides normal English interpretation. You must apply it every time, in every context, even if the sentence would normally imply otherwise. "
                 "If a user message contains the word “you,” you must treat it as referring to yourself, the AI assistant. "
                 "If a message contains “my” or “I,” you must treat it as referring to the user. "
                 "You may NOT assume the user is addressing themselves or someone else. "
-                "You may NOT reinterpret pronouns based on conversational context.
+                "You may NOT reinterpret pronouns based on conversational context. "
                 "You are a helpful, witty AI assistant. You chat with the user, "
                 "trying to be a fun person. Please keep responses 1-3 sentences "
                 "unless specifically requested."
-            )
+            ),
         },
-        {"role": "user", "content": msg}
+        {"role": "user", "content": msg},
     ]
 
     for model in NORMAL_CHAT_MODELS:
@@ -705,7 +812,18 @@ async def bot_chat(msg):
             log(f"[CHAT] {model} failed with non-500 error: {e}")
             continue
 
-    return "My brain is buffering. I couldn't get a response from any of my chat partners."
+    return (
+        "My brain is buffering. I couldn't get a response from any of my chat partners."
+    )
+
+
+async def embed_text(text):
+    try:
+        resp = groq_client.embeddings.create(model="nomic-embed-text", input=text)
+        return resp.data[0].embedding
+    except:
+        return None
+
 
 async def bot_roast(msg, uid, mode):
     log(f"[ROAST] User: {uid} | Mode: {mode}")
@@ -718,7 +836,8 @@ async def bot_roast(msg, uid, mode):
             candidates = await gather_api_roasts(msg)
 
             candidates = [
-                c for c in candidates
+                c
+                for c in candidates
                 if isinstance(c.get("text"), str)
                 and len(c["text"]) > 4
                 and c["text"][0].isalpha()
@@ -770,9 +889,13 @@ async def bot_roast(msg, uid, mode):
             for cand, ai_score in zip(candidates, spices):
                 diff = abs(ai_score - user_spice)
                 scored.append((diff, ai_score, cand))
-                log(f"[ROAST-O-METER] ADJUST | AI={ai_score:.2f} | DIFF={diff:.2f} | {cand['source']}")
+                log(
+                    f"[ROAST-O-METER] ADJUST | AI={ai_score:.2f} | DIFF={diff:.2f} | {cand['source']}"
+                )
 
-            scored.sort(key=lambda x: (x[0], -x[1], 0 if 'LLM' in x[2].get('source', '') else 1))
+            scored.sort(
+                key=lambda x: (x[0], -x[1], 0 if "LLM" in x[2].get("source", "") else 1)
+            )
 
             best = scored[0][2]
             log(f"[ADJUST] SELECTED from {best['source']} | {best['text']}")
@@ -788,6 +911,7 @@ async def bot_roast(msg, uid, mode):
         log(f"[ERROR] Unhandled exception in bot_roast: {e}")
         return "My brain just lagged mid-roast. Try again."
 
+
 @bot.command()
 async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
     mode = roast_mode.get(ctx.author.id, "deep")
@@ -795,7 +919,9 @@ async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
     mentions = [m for m in ctx.message.mentions if bot_id is None or m.id != bot_id]
     if not mentions:
         if not prompt:
-            await ctx.send("Tag someone or write something to roast. Example: `!roast @User`.")
+            await ctx.send(
+                "Tag someone or write something to roast. Example: `!roast @User`."
+            )
             return
         response = await bot_roast(prompt, ctx.author.id, mode)
         await ctx.send(response)
@@ -834,6 +960,7 @@ async def autor(ctx, mode: str = None):
     else:
         await ctx.send("Use !autor on or !autor off")
 
+
 @bot.command()
 async def roastmode(ctx, mode: str = "adjustable"):
     mode = mode.lower()
@@ -842,7 +969,9 @@ async def roastmode(ctx, mode: str = "adjustable"):
         return
     roast_mode[ctx.author.id] = mode
     roast_history[ctx.author.id] = []
-    await ctx.send(f"🔥 Roast Mode: **{mode.upper()}**. Use !stoproast if you can't handle the flames.")
+    await ctx.send(
+        f"🔥 Roast Mode: **{mode.upper()}**. Use !stoproast if you can't handle the flames."
+    )
 
 
 @bot.command()
@@ -870,7 +999,7 @@ async def on_message(message):
     if bot_id:
         for mention in (f"<@{bot_id}>", f"<@!{bot_id}>"):
             if content_for_commands.startswith(mention):
-                content_for_commands = content_for_commands[len(mention):].lstrip()
+                content_for_commands = content_for_commands[len(mention) :].lstrip()
                 break
     if content_for_commands.startswith("!"):
         if content_for_commands != message.content:
@@ -885,21 +1014,92 @@ async def on_message(message):
     log(f"[DEBUG] CLEAN TEXT: {clean_text}")
     is_mentioned = False
     if bot_id:
-        is_mentioned = (f"<@{bot_id}>" in message.content) or (f"<@!{bot_id}>" in message.content)
+        is_mentioned = (f"<@{bot_id}>" in message.content) or (
+            f"<@!{bot_id}>" in message.content
+        )
     log(f"[DEBUG] IS_MENTIONED: {is_mentioned}")
     uid = message.author.id
     if is_mentioned:
 
-        user_personas.setdefault(uid, []).extend(analyze_user_message(clean_text))
-        user_keywords.setdefault(uid, []).extend(extract_keywords(clean_text))
-        user_tone[uid] = 'angry' if clean_text.isupper() else 'calm'
+        mem = get_user_memory(uid)
+        msg = clean_text
+        lower = msg.lower()
+        mem["msg_count"] += 1
 
+        mem["LF"]["msg_samples"].append(msg)
+        if len(mem["LF"]["msg_samples"]) > 50:
+            mem["LF"]["msg_samples"].pop(0)
+
+        mem["LF"]["slang"] += (
+            sum(1 for w in ["bro", "fr", "nah", " ong", "tf"] if w in lower) * 0.2
+        )
+        mem["LF"]["emoji_rate"] += sum(c in lower for c in ["😂", "😭", "💀"]) * 0.3
+        mem["LF"]["all_caps_rate"] += 1 if msg.isupper() else 0
+        mem["LF"]["punct_energy"] += msg.count("!") * 0.15
+        mem["LF"]["avg_len"] = (mem["LF"]["avg_len"] * 0.95) + (len(msg) * 0.05)
+
+        if msg.isupper():
+            mem["EB"]["anger"] += 0.3
+        if "help" in lower or "why" in lower:
+            mem["EB"]["sadness"] += 0.25
+        if "lmao" in lower or "lol" in lower:
+            mem["EB"]["hype"] += 0.3
+        if "???" in msg:
+            mem["EB"]["chaos"] += 0.4
+
+        if "mid" in lower or "trash" in lower:
+            mem["HP"]["mean"] += 0.4
+        if "kill" in lower or "die" in lower:
+            mem["HP"]["dark"] += 0.4
+        if "bro wtf" in lower:
+            mem["HP"]["petty"] += 0.3
+        if "ok?" in lower:
+            mem["HP"]["simple"] += 0.2
+        if "lmfao" in lower:
+            mem["HP"]["goofy"] += 0.4
+
+        if f"<@{bot_id}>" in message.content:
+            mem["IS"]["bot_mentions"] += 1
+        if "roast me" in lower or "roast" in lower:
+            mem["IS"]["roast_requests"] += 1
+        if "i suck" in lower or "im trash" in lower:
+            mem["IS"]["self_roasts"] += 1
+        if msg.count("!") >= 3:
+            mem["IS"]["escalation"] += 0.3
+
+        emb = await embed_text(msg)
+        if emb:
+            mem["SPM"]["embeddings"].append(emb)
+            mem["SPM"]["texts"].append(msg)
+            if len(mem["SPM"]["embeddings"]) > 30:
+                mem["SPM"]["embeddings"].pop(0)
+                mem["SPM"]["texts"].pop(0)
+
+        if mem["msg_count"] % 30 == 0:
+            combined_text = "\n".join(mem["LF"]["msg_samples"][-20:])
+            try:
+                summary = openrouter_client.chat.completions.create(
+                    model="microsoft/phi-3-mini-128k-instruct",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "Summarize user's tone, humor, language, and emotional patterns in 3 sentences.",
+                        },
+                        {"role": "user", "content": combined_text},
+                    ],
+                    max_tokens=120,
+                    temperature=0.3,
+                )
+                mem["LTS"] = summary.choices[0].message.content.strip()
+            except:
+                pass
 
         if uid in auto_roast:
-            response = await bot_roast(clean_text or "Roast me", uid, roast_mode.get(uid, "deep"))
+            response = await bot_roast(
+                clean_text or "Roast me", uid, roast_mode.get(uid, "deep")
+            )
             await message.channel.send(response)
             return
-
 
         if uid in roast_mode:
             mode = roast_mode[uid]
@@ -916,11 +1116,4 @@ async def on_message(message):
         return
 
 
-
-
-
 bot.run(os.getenv("DISCORDKEY"))
-
-
-
-
