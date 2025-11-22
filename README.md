@@ -1,6 +1,6 @@
 ## Absolute Horsey Bot
 ### Activation
-1. Click -> [AbsoluteHorseyBot](https://discord.com/channels/@me/1440204239056928880/1441096182427287634)
+1. Click -> [AbsoluteHorseyBot](https://discord.com/oauth2/authorize?client_id=1440004841559560214&scope=bot+applications.commands&permissions=2147483648)
 - Add to all apps
 2. Mention it in any server with @ and it will respond! Replying doesn't count.
 
