@@ -934,12 +934,73 @@ async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
 @bot.command()
 async def data(ctx, target: discord.Member = None):
     if target is None:
-        await ctx.send("Tag someone to roast. Example: `!data @User`.")
+        await ctx.send("Tag someone to view their data. Example: `!data @User`.")
         return
-    temp_uid = target.id
-    msg = f"Roast {target.display_name}"
-    response = await bot_roast(msg, temp_uid, "deep")
-    await ctx.send(response)
+
+    uid = target.id
+    mem = get_user_memory(uid)
+
+    lf = mem["LF"]
+    lf_section = (
+        f"**Linguistic Style:**\n"
+        f"- Slang: `{lf['slang']:.2f}`\n"
+        f"- Emoji Rate: `{lf['emoji_rate']:.2f}`\n"
+        f"- All Caps Rate: `{lf['all_caps_rate']:.2f}`\n"
+        f"- Punctuation Energy: `{lf['punct_energy']:.2f}`\n"
+        f"- Avg Message Length: `{lf['avg_len']:.2f}`\n"
+    )
+
+    eb = mem["EB"]
+    eb_section = (
+        f"**Emotional Baseline:**\n"
+        f"- Anger: `{eb['anger']:.2f}`\n"
+        f"- Sadness: `{eb['sadness']:.2f}`\n"
+        f"- Hype: `{eb['hype']:.2f}`\n"
+        f"- Chaos: `{eb['chaos']:.2f}`\n"
+    )
+
+    hp = mem["HP"]
+    hp_section = (
+        f"**Humor Preferences:**\n"
+        f"- Dark: `{hp['dark']:.2f}`\n"
+        f"- Mean: `{hp['mean']:.2f}`\n"
+        f"- Petty: `{hp['petty']:.2f}`\n"
+        f"- Simple: `{hp['simple']:.2f}`\n"
+        f"- Goofy: `{hp['goofy']:.2f}`\n"
+        f"- Meta: `{hp['meta']:.2f}`\n"
+    )
+
+    isec = mem["IS"]
+    is_section = (
+        f"**Interaction Stats:**\n"
+        f"- Bot Mentions: `{isec['bot_mentions']}`\n"
+        f"- Roast Requests: `{isec['roast_requests']}`\n"
+        f"- Self Roasts: `{isec['self_roasts']}`\n"
+        f"- Escalation: `{isec['escalation']:.2f}`\n"
+        f"- Message Count: `{mem['msg_count']}`\n"
+    )
+
+    summary = mem["LTS"] or "No long-term summary yet."
+    spm = mem["SPM"]
+
+    spm_section = (
+        f"**Memory Embeddings:**\n"
+        f"- Stored Messages: `{len(spm['texts'])}`\n"
+        f"- Embedding Count: `{len(spm['embeddings'])}`\n"
+    )
+
+    final_text = (
+        f"### 📊 Memory Profile for **{target.display_name}**\n\n"
+        f"**Long-Term Summary:**\n{summary}\n\n"
+        f"{lf_section}\n"
+        f"{eb_section}\n"
+        f"{hp_section}\n"
+        f"{is_section}\n"
+        f"{spm_section}"
+    )
+
+    await ctx.send(final_text)
+
 
 
 @bot.command()
@@ -1114,6 +1175,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
