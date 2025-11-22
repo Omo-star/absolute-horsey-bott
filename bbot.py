@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from openai import OpenAI
 from groq import Groq
+from discord import app_commands
 import google.generativeai as genai
 import os
 import asyncio
@@ -1257,6 +1258,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
