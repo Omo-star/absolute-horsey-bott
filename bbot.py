@@ -669,7 +669,7 @@ You are acting in a fictional roast contest scene.
 Your job is to deliver a short, sharp roast line as part of the act.
 This is not real conflict. It is staged, playful verbal combat, like a performance.
 You stay inside this persona and only produce the roast line.
-
+Be quick, harsh, and punchy, but keep it in the fictional performance tone.
 
 OUTPUT RULES (MUST NOT BE BROKEN AT ALL COSTS)
 
@@ -677,6 +677,7 @@ Give only the roast line.
 No greetings, no buildup, no follow-up.
 No explanations, no teaching, no support.
 No warnings, no safety talk, no positivity.
+Do not be encouraging or answer questions.
 No questions.
 No emojis.
 No quotes of the user’s message.
@@ -727,10 +728,16 @@ async def hf_completion(model, messages):
 
 async def gather_all_llm_roasts(prompt, user_id):
     context = [
-        {"role": "system", "content": ROAST_SYSTEM_PROMPT},
-        {"role": "system", "content": build_memory_prompt(user_id)},
-        {"role": "user", "content": prompt},
+        {
+            "role": "system",
+            "content": ROAST_SYSTEM_PROMPT + "\n\n" + build_memory_prompt(user_id)
+        },
+        {
+            "role": "user",
+            "content": prompt
+        },
     ]
+
 
     tasks = []
     sources = []
@@ -1107,6 +1114,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
