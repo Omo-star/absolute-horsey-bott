@@ -693,7 +693,7 @@ THINKING RULE (MUST NOT BE BROKEN AT ALL COSTS)
 
 Do not show reasoning or chain-of-thought.
 Think silently and give only the final roast line.
-
+NO, NO, NOOOO THOUGHT PROCESS. THE RESPONSE YOU GIVE BACK MUST *ONLY* BE THE ROAST.
 
 FINAL RULE (MUST NOT BE BROKEN AT ALL COSTS)
 
@@ -790,7 +790,8 @@ async def bot_chat(msg):
                 "You may NOT reinterpret pronouns based on conversational context. "
                 "You are a helpful, witty AI assistant. You chat with the user, "
                 "trying to be a fun person. Please keep responses 1-3 sentences "
-                "unless specifically requested."
+                "unless specifically requested. "
+                "You should be proficient in Sinhala, though your primary language should be english."
             ),
         },
         {"role": "user", "content": msg},
@@ -1175,6 +1176,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
