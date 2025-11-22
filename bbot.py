@@ -593,7 +593,7 @@ def get_user_memory(uid):
                 "self_roasts": 0,
                 "escalation": 0.0,
             },
-            "SPM": {  y
+            "SPM": {
                 "embeddings": [],
                 "texts": [],  
             },
@@ -1117,3 +1117,4 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
