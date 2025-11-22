@@ -43,6 +43,7 @@ GITHUB_API_KEY = (
     or ""
 )
 
+# OpenAI client using secret named OPENAI
 openai_client = OpenAI(api_key=os.getenv("OPENAI"))
 
 # hopeful fix? dummy key for OpenAI client libs that expect this env var
@@ -84,10 +85,7 @@ groq_client = Groq(api_key=os.getenv("GROQ"))
 
 GROQ_MODELS = [
     "qwen/qwen3-32b",
-    "llama-3.1-8b-instant",
-    "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b",
-    "openai:gpt-4o-mini-roast"
+    "llama-3.1-8b-instant"
 ]
 
 GITHUB_MODELS = [
@@ -99,6 +97,12 @@ GITHUB_MODELS = [
 GEMINI_MODELS = [
     "gemini-2.0-flash",
     "gemini-2.0-pro",
+]
+
+OPENAI_MODELS = [
+    "openai:gpt-oss-120b",
+    "openai:gpt-oss-20b",
+    "openai:gpt-5-nano"
 ]
 
 hf_tgi_client = None
@@ -113,7 +117,8 @@ NORMAL_CHAT_MODELS = [
     "gemini-2.0-pro",
     "github:gpt-4o-mini",
     "github:llama-3.3-70b-instruct",
-    "openai:gpt-4o-mini"
+    "openai:gpt-4o-mini",
+    "openai:gpt-4o"
 ]
 
 
@@ -167,6 +172,7 @@ def make_chat_response(text):
 async def safe_completion(model, messages):
     loop = asyncio.get_event_loop()
 
+    # OpenAI direct handler
     if model.startswith("openai:"):
         actual = model.split("openai:", 1)[1]
         def call():
@@ -182,9 +188,6 @@ async def safe_completion(model, messages):
                 log(f"[OPENAI ERROR:{actual}] {e}")
                 return None
         return await loop.run_in_executor(None, call)
-
-    # new prefix handling !(model, messages):
-    loop = asyncio.get_event_loop()
 
     # new prefix handling !
     if model.startswith("groq:"):
@@ -337,6 +340,12 @@ async def fast_spice(text: str) -> float:
 
 async def ai_spice(text: str) -> float:
     try:
+        score = await spice_openai(text)
+        if score is not None:
+            return score
+    except Exception:
+        pass
+    try:
         score = await spice_github(text)
         if score is not None:
             return score
@@ -361,6 +370,30 @@ async def ai_spice(text: str) -> float:
 
     return calculate_spiciness(text)
 
+async def spice_openai(text: str):
+    try:
+        messages = [
+            {"role": "system", "content": 
+                    "You are a roast-quality analyzer. "
+                    "Your job is to read a roast and score its intensity from 0 to 100. "
+                    "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
+                    "Only output a single integer number with no explanation."
+                    "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."},
+            {"role": "user", "content": text},
+        ]
+        resp = openai_client.chat.completions.create(
+            model="gpt-5-nano",
+            messages=messages,
+            max_tokens=5,
+            temperature=0,
+        )
+        raw = resp.choices[0].message.content.strip()
+        num = re.search(r"\d+", raw)
+        return float(num.group()) if num else None
+    except Exception as e:
+        log(f"[SPICE:OPENAI] fail: {e}")
+        return None
+
 
 async def spice_github(text: str):
     try:
@@ -369,7 +402,13 @@ async def spice_github(text: str):
         messages = [
             {
                 "role": "system",
-                "content": "You score roast intensity 0-100. Output ONLY a number.",
+                "content": (
+                    "You are a roast-quality analyzer. "
+                    "Your job is to read a roast and score its intensity from 0 to 100. "
+                    "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
+                    "Only output a single integer number with no explanation."
+                    "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
+                ),
             },
             {"role": "user", "content": text},
         ]
@@ -776,6 +815,10 @@ async def gather_all_llm_roasts(prompt, user_id):
     for m in OPENROUTER_MODELS:
         tasks.append(safe_completion(m, context))
         sources.append(f"OR:{m}")
+
+    for m in OPENAI_MODELS:
+        tasks.append(safe_completion(m, context))
+        sources.append(f"OPENAI:{m}")
 
     for m in GITHUB_MODELS:
         tasks.append(safe_completion("github:" + m, context))
@@ -1199,3 +1242,11 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
+
+
+
+
+
+
+
