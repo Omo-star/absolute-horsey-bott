@@ -987,39 +987,45 @@ class SlashCommands(commands.Cog):
         description="Roast one or more people, or roast a custom prompt."
     )
     @app_commands.describe(
-        targets="Select one or more users to roast.",
-        prompt="Optional custom roast prompt or hint."
+        text="Mention users and/or add text. Example: '@User1 @User2 make it brutal'"
     )
     async def roast(
         self,
         interaction: discord.Interaction,
-        targets: list[discord.User] | None = None,
-        prompt: str | None = None
+        text: str
     ):
         await interaction.response.defer()
 
         mode = roast_mode.get(interaction.user.id, "deep")
 
-        if not targets and not prompt:
-            await interaction.followup.send(
-                "Tag users or provide text:\n"
-                "`/roast targets:@User`\n"
-                "`/roast prompt: roast this please`"
-            )
+        mention_ids = re.findall(r"<@!?(\d+)>", text)
+        mention_ids = list(dict.fromkeys(mention_ids))  
+
+        if mention_ids:
+            out = []
+            clean_prompt = re.sub(r"<@!?\d+>", "", text).strip()
+
+            for uid in mention_ids:
+                member = interaction.guild.get_member(int(uid))
+                if member is None:
+                    continue
+
+                hint = clean_prompt or f"Roast {member.display_name}"
+                response = await bot_roast(hint, member.id, mode)
+                out.append(f"**{member.display_name}:** {response}")
+
+            await interaction.followup.send("\n".join(out))
             return
 
-        if not targets and prompt:
-            resp = await bot_roast(prompt, interaction.user.id, mode)
+        if text.strip():
+            resp = await bot_roast(text, interaction.user.id, mode)
             await interaction.followup.send(resp)
             return
 
-        out = []
-        for user in targets:
-            hint = prompt or f"Roast {user.display_name}"
-            r = await bot_roast(hint, user.id, mode)
-            out.append(f"**{user.display_name}:** {r}")
+        await interaction.followup.send(
+            "Use `/roast @User`, `/roast @User @Other`, or `/roast your text here`"
+        )
 
-        await interaction.followup.send("\n".join(out))
 
 
 
@@ -1258,6 +1264,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
