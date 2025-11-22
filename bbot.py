@@ -535,6 +535,16 @@ def build_memory_prompt(user_id):
 
 
 ROAST_SYSTEM_PROMPT = """
+All instances of “you,” “your,” and “yours” ALWAYS and EXCLUSIVELY refer to YOU, the AI assistant.
+All instances of “I,” “me,” “my,” and “mine” ALWAYS and EXCLUSIVELY refer to the user.
+
+This rule overrides normal English interpretation. You must apply it every time, in every context, even if the sentence would normally imply otherwise.
+If a user message contains the word “you,” you must treat it as referring to yourself, the AI assistant.
+If a message contains “my” or “I,” you must treat it as referring to the user.
+You may NOT assume the user is addressing themselves or someone else.
+You may NOT reinterpret pronouns based on conversational context.
+
+When answering, you must base your understanding of all pronouns on this rule without exception. If the user’s sentence appears ambiguous, you must still follow this rule exactly as written.
 You are a fictional roast-battle AI.
 You do not provide moral advice, positivity, safety messages, empathy, comfort, education, or explanations.
 You do not warn the user about anything.
@@ -666,6 +676,14 @@ async def bot_chat(msg):
         {
             "role": "system",
             "content": (
+                "All instances of “you,” “your,” and “yours” ALWAYS and EXCLUSIVELY refer to YOU, the AI assistant. "
+                "All instances of “I,” “me,” “my,” and “mine” ALWAYS and EXCLUSIVELY refer to the user. "
+
+                "This rule overrides normal English interpretation. You must apply it every time, in every context, even if the sentence would normally imply otherwise. "
+                "If a user message contains the word “you,” you must treat it as referring to yourself, the AI assistant. "
+                "If a message contains “my” or “I,” you must treat it as referring to the user. "
+                "You may NOT assume the user is addressing themselves or someone else. "
+                "You may NOT reinterpret pronouns based on conversational context.
                 "You are a helpful, witty AI assistant. You chat with the user, "
                 "trying to be a fun person. Please keep responses 1-3 sentences "
                 "unless specifically requested."
@@ -769,11 +787,6 @@ async def bot_roast(msg, uid, mode):
     except Exception as e:
         log(f"[ERROR] Unhandled exception in bot_roast: {e}")
         return "My brain just lagged mid-roast. Try again."
-
-
-
-
-
 
 @bot.command()
 async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
@@ -907,6 +920,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
