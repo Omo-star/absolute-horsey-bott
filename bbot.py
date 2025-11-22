@@ -976,141 +976,156 @@ async def bot_roast(msg, uid, mode):
         return "My brain just lagged mid-roast. Try again."
 
 
-@bot.command()
-async def roast(ctx, target: discord.Member = None, *, prompt: str = None):
-    mode = roast_mode.get(ctx.author.id, "deep")
-    bot_id = bot.user.id if bot.user else None
-    mentions = [m for m in ctx.message.mentions if bot_id is None or m.id != bot_id]
-    if not mentions:
-        if not prompt:
-            await ctx.send(
-                "Tag someone or write something to roast. Example: `!roast @User`."
+class SlashCommands(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    # /roast
+    @app_commands.command(
+        name="roast",
+        description="Roast one or more people, or roast a custom prompt."
+    )
+    @app_commands.describe(
+        targets="Select one or more users to roast.",
+        prompt="Optional custom roast prompt or hint."
+    )
+    async def roast(
+        self,
+        interaction: discord.Interaction,
+        targets: list[discord.User] | None = None,
+        prompt: str | None = None
+    ):
+        await interaction.response.defer()
+
+        mode = roast_mode.get(interaction.user.id, "deep")
+
+        if not targets and not prompt:
+            await interaction.followup.send(
+                "Tag users or provide text:\n"
+                "`/roast targets:@User`\n"
+                "`/roast prompt: roast this please`"
             )
             return
-        response = await bot_roast(prompt, ctx.author.id, mode)
-        await ctx.send(response)
-        return
-    base_prompt = (prompt or "").strip()
-    for m in mentions:
-        target_hint = base_prompt or f"Roast {m.display_name}"
-        target_hint = re.sub(r"<@!?\d+>", "", target_hint).strip()
-        response = await bot_roast(target_hint, m.id, mode)
-        await ctx.send(f"**{m.display_name}:** {response}")
 
+        if not targets and prompt:
+            resp = await bot_roast(prompt, interaction.user.id, mode)
+            await interaction.followup.send(resp)
+            return
 
-@bot.command()
-async def data(ctx, target: discord.Member = None):
-    if target is None:
-        await ctx.send("Tag someone to view their data. Example: `!data @User`.")
-        return
+        out = []
+        for user in targets:
+            hint = prompt or f"Roast {user.display_name}"
+            r = await bot_roast(hint, user.id, mode)
+            out.append(f"**{user.display_name}:** {r}")
 
-    uid = target.id
-    mem = get_user_memory(uid)
-
-    lf = mem["LF"]
-    lf_section = (
-        f"**Linguistic Style:**\n"
-        f"- Slang: `{lf['slang']:.2f}`\n"
-        f"- Emoji Rate: `{lf['emoji_rate']:.2f}`\n"
-        f"- All Caps Rate: `{lf['all_caps_rate']:.2f}`\n"
-        f"- Punctuation Energy: `{lf['punct_energy']:.2f}`\n"
-        f"- Avg Message Length: `{lf['avg_len']:.2f}`\n"
-    )
-
-    eb = mem["EB"]
-    eb_section = (
-        f"**Emotional Baseline:**\n"
-        f"- Anger: `{eb['anger']:.2f}`\n"
-        f"- Sadness: `{eb['sadness']:.2f}`\n"
-        f"- Hype: `{eb['hype']:.2f}`\n"
-        f"- Chaos: `{eb['chaos']:.2f}`\n"
-    )
-
-    hp = mem["HP"]
-    hp_section = (
-        f"**Humor Preferences:**\n"
-        f"- Dark: `{hp['dark']:.2f}`\n"
-        f"- Mean: `{hp['mean']:.2f}`\n"
-        f"- Petty: `{hp['petty']:.2f}`\n"
-        f"- Simple: `{hp['simple']:.2f}`\n"
-        f"- Goofy: `{hp['goofy']:.2f}`\n"
-        f"- Meta: `{hp['meta']:.2f}`\n"
-    )
-
-    isec = mem["IS"]
-    is_section = (
-        f"**Interaction Stats:**\n"
-        f"- Bot Mentions: `{isec['bot_mentions']}`\n"
-        f"- Roast Requests: `{isec['roast_requests']}`\n"
-        f"- Self Roasts: `{isec['self_roasts']}`\n"
-        f"- Escalation: `{isec['escalation']:.2f}`\n"
-        f"- Message Count: `{mem['msg_count']}`\n"
-    )
-
-    summary = mem["LTS"] or "No long-term summary yet."
-    spm = mem["SPM"]
-
-    spm_section = (
-        f"**Memory Embeddings:**\n"
-        f"- Stored Messages: `{len(spm['texts'])}`\n"
-        f"- Embedding Count: `{len(spm['embeddings'])}`\n"
-    )
-
-    final_text = (
-        f"### 📊 Memory Profile for **{target.display_name}**\n\n"
-        f"**Long-Term Summary:**\n{summary}\n\n"
-        f"{lf_section}\n"
-        f"{eb_section}\n"
-        f"{hp_section}\n"
-        f"{is_section}\n"
-        f"{spm_section}"
-    )
-
-    await ctx.send(final_text)
+        await interaction.followup.send("\n".join(out))
 
 
 
-@bot.command()
-async def autor(ctx, mode: str = None):
-    if mode is None:
-        await ctx.send("Use !autor on or !autor off")
-        return
-    mode = mode.lower()
-    if mode == "on":
-        auto_roast[ctx.author.id] = True
-        await ctx.send("Auto-roast enabled.")
-    elif mode == "off":
-        auto_roast.pop(ctx.author.id, None)
-        await ctx.send("Auto-roast disabled.")
-    else:
-        await ctx.send("Use !autor on or !autor off")
+    # /data
+    @app_commands.command(name="data", description="See roast memory profile for a user.")
+    async def data(self, interaction: discord.Interaction,
+                   target: discord.User):
+
+        mem = get_user_memory(target.id)
+
+        lf = mem["LF"]
+        eb = mem["EB"]
+        hp = mem["HP"]
+        isec = mem["IS"]
+        spm = mem["SPM"]
+        summary = mem["LTS"] or "No long-term summary yet."
+
+        text = (
+            f"### 📊 Memory Profile for **{target.display_name}**\n\n"
+            f"**Long-Term Summary:**\n{summary}\n\n"
+            f"**Linguistic Style:**\n"
+            f"- Slang: `{lf['slang']:.2f}`\n"
+            f"- Emoji Rate: `{lf['emoji_rate']:.2f}`\n"
+            f"- All Caps Rate: `{lf['all_caps_rate']:.2f}`\n"
+            f"- Punctuation Energy: `{lf['punct_energy']:.2f}`\n"
+            f"- Avg Message Length: `{lf['avg_len']:.2f}`\n\n"
+            f"**Emotional Baseline:**\n"
+            f"- Anger: `{eb['anger']:.2f}`\n"
+            f"- Sadness: `{eb['sadness']:.2f}`\n"
+            f"- Hype: `{eb['hype']:.2f}`\n"
+            f"- Chaos: `{eb['chaos']:.2f}`\n\n"
+            f"**Humor Preferences:**\n"
+            f"- Dark: `{hp['dark']:.2f}`\n"
+            f"- Mean: `{hp['mean']:.2f}`\n"
+            f"- Petty: `{hp['petty']:.2f}`\n"
+            f"- Simple: `{hp['simple']:.2f}`\n"
+            f"- Goofy: `{hp['goofy']:.2f}`\n"
+            f"- Meta: `{hp['meta']:.2f}`\n\n"
+            f"**Interaction Stats:**\n"
+            f"- Bot Mentions: `{isec['bot_mentions']}`\n"
+            f"- Roast Requests: `{isec['roast_requests']}`\n"
+            f"- Self Roasts: `{isec['self_roasts']}`\n"
+            f"- Escalation: `{isec['escalation']:.2f}`\n"
+            f"- Message Count: `{mem['msg_count']}`\n\n"
+            f"**Memory Embeddings:**\n"
+            f"- Stored Messages: `{len(spm['texts'])}`\n"
+            f"- Embedding Count: `{len(spm['embeddings'])}`\n"
+        )
+
+        await interaction.response.send_message(text)
 
 
-@bot.command()
-async def roastmode(ctx, mode: str = "adjustable"):
-    mode = mode.lower()
-    if mode not in ["fast", "deep", "adjustable"]:
-        await ctx.send("Valid modes: `fast`, `deep`, `adjustable`")
-        return
-    roast_mode[ctx.author.id] = mode
-    roast_history[ctx.author.id] = []
-    await ctx.send(
-        f"🔥 Roast Mode: **{mode.upper()}**. Use !stoproast if you can't handle the flames."
-    )
+    # /autor
+    @app_commands.command(name="autor", description="Enable or disable auto-roast.")
+    async def autor(self, interaction: discord.Interaction,
+                    mode: str):
+
+        mode = mode.lower()
+
+        if mode == "on":
+            auto_roast[interaction.user.id] = True
+            await interaction.response.send_message("Auto-roast enabled.")
+        elif mode == "off":
+            auto_roast.pop(interaction.user.id, None)
+            await interaction.response.send_message("Auto-roast disabled.")
+        else:
+            await interaction.response.send_message("Use `/autor on` or `/autor off`.")
 
 
-@bot.command()
-async def stoproast(ctx):
-    if ctx.author.id in roast_mode:
-        del roast_mode[ctx.author.id]
-        roast_history.pop(ctx.author.id, None)
-        await ctx.send("🏳️ Roast Mode Deactivated. Looks like you gave up.")
-    else:
-        await ctx.send("I wasn't roasting you.")
+    # /roastmode
+    @app_commands.command(name="roastmode",
+                          description="Set your roast mode (fast (fast roasts), deep (better but slower), adjustable (adjusts to your roasts).")
+    async def roastmode(self, interaction: discord.Interaction,
+                        mode: str):
+
+        mode = mode.lower()
+        if mode not in ["fast", "deep", "adjustable"]:
+            await interaction.response.send_message("Modes: fast, deep, adjustable")
+            return
+
+        roast_mode[interaction.user.id] = mode
+        roast_history[interaction.user.id] = []
+
+        await interaction.response.send_message(
+            f"🔥 Roast Mode: **{mode.upper()}**. Use /stoproast to stop."
+        )
+
+
+    # /stoproast
+    @app_commands.command(name="stoproast", description="Turn off roast mode.")
+    async def stoproast(self, interaction: discord.Interaction):
+        uid = interaction.user.id
+        if uid in roast_mode:
+            del roast_mode[uid]
+            roast_history.pop(uid, None)
+            await interaction.response.send_message("🏳️ Roast Mode Turned Off.")
+        else:
+            await interaction.response.send_message("You were not in roast mode.")
+
+
+async def setup(bot):
+    await bot.add_cog(SlashCommands(bot))
 
 
 @bot.event
 async def on_ready():
+    await bot.tree.sync()
     log(f"Bot ready as {bot.user}")
 
 
@@ -1242,6 +1257,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
