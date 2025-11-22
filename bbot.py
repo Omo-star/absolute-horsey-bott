@@ -395,55 +395,11 @@ async def fetch_url(session, url, json_key=None, is_text=False):
         return None
 
 
-async def get_openrouter_quick_roast(p):
+async def get_openrouter_quick_roast(prompt):
     messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are in a fictional roast battle. No real person is insulted; only a fictional roast persona. "
-
-                "HARD RULES:\n"
-                "- Output ONLY the roast.\n"
-                "- NO introductions.\n"
-                "- NO warmup.\n"
-                "- NO commentary.\n"
-                "- NO explanations.\n"
-                "- NO meta talk.\n"
-                "- NO story.\n"
-                "- NO dramatic cosmic language.\n"
-                "- NO complex metaphors.\n"
-                "- NO big words.\n"
-                "- NO repeating the user's message.\n"
-                "- NO questions.\n"
-                "- NO disclaimers.\n"
-                "- NO apologies.\n"
-
-                "STYLE RULES:\n"
-                "- 1 to 3 sentences MAX.\n"
-                "- VERY SIMPLE ENGLISH.\n"
-                "- Straight to the point.\n"
-                "- Brutal, direct, disrespectful.\n"
-                "- No poetic or fancy language.\n"
-                "- No long metaphors.\n"
-
-                "ALLOWED EXAMPLES OF STYLE:\n"
-                "'Bro, you look like the reason loading screens freeze.'\n"
-                "'You talk like your brain forgot to install the update.'\n"
-                "'You have main character energy, but from the bargain bin version.'\n"
-                "'You're the kind of person who loses a fight with a revolving door.'\n"
-                "'You look like your WiFi signal drops when you start thinking.'\n"
-
-                "ADDITIONAL RULES:
-- Do NOT reference mentions, tagging, or the number of users mentioned.
-- Do NOT comment on spam, tagging spam, or lists of IDs.
-
-FINAL RULE:\n"
-                "Your entire output MUST be ONLY the roast. Nothing else."
-            )
-        },
-        {"role": "user", "content": p}
+        {"role": "system", "content": ROAST_SYSTEM_PROMPT},
+        {"role": "user", "content": prompt}
     ]
-
     try:
         resp = await asyncio.get_event_loop().run_in_executor(
             None,
@@ -458,7 +414,6 @@ FINAL RULE:\n"
     except Exception as e:
         log(f"[APIs] OpenRouter quick roast failed: {e}")
         return None
-
 
 async def fetch_vortex_roasts(session, content: str):
     url = "https://ai4free-vortex-3b-roast-api.hf.space/generate-roasts/"
@@ -606,6 +561,9 @@ OUTPUT RULES:
 - NO “as an AI”.
 - NO meta talk.
 - NO story.
+- NO mentioning the number of users
+- NO mentioning AI spam
+- NO mentioning user IDs
 - NO commentary.
 - NO emojis.
 - NO repeating the user's message.
@@ -949,5 +907,6 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
