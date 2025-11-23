@@ -41,13 +41,13 @@ async def get_balance(user_id: int) -> int:
 async def update_balance(user_id: int, amount: int):
     user = get_user(user_id)
     user["balance"] += amount
-    save_state(state)
+    save_state()
 
 
 async def set_daily_timestamp(user_id: int):
     user = get_user(user_id)
     user["last_daily"] = datetime.datetime.utcnow().isoformat()
-    save_state(state)
+    save_state()
 
 
 async def get_last_daily(user_id: int):
