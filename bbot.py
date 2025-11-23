@@ -1162,6 +1162,7 @@ async def bot_roast(msg, uid, mode):
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
+
     try:
         await bot.unload_extension("economy")
     except:
@@ -1173,10 +1174,9 @@ async def on_ready():
     except Exception as e:
         print(f"FAILED to load Economy cog: {e}")
 
-    for guild in bot.guilds:
-        bot.tree.clear_commands(guild=guild)
-        synced = await bot.tree.sync(guild=guild)
-        print(f"Synced {len(synced)} commands in {guild.name}")
+    synced = await bot.tree.sync()
+    print(f"Synced {len(synced)} global commands.")
+
 
 @bot.event
 async def on_message(message):
@@ -1307,6 +1307,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
