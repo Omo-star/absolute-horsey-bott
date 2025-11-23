@@ -1127,10 +1127,15 @@ class SlashCommands(commands.Cog):
 
 @bot.event
 async def on_ready():
-    await bot.add_cog(SlashCommands(bot))
-    synced_global = await bot.tree.sync()
-    log(f"Synced {len(synced_global)} global commands")
-    log(f"Bot ready as {bot.user}")
+    for guild in bot.guilds:
+        try:
+            await bot.tree.sync(guild=guild)
+            print(f"Synced commands for {guild.name}")
+        except Exception as e:
+            print(f"Failed syncing in {guild.name}: {e}")
+
+    print(f"Bot ready as {bot.user}")
+
 
 
 @bot.event
@@ -1264,6 +1269,7 @@ async def setup_hook():
     await bot.load_extension("economy")
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
