@@ -1127,6 +1127,14 @@ class SlashCommands(commands.Cog):
 
 @bot.event
 async def on_ready():
+    if not hasattr(bot, "slash_loaded"):
+        await bot.add_cog(SlashCommands(bot))
+        try:
+            await bot.load_extension("economy")
+        except commands.ExtensionAlreadyLoaded:
+            pass
+        bot.slash_loaded = True
+
     for guild in bot.guilds:
         try:
             await bot.tree.sync(guild=guild)
@@ -1135,7 +1143,6 @@ async def on_ready():
             print(f"Failed syncing in {guild.name}: {e}")
 
     print(f"Bot ready as {bot.user}")
-
 
 
 @bot.event
@@ -1264,12 +1271,9 @@ async def on_message(message):
             await message.channel.send(response)
         return
         
-@bot.event
-async def setup_hook():
-    await bot.add_cog(SlashCommands(bot))
-    await bot.load_extension("economy")
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
