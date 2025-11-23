@@ -1258,9 +1258,15 @@ async def on_message(message):
             response = await bot_chat(clean_text or "hi")
             await message.channel.send(response)
         return
+        
+async def setup_hook():
+    await bot.load_extension("economy")
+
+bot.setup_hook = setup_hook
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
