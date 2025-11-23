@@ -1130,13 +1130,16 @@ async def on_ready():
     await bot.add_cog(SlashCommands(bot))
 
     guild = discord.Object(id=1440020962295676938)
-    await bot.tree.sync(guild=guild)
 
-    await bot.tree.sync()
+    synced = await bot.tree.sync(guild=guild)
 
-    log("Bot ready and all commands synced.")
+    log(f"Synced {len(synced)} commands to guild {guild.id}")
 
+    synced_global = await bot.tree.sync()
 
+    log(f"Synced {len(synced_global)} global commands")
+
+    log(f"Bot ready as {bot.user}")
 
 
 @bot.event
@@ -1267,6 +1270,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
