@@ -1097,7 +1097,7 @@ class SlashCommands(commands.Cog):
 
     # /roastmode
     @app_commands.command(name="roastmode",
-                          description="Set your roast mode: fast, deep, or adjustable. Get ready for some flames!")
+                          description="Set your roast mode: fast, deep, or adjustable.")
     async def roastmode(self, interaction: discord.Interaction,
                         mode: str):
 
@@ -1125,16 +1125,18 @@ class SlashCommands(commands.Cog):
         else:
             await interaction.response.send_message("You were not in roast mode.")
 
-
-async def setup(bot):
-    await bot.add_cog(SlashCommands(bot))
-
-
 @bot.event
 async def on_ready():
     await bot.add_cog(SlashCommands(bot))
+
+    guild = discord.Object(id=1440020962295676938)
+    await bot.tree.sync(guild=guild)
+
     await bot.tree.sync()
-    log(f"Bot ready as {bot.user}")
+
+    log("Bot ready and all commands synced.")
+
+
 
 
 @bot.event
@@ -1265,6 +1267,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
