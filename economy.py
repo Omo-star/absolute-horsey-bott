@@ -177,6 +177,682 @@ class Economy(commands.Cog):
         await interaction.response.send_message(
             "🏆| **Top 10 Richest Users**\n" + "\n".join(lines)
         )
+    @app_commands.command(name="hunt", description="Go hunting with a rich loot table.")
+    async def hunt(self, interaction: discord.Interaction):
+        user_id = interaction.user.id
+
+        loot_table = [
+                ("🐀 Rat", 10, "Common"),
+                ("🐁 Field Mouse", 12, "Common"),
+                ("🐦 Sparrow", 15, "Common"),
+                ("🐇 Bunny", 20, "Common"),
+                ("🦊 Fox", 25, "Common"),
+                ("🦝 Raccoon", 18, "Common"),
+                ("🐿️ Squirrel", 17, "Common"),
+                ("🦤 Dodo (how??)", 22, "Common"),
+                ("🐔 Chicken", 19, "Common"),
+                ("🦆 Duck", 23, "Common"),
+                ("🐄 Cow (baby)", 30, "Common"),
+                ("🐕 Stray Dog", 28, "Common"),
+                ("🐈 Wild Cat", 29, "Common"),
+                ("🦮 Hunting Dog", 33, "Common"),
+                ("🐖 Piglet", 26, "Common"),
+                ("🦢 Swan", 21, "Common"),
+                ("🦉 Barn Owl", 27, "Common"),
+                ("🦜 Parrot", 24, "Common"),
+                ("🦎 Lizard", 14, "Common"),
+                ("🐍 Small Snake", 16, "Common"),
+                ("🦌 Deer", 70, "Uncommon"),
+                ("🐗 Wild Hog", 65, "Uncommon"),
+                ("🦃 Turkey", 55, "Uncommon"),
+                ("🐐 Mountain Goat", 60, "Uncommon"),
+                ("🐓 Rooster", 48, "Uncommon"),
+                ("🦢 Giant Swan", 50, "Uncommon"),
+                ("🦨 Skunk", 52, "Uncommon"),
+                ("🐊 Baby Crocodile", 80, "Uncommon"),
+                ("🐺 Wolf", 85, "Uncommon"),
+                ("🦫 Beaver", 57, "Uncommon"),
+                ("🦦 Otter", 68, "Uncommon"),
+                ("🐅 Young Tiger", 75, "Uncommon"),
+                ("🦘 Wallaby", 58, "Uncommon"),
+                ("🐏 Ram", 72, "Uncommon"),
+                ("🦅 Eagle", 88, "Uncommon"),
+                ("🦩 Flamingo", 63, "Uncommon"),
+                ("🦚 Peacock", 66, "Uncommon"),
+                ("🦡 Badger", 71, "Uncommon"),
+                ("🦤 Giant Dodo", 90, "Uncommon"),
+                ("🦭 Mini Seal", 69, "Uncommon"),
+                ("🐻 Bear", 180, "Rare"),
+                ("🐅 Tiger", 160, "Rare"),
+                ("🦏 Rhino (baby)", 150, "Rare"),
+                ("🦍 Gorilla", 170, "Rare"),
+                ("🦬 Buffalo", 155, "Rare"),
+                ("🐘 Baby Elephant", 140, "Rare"),
+                ("🦌 Elk", 145, "Rare"),
+                ("🦈 Reef Shark", 175, "Rare"),
+                ("🐊 Crocodile", 190, "Rare"),
+                ("🦒 Giraffe", 165, "Rare"),
+                ("🦛 Hippo", 185, "Rare"),
+                ("🐆 Leopard", 200, "Rare"),
+                ("🦃 Mutant Turkey", 130, "Rare"),
+                ("🦜 Tropical Macaw", 120, "Rare"),
+                ("🦢 Enraged Swan", 125, "Rare"),
+                ("🦡 Alpha Badger", 150, "Rare"),
+                ("🦭 Great Seal", 160, "Rare"),
+                ("🐐 Demon Goat", 140, "Rare"),
+                ("🦣 Mammoth Calf", 180, "Rare"),
+                ("🦦 Sea Otter King", 190, "Rare"),
+                ("🐉 Baby Dragon", 320, "Epic"),
+                ("🦅 Roc Hatchling", 300, "Epic"),
+                ("🐲 Mini Wyvern", 260, "Epic"),
+                ("🦂 Giant Scorpion", 240, "Epic"),
+                ("🦖 Young T-Rex", 350, "Epic"),
+                ("🦕 Brontosaurus Hatchling", 330, "Epic"),
+                ("🦍 Titan Gorilla", 310, "Epic"),
+                ("🐲 Lava Drake", 340, "Epic"),
+                ("🦈 Megalodon Pup", 325, "Epic"),
+                ("🐺 Dire Wolf", 285, "Epic"),
+                ("🦄 Unicorn Fawn", 300, "Epic"),
+                ("🐉 Forest Dragonling", 290, "Epic"),
+                ("🐐 Chaos Goat", 260, "Epic"),
+                ("🦅 Storm Eagle", 270, "Epic"),
+                ("🐗 Demon Boar", 255, "Epic"),
+                ("🐆 Shadow Panther", 295, "Epic"),
+                ("🦇 Vampire Batlord", 275, "Epic"),
+                ("🐍 Titan Serpent", 310, "Epic"),
+                ("🦎 Elder Lizard", 265, "Epic"),
+                ("🐘 Giant Elephant Spirit", 300, "Epic"),
+                ("🐉 Ancient Dragon", 700, "Legendary"),
+                ("🐲 Celestial Wyvern", 680, "Legendary"),
+                ("🦅 Thunder Roc", 650, "Legendary"),
+                ("🦄 Eternal Unicorn", 640, "Legendary"),
+                ("🐺 Moon Wolf", 590, "Legendary"),
+                ("🐆 Galaxy Panther", 620, "Legendary"),
+                ("🦂 King Scorpion", 575, "Legendary"),
+                ("🦖 Elder T-Rex", 750, "Legendary"),
+                ("🦕 Prime Bronto", 770, "Legendary"),
+                ("🐊 Abyssal Crocodile", 800, "Legendary"),
+                ("🌑 Shadow Colossus", 1500, "Mythic"),
+                ("🌋 Volcano Titan", 1800, "Mythic"),
+                ("🌪️ Storm Leviathan", 2000, "Mythic"),
+                ("🌌 Cosmic Dragon", 2500, "Mythic"),
+                ("🔥 Phoenix", 3000, "Mythic")
+        ]
+
+        weights = [
+                *([35] * 20),
+                *([15] * 20),
+                *([5] * 20),
+                *([1.5] * 20),
+                *([0.35] * 10),
+                *([0.1] * 5)
+        ]
+
+        catch = random.choices(loot_table, weights=weights, k=1)[0]
+        animal, base_reward, rarity = catch
+
+        crit = random.random() < 0.10
+        reward = base_reward * (2 if crit else 1)
+
+        if random.random() < 0.05:
+            return await interaction.response.send_message("💨 You missed everything. Skill issue.")
+
+        await update_balance(user_id, reward)
+        await interaction.response.send_message(
+            f"🏹 You hunted a **{animal}** ({rarity}) and earned **{reward} coins!**"
+            + (" 💥 **CRITICAL HIT!**" if crit else "")
+        )
+    @app_commands.command(name="fish", description="Go fishing with expanded loot!")
+    async def fish(self, interaction: discord.Interaction):
+        user_id = interaction.user.id
+
+        fish_table = [
+                ("🐟 Common Carp", 15, "Common"),
+                ("🐠 Clownfish", 25, "Common"),
+                ("🦐 Shrimp", 10, "Common"),
+                ("🐠 Sardine", 12, "Common"),
+                ("🐡 Sunfish", 14, "Common"),
+                ("🐟 Anchovy", 11, "Common"),
+                ("🐠 Guppy", 13, "Common"),
+                ("🐟 Minnow", 10, "Common"),
+                ("🦑 Baby Squid", 18, "Common"),
+                ("🦀 Small Crab", 20, "Common"),
+                ("🐚 Seashell Fragment", 8, "Common"),
+                ("🐌 Sea Snail", 17, "Common"),
+                ("🪼 Tiny Jellyfish", 16, "Common"),
+                ("🐠 Bluegill", 19, "Common"),
+                ("🐟 Perch", 22, "Common"),
+                ("🐠 Butterflyfish", 21, "Common"),
+                ("🐟 Tadpole", 9, "Common"),
+                ("🦐 Krill Cluster", 12, "Common"),
+                ("🐡 Baby Blowfish", 18, "Common"),
+                ("🦦 Wet Fur Scrap", 7, "Common"),
+                ("🐟 Bass", 30, "Uncommon"),
+                ("🐠 Neon Tetra", 35, "Uncommon"),
+                ("🐟 Trout", 40, "Uncommon"),
+                ("🦐 Tiger Shrimp", 36, "Uncommon"),
+                ("🐡 Spiked Puffer", 50, "Uncommon"),
+                ("🐠 Angel Fish", 42, "Uncommon"),
+                ("🐟 Golden Carp", 45, "Uncommon"),
+                ("🦑 Squid", 48, "Uncommon"),
+                ("🦀 Stone Crab", 38, "Uncommon"),
+                ("🐚 Conch Shell", 33, "Uncommon"),
+                ("🐠 Zebra Fish", 37, "Uncommon"),
+                ("🐟 Salmon", 55, "Uncommon"),
+                ("🐠 Swordtail", 34, "Uncommon"),
+                ("🐡 Banded Puffer", 47, "Uncommon"),
+                ("🪼 Pink Jellyfish", 52, "Uncommon"),
+                ("🐠 Moorish Idol", 41, "Uncommon"),
+                ("🐟 Catfish", 49, "Uncommon"),
+                ("🦀 Hermit Crab", 44, "Uncommon"),
+                ("🐠 Rainbow Fish", 53, "Uncommon"),
+                ("🦐 Jumbo Shrimp", 39, "Uncommon"),
+                ("🐙 Octopus", 90, "Rare"),
+                ("🦞 Lobster", 120, "Rare"),
+                ("🐠 Lionfish", 110, "Rare"),
+                ("🦑 Giant Squidling", 105, "Rare"),
+                ("🐡 Balloon Puffer", 95, "Rare"),
+                ("🦀 King Crab", 130, "Rare"),
+                ("🐟 Electric Eel", 125, "Rare"),
+                ("🐋 Baby Whale", 140, "Rare"),
+                ("🐬 Dolphin Tooth", 135, "Rare"),
+                ("🦈 Reef Shark", 150, "Rare"),
+                ("🐠 Koi Spirit", 145, "Rare"),
+                ("🐙 Ink Demon Octopus", 160, "Rare"),
+                ("🐟 Steelhead Fish", 115, "Rare"),
+                ("🦞 Blood Lobster", 155, "Rare"),
+                ("🐡 Toxic Puffer", 100, "Rare"),
+                ("🪼 Stinger Jellyfish", 120, "Rare"),
+                ("🐠 Ghost Fish", 143, "Rare"),
+                ("🐋 Leviathan Scale", 170, "Rare"),
+                ("🦀 Royal Crab", 155, "Rare"),
+                ("🐬 Echo Dolphin", 165, "Rare"),
+                ("🦈 Shark", 250, "Epic"),
+                ("🐋 Leviathan Fragment", 300, "Epic"),
+                ("🐉 Abyss Dragonfish", 280, "Epic"),
+                ("🐙 Titan Octopus", 260, "Epic"),
+                ("🦑 Krakenling", 275, "Epic"),
+                ("🐡 Astro Puffer", 245, "Epic"),
+                ("🦞 Cosmic Lobster", 290, "Epic"),
+                ("🐟 Thunder Eel", 255, "Epic"),
+                ("🐬 Celestial Dolphin", 310, "Epic"),
+                ("🦀 Void Crab", 265, "Epic"),
+                ("🐠 Crystal Koi", 295, "Epic"),
+                ("🪼 Nebula Jellyfish", 270, "Epic"),
+                ("🐚 Soul Shell", 240, "Epic"),
+                ("🐋 Abyss Whale", 300, "Epic"),
+                ("🦈 Ironjaw Shark", 250, "Epic"),
+                ("🐡 Galactic Puffer", 320, "Epic"),
+                ("🐙 Dimensional Octopus", 305, "Epic"),
+                ("🦑 Arcane Squid", 285, "Epic"),
+                ("🐬 Star Whale Cub", 330, "Epic"),
+                ("🐋 Tidal Leviathan", 350, "Epic"),
+                ("🐲 Sea Dragon", 450, "Legendary"),
+                ("🦈 Megalodon", 500, "Legendary"),
+                ("🐋 Leviathan", 600, "Legendary"),
+                ("🐙 Kraken", 550, "Legendary"),
+                ("🐉 Ocean Serpent", 650, "Legendary"),
+                ("🦑 Colossal Squid", 520, "Legendary"),
+                ("🐬 Astral Dolphin", 580, "Legendary"),
+                ("🦞 Mythic Lobster", 490, "Legendary"),
+                ("🐟 Thunderbird Fish", 470, "Legendary"),
+                ("🪼 Radiant Jellyfish", 530, "Legendary"),
+                ("🌊 Tidal Colossus", 900, "Mythic"),
+                ("🌌 Cosmic Leviathan", 1100, "Mythic"),
+                ("🔥 Phoenix Salmon", 1300, "Mythic"),
+                ("⚡ Storm Serpent", 1500, "Mythic"),
+                ("🜂 Eternal Flamefish", 2000, "Mythic")
+        ]
+
+        weights = [
+                *([35] * 20),
+                *([20] * 20),
+                *([8] * 20),
+                *([2] * 20),
+                *([0.4] * 10),
+                *([0.1] * 5)
+        ]
+
+        fish, value, rarity = random.choices(fish_table, weights=weights, k=1)[0]
+
+        jackpot = random.random() < 0.05
+        if jackpot:
+            value *= 5
+
+        await update_balance(user_id, value)
+        await interaction.response.send_message(
+            f"🎣 You caught **{fish}** ({rarity}) worth **{value} coins!**"
+            + (" 🎉 **JACKPOT CATCH! x5 VALUE!**" if jackpot else "")
+        )
+    @app_commands.command(name="battle", description="Fight monsters RPG-style!")
+    async def battle(self, interaction: discord.Interaction):
+        uid = interaction.user.id
+
+        monsters = [
+                ("Slime", 30, 0.70),
+                ("Bandit", 50, 0.60),
+                ("Goblin", 80, 0.55),
+                ("Wolf", 75, 0.58),
+                ("Skeleton", 65, 0.62),
+                ("Zombie", 70, 0.60),
+                ("Orc Grunt", 85, 0.54),
+                ("Giant Rat", 45, 0.66),
+                ("Bat Swarm", 40, 0.68),
+                ("Stone Imp", 90, 0.53),
+                ("Minotaur", 140, 0.45),
+                ("Forest Troll", 120, 0.48),
+                ("Sand Golem", 110, 0.50),
+                ("Ice Wraith", 130, 0.46),
+                ("Dark Ranger", 115, 0.49),
+                ("Cave Spider", 95, 0.52),
+                ("Fire Imp", 105, 0.51),
+                ("Bog Lurker", 100, 0.52),
+                ("Harpy", 125, 0.47),
+                ("Sea Serpentling", 135, 0.45),
+                ("Demon", 250, 0.30),
+                ("Ogre", 190, 0.38),
+                ("Frost Giantling", 210, 0.35),
+                ("Lava Hound", 230, 0.33),
+                ("Vampire Thrall", 160, 0.42),
+                ("Shadow Assassin", 175, 0.40),
+                ("Wraith", 185, 0.39),
+                ("Ghoul", 155, 0.43),
+                ("Stone Gargoyle", 200, 0.36),
+                ("Thunder Boar", 170, 0.41),
+                ("Ancient Dragon", 500, 0.15),
+                ("Flame Titan", 480, 0.16),
+                ("Storm Colossus", 520, 0.14),
+                ("Frost Wyvern", 450, 0.17),
+                ("Magma Serpent", 430, 0.18),
+                ("Astral Chimera", 540, 0.13),
+                ("Elder Treant", 460, 0.17),
+                ("Abyss Drake", 550, 0.12),
+                ("Crystal Golem", 490, 0.15),
+                ("Celestial Sphinx", 570, 0.12),
+                ("Cursed Knight", 260, 0.32),
+                ("Plague Bringer", 280, 0.31),
+                ("Warlock", 240, 0.34),
+                ("Nightmare Horse", 275, 0.30),
+                ("Bone Colossus", 300, 0.28),
+                ("Spectral Vanguard", 265, 0.31),
+                ("Void Revenant", 320, 0.26),
+                ("Flame Wraith", 290, 0.29),
+                ("Rune Guardian", 310, 0.27),
+                ("Fallen Hero", 255, 0.32),
+                ("Abyss Walker", 350, 0.24),
+                ("Dread Knight", 370, 0.23),
+                ("Time Eater", 390, 0.22),
+                ("Reality Shifter", 420, 0.20),
+                ("Eternal Harvester", 410, 0.21),
+                ("Corrupted Paladin", 345, 0.25),
+                ("Blight Dragonling", 385, 0.23),
+                ("Phantom Rider", 330, 0.25),
+                ("Soul Burner", 365, 0.24),
+                ("Astral Blade Spirit", 405, 0.21),
+                ("Kraken Spawn", 310, 0.27),
+                ("Sea Wraith", 330, 0.26),
+                ("Tidebreaker Golem", 350, 0.24),
+                ("Saltwater Leviathan", 380, 0.22),
+                ("Coral Serpent", 295, 0.29),
+                ("Drowned King", 420, 0.19),
+                ("Abyssal Siren", 360, 0.23),
+                ("Brine Demon", 340, 0.25),
+                ("Storm Sailor Ghost", 325, 0.26),
+                ("Whirlpool Elemental", 400, 0.20),
+                ("Lich", 600, 0.10),
+                ("Archdemon", 650, 0.08),
+                ("Void Titan", 700, 0.07),
+                ("Elder Lich", 680, 0.09),
+                ("Doom Hydra", 720, 0.06),
+                ("Worldspine Serpent", 750, 0.05),
+                ("Titanic Minotaur", 670, 0.09),
+                ("Nether Colossus", 740, 0.05),
+                ("Cataclysm Dragon", 800, 0.04),
+                ("Oblivion Phoenix", 820, 0.03),
+                ("Abyss Emperor", 900, 0.02),
+                ("Planetbreaker Golem", 950, 0.015),
+                ("Cosmic Devourer", 1000, 0.01),
+                ("Starborn Wyrm", 880, 0.02),
+                ("Infinity Chimera", 920, 0.015),
+                ("Void Sovereign", 1100, 0.009),
+                ("Chrono Seraph", 1050, 0.011),
+                ("Eclipse Dragon", 1150, 0.008),
+                ("Oblivion Titan", 1200, 0.007),
+                ("The Endbringer", 1500, 0.005),
+                ("World Eater Zorvath", 2000, 0.003),
+                ("Dimensional Anomaly", 1750, 0.004),
+                ("Dread Star Serpent", 1600, 0.0045),
+                ("The Final Horror", 2500, 0.002)
+        ]
+
+        if random.random() < 0.03:
+            monster = ("🌑 World Eater Horsey", 1500, 0.05)
+        else:
+            monster = random.choice(monsters)
+
+        name, reward, win_rate = monster
+        win = random.random() < win_rate
+
+        crit = random.random() < 0.12  
+
+        if win:
+            final_reward = reward * (2 if crit else 1)
+            await update_balance(uid, final_reward)
+            await interaction.response.send_message(
+                f"⚔️ You defeated **{name}** and earned **{final_reward} coins!**"
+                + (" 💥 **CRITICAL STRIKE!**" if crit else "")
+            )
+        else:
+            loss = random.randint(25, 80)
+            await update_balance(uid, -loss)
+            await interaction.response.send_message(
+                f"💀 **{name}** destroyed you. You dropped **{loss} coins**."
+            )
+    @app_commands.command(name="crime", description="Commit a risky crime!")
+    async def crime(self, interaction: discord.Interaction):
+        uid = interaction.user.id
+
+        crimes = [
+                ("Pickpocketed a tourist", 30),
+                ("Stole a bike", 45),
+                ("Hacked an ATM", 80),
+                ("Robbed a jewelry store", 150),
+                ("Embezzled government funds", 300),
+                ("Robbed the central bank", 600),
+                ("Snatched a purse", 25),
+                ("Shoplifted snacks", 20),
+                ("Stole a phone", 40),
+                ("Robbed a gas station", 70),
+                ("Forged lottery tickets", 90),
+                ("Scammed someone online", 85),
+                ("Sold counterfeit shoes", 60),
+                ("Stole a wallet on the bus", 35),
+                ("Pickpocketed a businessman", 55),
+                ("Hacked a vending machine", 50),
+                ("Stole cryptocurrency keys", 100),
+                ("Robbed a mini-mart", 65),
+                ("Sold fake concert tickets", 95),
+                ("Framed someone for a crime", 120),
+                ("Stole military rations", 45),
+                ("Stole a police radio", 50),
+                ("Committed tax fraud", 150),
+                ("Sold stolen laptops", 110),
+                ("Pirated paid software", 40),
+                ("Broke into a warehouse", 130),
+                ("Hijacked a scooter", 30),
+                ("Ran an illegal raffle", 70),
+                ("Stole rare coins", 90),
+                ("Scammed a streamer donation", 75),
+                ("Illegally siphoned gas", 65),
+                ("Cracked a safe", 160),
+                ("Sold bootleg movies", 35),
+                ("Stole a golden statue", 210),
+                ("Counterfeited documents", 140),
+                ("Sold stolen credit cards", 180),
+                ("Hacked school servers", 110),
+                ("Bribed a guard", 50),
+                ("Smuggled rare spices", 95),
+                ("Illegally resold medicine", 130),
+                ("Fraudulently used coupons", 28),
+                ("Stole a luxury handbag", 140),
+                ("Ran a fake charity scam", 200),
+                ("Stole high-end electronics", 175),
+                ("Smuggled exotic birds", 150),
+                ("Stole casino chips", 125),
+                ("Sold hacked accounts", 105),
+                ("Stole a delivery package", 45),
+                ("Hijacked a delivery truck", 190),
+                ("Sold fake NFTs", 160),
+                ("Cloned credit cards", 220),
+                ("Spoofed bank emails", 180),
+                ("Stole a diamond ring", 155),
+                ("Sold counterfeit gold", 170),
+                ("Hacked medical records", 140),
+                ("Stole a rare painting", 230),
+                ("Robbed a poker game", 175),
+                ("Sold government secrets", 300),
+                ("Stole a rare artifact", 260),
+                ("Hacked airport Wi-Fi", 90),
+                ("Robbed a crypto miner", 210),
+                ("Stole confidential files", 130),
+                ("Ran a phishing scheme", 120),
+                ("Smuggled illegal fireworks", 60),
+                ("Organized a street scam", 70),
+                ("Hijacked a taxi", 55),
+                ("Stole from a church donation box", 40),
+                ("Stole a vintage guitar", 100),
+                ("Sold fake IDs", 95),
+                ("Hacked a YouTuber account", 140),
+                ("Broke into a luxury home", 200),
+                ("Stole casino prize money", 175),
+                ("Ran a loan shark ring", 180),
+                ("Robbed a food truck", 90),
+                ("Bribed a customs officer", 160),
+                ("Smuggled rare minerals", 190),
+                ("Hacked cryptocurrency wallets", 250),
+                ("Stole a high-end PC", 150),
+                ("Organized a black-market auction", 275),
+                ("Stole classified intel", 240),
+                ("Manipulated stock trades", 300),
+                ("Robbed an armored truck", 400),
+                ("Completely drained a bank account", 500),
+                ("Illegally sold weapons", 260),
+                ("Broke into a government bunker", 350),
+                ("Stole a prototype device", 320),
+                ("Extorted an influencer", 210),
+                ("Hacked a corporation", 330),
+                ("Hijacked a private yacht", 380),
+                ("Stole a luxury sports car", 420),
+                ("Blackmailed a politician", 450),
+                ("Robbed a mafia vault", 600),
+                ("Hijacked a crypto exchange", 700),
+                ("Broke into a maximum-security vault", 900),
+                ("Stole an alien artifact", 1000),
+                ("Cracked an interdimensional bank", 1500)
+        ]
+
+        success_rate = 0.45
+        action, reward = random.choice(crimes)
+
+        if random.random() < 0.02:
+            reward *= 10
+            await update_balance(uid, reward)
+            return await interaction.response.send_message(
+                f"💰💰 **LEGENDARY HEIST!** You stole **{reward} coins!!!**"
+            )
+
+        if random.random() < success_rate:
+            await update_balance(uid, reward)
+            return await interaction.response.send_message(
+                f"🦹 You **{action}** and earned **{reward} coins!**"
+            )
+        else:
+            loss = random.randint(30, 120)
+
+            if random.random() < 0.15:
+                loss *= 2
+                msg = "🚨 Police chase! You got doubled fines!"
+            else:
+                msg = "🚓 You got caught."
+
+            await update_balance(uid, -loss)
+            return await interaction.response.send_message(
+                f"{msg} You lost **{loss} coins.**"
+            )
+    @app_commands.command(name="slots", description="Spin the enhanced slot machine!")
+    async def slots(self, interaction: discord.Interaction, bet: int):
+        uid = interaction.user.id
+        balance = await get_balance(uid)
+
+        if bet <= 0:
+            return await interaction.response.send_message("Bet must be positive.")
+        if bet > balance:
+            return await interaction.response.send_message("You don't have enough coins!")
+
+        icons = ["🍒", "🍋", "🍇", "⭐", "💎", "🔥"]
+        result = [random.choice(icons) for _ in range(3)]
+
+        await interaction.response.defer()
+
+        if len(set(result)) == 1:
+            reward = bet * 7
+            multiplier = "🔥 **MYTHIC TRIPLE MATCH!**" if result[0] == "🔥" else "**TRIPLE MATCH!**"
+        elif len(set(result)) == 2:
+            reward = bet * 2.5
+            multiplier = "**DOUBLE MATCH!**"
+        else:
+            reward = -bet
+            await update_balance(uid, reward)
+            return await interaction.followup.send(
+                f"🎰 {' '.join(result)} | ❌ Loss! You lost **{bet} coins.**"
+            )
+
+        await update_balance(uid, reward)
+        await interaction.followup.send(
+            f"🎰 {' '.join(result)} | {multiplier} You earned **{reward} coins!**"
+        )
+    @app_commands.command(name="work", description="Work jobs with promotions & raises!")
+    async def work(self, interaction: discord.Interaction):
+        uid = interaction.user.id
+        user = get_user(uid)
+
+        last = user.get("last_work")
+        now = datetime.datetime.utcnow()
+
+        if last:
+            last_time = datetime.datetime.fromisoformat(last)
+            diff = (now - last_time).total_seconds()
+            if diff < 3600:
+                remaining = int(3600 - diff)
+                minutes = remaining // 60
+                seconds = remaining % 60
+                return await interaction.response.send_message(
+                    f"⏳ You must wait **{minutes}m {seconds}s** before working again."
+                )
+
+        jobs = [
+                ("☕ Barista", (30, 60)),
+                ("🧹 Janitor", (20, 50)),
+                ("💻 Programmer", (70, 150)),
+                ("🚚 Delivery Driver", (40, 90)),
+                ("💼 Business Analyst", (100, 180)),
+                ("🧪 Scientist", (150, 250)),
+                ("🍔 Fast Food Worker", (25, 55)),
+                ("📦 Warehouse Packer", (35, 70)),
+                ("🛒 Store Cashier", (30, 65)),
+                ("📮 Mail Sorter", (28, 60)),
+                ("🚜 Farmhand", (35, 75)),
+                ("🧰 Mechanic Assistant", (40, 80)),
+                ("📚 Librarian", (45, 85)),
+                ("🎨 Artist", (50, 100)),
+                ("📝 Copywriter", (55, 110)),
+                ("📞 Call Center Agent", (45, 95)),
+                ("🔧 Technician", (60, 120)),
+                ("🛠️ Repair Specialist", (70, 140)),
+                ("🍕 Pizza Cook", (30, 65)),
+                ("🏗️ Construction Worker", (60, 130)),
+                ("🍽️ Waiter", (35, 70)),
+                ("🚇 Subway Operator", (80, 150)),
+                ("🧑‍🏫 Teacher", (60, 120)),
+                ("🏥 Nurse Assistant", (70, 130)),
+                ("👮 Security Guard", (55, 100)),
+                ("🎥 Videographer", (75, 140)),
+                ("📸 Photographer", (70, 130)),
+                ("📦 Delivery Cyclist", (30, 65)),
+                ("✏️ Graphic Designer", (70, 140)),
+                ("🎧 Sound Technician", (75, 150)),
+                ("🎤 Singer", (60, 130)),
+                ("🎭 Actor", (50, 120)),
+                ("🪚 Carpenter", (60, 130)),
+                ("🧱 Bricklayer", (55, 115)),
+                ("🧯 Firefighter", (90, 160)),
+                ("🚑 Paramedic", (95, 170)),
+                ("👩‍⚕️ Doctor Assistant", (120, 200)),
+                ("🐶 Dog Walker", (25, 55)),
+                ("🐱 Pet Groomer", (35, 75)),
+                ("🧳 Hotel Porter", (40, 80)),
+                ("🧼 Housekeeper", (35, 70)),
+                ("🪑 Furniture Mover", (45, 90)),
+                ("🛠️ Electrician", (80, 150)),
+                ("🪜 Roofer", (75, 140)),
+                ("🧯 Fire Inspector", (100, 180)),
+                ("🛰️ Drone Operator", (90, 170)),
+                ("🛠️ Robotics Technician", (120, 220)),
+                ("🧬 Genetic Lab Assistant", (130, 230)),
+                ("🏦 Bank Teller", (60, 110)),
+                ("📊 Accountant", (80, 160)),
+                ("📈 Stock Analyst", (120, 210)),
+                ("💰 Loan Officer", (100, 180)),
+                ("📢 Marketing Specialist", (70, 140)),
+                ("📦 Logistics Coordinator", (75, 145)),
+                ("🎮 Game Tester", (40, 90)),
+                ("🎮 Game Developer", (100, 200)),
+                ("🕹️ eSports Player", (80, 170)),
+                ("📻 Radio Host", (75, 145)),
+                ("📺 TV Reporter", (85, 160)),
+                ("🎤 Podcast Host", (65, 130)),
+                ("🧙 Wizard’s Apprentice", (50, 150)),
+                ("⚒️ Blacksmith", (80, 170)),
+                ("🧵 Tailor", (40, 90)),
+                ("👗 Fashion Designer", (70, 150)),
+                ("💇 Hair Stylist", (45, 100)),
+                ("💅 Nail Artist", (40, 95)),
+                ("🚤 Ferry Operator", (70, 135)),
+                ("⛵ Sailor", (80, 150)),
+                ("⚓ Dock Worker", (50, 100)),
+                ("✈️ Flight Attendant", (90, 170)),
+                ("🛫 Pilot (small aircraft)", (130, 220)),
+                ("🛰️ Satellite Technician", (140, 260)),
+                ("🧪 Chemist", (120, 210)),
+                ("🧫 Lab Researcher", (130, 230)),
+                ("🩺 Surgeon Assistant", (150, 260)),
+                ("🤖 AI Engineer", (160, 280)),
+                ("🧠 Neuroscientist", (170, 290)),
+                ("🏛️ Lawyer", (140, 250)),
+                ("📜 Judge Clerk", (100, 190)),
+                ("🗂️ Office Manager", (70, 140)),
+                ("📈 Financial Advisor", (130, 220)),
+                ("🤝 HR Specialist", (65, 130)),
+                ("🧮 Data Entry Clerk", (45, 85)),
+                ("🛰️ Spaceport Technician", (140, 260)),
+                ("🚀 Rocket Fuel Handler", (120, 220)),
+                ("👨‍🚀 Astronaut Trainee", (180, 300)),
+                ("🌋 Volcano Researcher", (130, 240)),
+                ("🦈 Marine Biologist", (120, 210)),
+                ("🌌 Astrophysicist", (170, 300)),
+                ("🪐 Planetary Cartographer", (150, 260)),
+                ("⚙️ Quantum Engineer", (200, 320)),
+                ("🔮 Oracle Consultant", (180, 300)),
+                ("🧛 Night Shift Guard", (60, 130)),
+                ("🐉 Dragon Keeper", (150, 260)),
+                ("💎 Treasure Appraiser", (130, 240)),
+                ("🗺️ Expedition Leader", (160, 270)),
+                ("🏰 Castle Steward", (110, 200)),
+                ("⚔️ Monster Hunter", (140, 260)),
+                ("🛡️ Royal Guard", (150, 240)),
+                ("💫 Dimensional Explorer", (200, 340)),
+                ("🌠 Starship Captain", (250, 380)),
+                ("⚛️ Particle Researcher", (230, 360))
+        ]
+
+        job, pay_range = random.choice(jobs)
+        reward = random.randint(*pay_range)
+
+
+        if random.random() < 0.05:
+            reward *= 3
+            promo = " 🎉 **PROMOTION BONUS!**"
+        else:
+            promo = ""
+
+        user["last_work"] = now.isoformat()
+        await update_balance(uid, reward)
+        save_state()
+
+        await interaction.response.send_message(
+            f"{job}: You earned **{reward} coins!**{promo}"
+        )
+
 
 
 async def setup(bot):
