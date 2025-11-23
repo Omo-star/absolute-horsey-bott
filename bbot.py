@@ -1266,10 +1266,11 @@ async def on_message(message):
         
 @bot.event
 async def setup_hook():
-    await bot.add_cog(SlashCommands(bot)
+    await bot.add_cog(SlashCommands(bot))
     await bot.load_extension("economy")
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
