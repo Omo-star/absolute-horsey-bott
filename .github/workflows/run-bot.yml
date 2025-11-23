@@ -25,6 +25,7 @@ jobs:
       OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
       DISCORDKEY: ${{ secrets.DISCORDKEY }}
       OPENAI: ${{ secrets.OPENAI }}
+      GITHUB: ${{ secrets.GITHUB }}
 
     steps:
       - name: Checkout code
