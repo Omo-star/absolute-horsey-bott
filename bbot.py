@@ -1161,26 +1161,22 @@ async def bot_roast(msg, uid, mode):
 
 @bot.event
 async def on_ready():
-    if not hasattr(bot, "slash_loaded"):
-        await bot.add_cog(SlashCommands(bot))
-        try:
-            await bot.load_extension("economy")
-            print("Economy cog loaded successfully.")
-        except commands.ExtensionAlreadyLoaded:
-            pass
-        bot.slash_loaded = True
-        
+    print(f"Logged in as {bot.user}")
+    try:
+        await bot.unload_extension("economy")
+    except:
+        pass
 
+    try:
+        await bot.load_extension("economy")
+        print("Economy cog loaded successfully.")
+    except Exception as e:
+        print(f"FAILED to load Economy cog: {e}")
 
     for guild in bot.guilds:
-        try:
-            await bot.tree.sync(guild=guild)
-            print(f"Synced commands for {guild.name}")
-        except Exception as e:
-            print(f"Failed syncing in {guild.name}: {e}")
-
-    print(f"Bot ready as {bot.user}")
-
+        bot.tree.clear_commands(guild=guild)
+        synced = await bot.tree.sync(guild=guild)
+        print(f"Synced {len(synced)} commands in {guild.name}")
 
 @bot.event
 async def on_message(message):
@@ -1311,6 +1307,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
