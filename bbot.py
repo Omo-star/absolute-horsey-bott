@@ -848,7 +848,7 @@ def get_user_memory(uid):
             "msg_count": 0,
             "last_summary_update": time.time(),
         }
-    save_roast_memory()
+        save_roast_memory()
     return user_memory[uid]
 
 
@@ -1313,6 +1313,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
