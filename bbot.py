@@ -1097,7 +1097,7 @@ class SlashCommands(commands.Cog):
 
     # /roastmode
     @app_commands.command(name="roastmode",
-                          description="Set your roast mode (fast (fast roasts), deep (better but slower), adjustable (adjusts to your roasts).")
+                          description="Set your roast mode: fast, deep, or adjustable. Get ready for some flames!")
     async def roastmode(self, interaction: discord.Interaction,
                         mode: str):
 
@@ -1265,6 +1265,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
