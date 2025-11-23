@@ -29,7 +29,8 @@ def get_user(uid: int):
     if uid not in state["users"]:
         state["users"][uid] = {
             "balance": 0,
-            "last_daily": None
+            "last_daily": None,
+            "last_work": None
         }
         save_state() 
     return state["users"][uid]
@@ -57,21 +58,6 @@ async def get_last_daily(user_id: int):
 class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.bot.tree.add_command(self.balance)
-        self.bot.tree.add_command(self.daily)
-        self.bot.tree.add_command(self.give)
-        self.bot.tree.add_command(self.coinflip)
-        self.bot.tree.add_command(self.leaderboard)
-        self.bot.tree.add_command(self.hunt)
-        self.bot.tree.add_command(self.fish)
-        self.bot.tree.add_command(self.battle)
-        self.bot.tree.add_command(self.crime)
-        self.bot.tree.add_command(self.slots)
-        self.bot.tree.add_command(self.work)
-        print("Economy commands added to app tree!")
-
 
     @app_commands.command(name="balance", description="Check your coin balance.")
     async def balance(self, interaction: discord.Interaction, user: discord.User = None):
@@ -713,7 +699,7 @@ class Economy(commands.Cog):
             reward = bet * 7
             multiplier = "🔥 **MYTHIC TRIPLE MATCH!**" if result[0] == "🔥" else "**TRIPLE MATCH!**"
         elif len(set(result)) == 2:
-            reward = bet * 2.5
+            reward = int(bet * 2.5)
             multiplier = "**DOUBLE MATCH!**"
         else:
             reward = -bet
