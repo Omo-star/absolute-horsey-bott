@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write   # REQUIRED so we can commit/push the state file
+      contents: write
 
     env:
       PYTHONUNBUFFERED: 1
@@ -26,12 +26,14 @@ jobs:
       DISCORDKEY: ${{ secrets.DISCORDKEY }}
       OPENAI: ${{ secrets.OPENAI }}
       GITHUB: ${{ secrets.GITHUB }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          persist-credentials: true   # needed for git push
+          token: ${{ secrets.PAT_TOKEN }} 
+          fetch-depth: 0                
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -42,14 +44,25 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run Discord Bot
-        run: timeout 21000 python -u bbot.py
+        run: |
+          echo "Starting bot..."
+          timeout 21000 python -u bbot.py
+          echo "Bot run complete."
 
       - name: Commit bot state
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add -A || true
-          git commit -m "Update bot state" || echo "No changes"
+
+          # Only commit the files we care about
+          git add state.json roast_memory.json || true
+
+          if ! git diff --cached --quiet; then
+            git commit -m "Update bot state"
+          else
+            echo "No state changes to commit."
+          fi
 
       - name: Push changes
-        run: git push
+        run: |
+          git push
