@@ -1129,10 +1129,6 @@ class SlashCommands(commands.Cog):
 async def on_ready():
     await bot.add_cog(SlashCommands(bot))
 
-    guild = discord.Object(id=1440020962295676938)
-
-    synced = await bot.tree.sync(guild=guild)
-
     log(f"Synced {len(synced)} commands to guild {guild.id}")
 
     synced_global = await bot.tree.sync()
@@ -1270,6 +1266,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
