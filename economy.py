@@ -170,11 +170,12 @@ class Economy(commands.Cog):
             await interaction.response.send_message("No data yet.")
             return
 
+        # Sort top 10 globally
         sorted_users = sorted(
             users.items(),
             key=lambda x: x[1]["balance"],
             reverse=True
-        )[:10]  
+        )[:10]
 
         lines = []
         rank = 1
@@ -183,15 +184,31 @@ class Economy(commands.Cog):
             uid_int = int(uid)
             balance = data["balance"]
 
-            member = interaction.guild.get_member(uid_int)
+            # Try to get from cache first
+            member = None
+            name = None
+
+            if interaction.guild:
+                member = interaction.guild.get_member(uid_int)
+
+            if not member:
+                member = interaction.client.get_user(uid_int)
+
+            if not member:
+                try:
+                    member = await interaction.client.fetch_user(uid_int)
+                except:
+                    member = None
+
             name = member.display_name if member else f"User {uid}"
 
             lines.append(f"**#{rank}** — {name}: **{balance} coins**")
             rank += 1
 
         await interaction.response.send_message(
-            "🏆| **Top 10 Richest Users**\n" + "\n".join(lines)
+            "🏆 | **Top 10 Richest Users**\n" + "\n".join(lines)
         )
+
     @app_commands.command(name="hunt", description="Go hunting with a rich loot table.")
     async def hunt(self, interaction: discord.Interaction):
         user_id = interaction.user.id
