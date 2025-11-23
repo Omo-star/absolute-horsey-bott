@@ -1,6 +1,9 @@
 discord.py
 openai
-aiohttp
-huggingface_hub
 groq
-google.generativeai
+google-generativeai
+aiohttp
+aiosqlite
+regex
+python-dotenv
+requests
