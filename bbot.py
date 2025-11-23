@@ -1167,12 +1167,17 @@ async def on_ready():
         await bot.unload_extension("economy")
     except:
         pass
-
     try:
         await bot.load_extension("economy")
         print("Economy cog loaded successfully.")
     except Exception as e:
         print(f"FAILED to load Economy cog: {e}")
+
+    try:
+        await bot.add_cog(SlashCommands(bot))
+        print("Roast cog loaded successfully.")
+    except Exception as e:
+        print(f"FAILED to load roast cog: {e}")
 
     synced = await bot.tree.sync()
     print(f"Synced {len(synced)} global commands.")
@@ -1307,6 +1312,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
