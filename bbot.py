@@ -520,20 +520,6 @@ async def fast_spice(text: str) -> float:
 
 
 async def ai_spice(text: str) -> float:
-    try:    
-        score = await spice_openai(text)
-        if score is not None:
-            return score
-    except Exception:
-        pass
-    try:
-        score = await spice_github(text)
-        if score is not None:
-            return score
-    except Exception:
-        pass
-
-    # groq fallback
     try:
         score = await spice_groq(text)
         if score is not None:
@@ -541,9 +527,21 @@ async def ai_spice(text: str) -> float:
     except Exception:
         pass
 
-    # gemini fallback
+    try:
+        score = await spice_github(text)
+        if score is not None:
+            return score
+    except Exception:
+        pass
+
     try:
         score = await spice_gemini(text)
+        if score is not None:
+            return score
+    except Exception:
+        pass
+    try:    
+        score = await spice_openai(text)
         if score is not None:
             return score
     except Exception:
@@ -1313,6 +1311,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
