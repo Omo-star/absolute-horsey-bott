@@ -3,64 +3,53 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import aiosqlite
 import datetime
 import random
+import json, os
 
-DB_NAME = "economy.db"
+STATE_FILE = "state.json"
 
-async def init_db():
-    async with aiosqlite.connect(DB_NAME) as db:
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                user_id INTEGER PRIMARY KEY,
-                balance INTEGER NOT NULL,
-                last_daily TEXT
-            );
-        """)
-        await db.commit()
+def load_state():
+    if not os.path.exists(STATE_FILE):
+        return {"users": {}}
+    with open(STATE_FILE, "r") as f:
+        return json.load(f)
+
+def save_state(state):
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f, indent=2)
+state = load_state()
+def get_user(uid: int):
+    uid = str(uid)
+    if uid not in state["users"]:
+        state["users"][uid] = {
+            "balance": 0,
+            "last_daily": None
+        }
+        save_state(state)
+        state = load_state()
+    return state["users"][uid]
+
 
 async def get_balance(user_id: int) -> int:
-    async with aiosqlite.connect(DB_NAME) as db:
-        cur = await db.execute("SELECT balance FROM users WHERE user_id = ?", (user_id,))
-        row = await cur.fetchone()
-        if row is None:
-            await db.execute(
-                "INSERT INTO users (user_id, balance, last_daily) VALUES (?, ?, ?)",
-                (user_id, 0, None),
-            )
-            await db.commit()
-            return 0
-        return row[0]
+    return get_user(user_id)["balance"]
+
 
 async def update_balance(user_id: int, amount: int):
-    async with aiosqlite.connect(DB_NAME) as db:
-        await db.execute(
-            """
-            INSERT INTO users (user_id, balance, last_daily)
-            VALUES (?, ?, ?)
-            ON CONFLICT(user_id)
-            DO UPDATE SET balance = balance + excluded.balance
-            """,
-            (user_id, amount, None),
-        )
-        await db.commit()
+    user = get_user(user_id)
+    user["balance"] += amount
+    save_state(state)
+
 
 async def set_daily_timestamp(user_id: int):
-    now = datetime.datetime.utcnow().isoformat()
-    async with aiosqlite.connect(DB_NAME) as db:
-        await db.execute(
-            "UPDATE users SET last_daily = ? WHERE user_id = ?", (now, user_id)
-        )
-        await db.commit()
+    user = get_user(user_id)
+    user["last_daily"] = datetime.datetime.utcnow().isoformat()
+    save_state(state)
+
 
 async def get_last_daily(user_id: int):
-    async with aiosqlite.connect(DB_NAME) as db:
-        cur = await db.execute(
-            "SELECT last_daily FROM users WHERE user_id = ?", (user_id,)
-        )
-        row = await cur.fetchone()
-        return row[0] if row else None
+    return get_user(user_id)["last_daily"]
+
 
 class Economy(commands.Cog):
     def __init__(self, bot):
@@ -156,28 +145,36 @@ class Economy(commands.Cog):
 
     @app_commands.command(name="leaderboard", description="Top players by coins.")
     async def leaderboard(self, interaction: discord.Interaction):
-        async with aiosqlite.connect(DB_NAME) as db:
-            cur = await db.execute(
-                "SELECT user_id, balance FROM users ORDER BY balance DESC LIMIT 10"
-            )
-            rows = await cur.fetchall()
 
-        if not rows:
+        users = state["users"]
+
+        if not users:
             await interaction.response.send_message("No data yet.")
             return
 
+        sorted_users = sorted(
+            users.items(),
+            key=lambda x: x[1]["balance"],
+            reverse=True
+        )[:10]  
+
         lines = []
         rank = 1
-        for user_id, balance in rows:
-            user = interaction.guild.get_member(user_id)
-            name = user.display_name if user else f"User {user_id}"
+
+        for uid, data in sorted_users:
+            uid_int = int(uid)
+            balance = data["balance"]
+
+            member = interaction.guild.get_member(uid_int)
+            name = member.display_name if member else f"User {uid}"
+
             lines.append(f"**#{rank}** — {name}: **{balance} coins**")
             rank += 1
 
         await interaction.response.send_message(
-            "🏆 **Top 10 Richest Users**\n" + "\n".join(lines)
+            "🏆| **Top 10 Richest Users**\n" + "\n".join(lines)
         )
 
+
 async def setup(bot):
-    await init_db()
     await bot.add_cog(Economy(bot))
