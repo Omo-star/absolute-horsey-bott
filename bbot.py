@@ -10,7 +10,41 @@ import aiohttp
 import re
 import time
 import datetime
+import json
 from math import sqrt
+MEMORY_FILE = "roast_memory.json"
+
+def load_roast_memory():
+    if not os.path.exists(MEMORY_FILE):
+        return {
+            "user_memory": {},
+            "roast_history": {},
+            "auto_roast": {},
+            "roast_mode": {},
+            "spice_cache": {}
+        }
+    try:
+        with open(MEMORY_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return {
+            "user_memory": {},
+            "roast_history": {},
+            "auto_roast": {},
+            "roast_mode": {},
+            "spice_cache": {}
+        }
+
+def save_roast_memory():
+    mem = {
+        "user_memory": user_memory,
+        "roast_history": roast_history,
+        "auto_roast": auto_roast,
+        "roast_mode": roast_mode,
+        "spice_cache": spice_cache
+    }
+    with open(MEMORY_FILE, "w") as f:
+        json.dump(mem, f, indent=2)
 
 
 def log(*msg):
@@ -137,9 +171,11 @@ class SlashCommands(commands.Cog):
 
         if mode == "on":
             auto_roast[interaction.user.id] = True
+            save_roast_memory()
             await interaction.response.send_message("Auto-roast enabled.")
         elif mode == "off":
             auto_roast.pop(interaction.user.id, None)
+            save_roast_memory()
             await interaction.response.send_message("Auto-roast disabled.")
         else:
             await interaction.response.send_message("Use `/autor on` or `/autor off`.")
@@ -158,6 +194,7 @@ class SlashCommands(commands.Cog):
 
         roast_mode[interaction.user.id] = mode
         roast_history[interaction.user.id] = []
+        save_roast_memory()
 
         await interaction.response.send_message(
             f"🔥 Roast Mode: **{mode.upper()}**. Use /stoproast to stop."
@@ -171,18 +208,13 @@ class SlashCommands(commands.Cog):
         if uid in roast_mode:
             del roast_mode[uid]
             roast_history.pop(uid, None)
+            save_roast_memory()
             await interaction.response.send_message("🏳️ Roast Mode Turned Off.")
         else:
             await interaction.response.send_message("You were not in roast mode.")
 
-auto_roast = {}
-
-roast_history = {}
 failed_models = {}
-roast_mode = {}
 MAX_HISTORY = 10
-
-spice_cache = {}
 
 GITHUB_API_KEY = (
     os.getenv("GITHUB_TOKEN")
@@ -483,11 +515,12 @@ async def fast_spice(text: str) -> float:
 
     score = await ai_spice(text)
     spice_cache[text] = score
+    save_roast_memory()
     return score
 
 
 async def ai_spice(text: str) -> float:
-    try:
+    try:    
         score = await spice_openai(text)
         if score is not None:
             return score
@@ -767,9 +800,13 @@ async def personality_meter(user_id, last_messages):
     except Exception:
         return []
 
+_memory = load_roast_memory()
 
-user_memory = {}
-
+user_memory = _memory["user_memory"]
+roast_history = _memory["roast_history"]
+auto_roast = _memory["auto_roast"]
+roast_mode = _memory["roast_mode"]
+spice_cache = _memory["spice_cache"]
 
 def get_user_memory(uid):
     if uid not in user_memory:
@@ -811,6 +848,7 @@ def get_user_memory(uid):
             "msg_count": 0,
             "last_summary_update": time.time(),
         }
+    save_roast_memory()
     return user_memory[uid]
 
 
@@ -1129,9 +1167,12 @@ async def on_ready():
         await bot.add_cog(SlashCommands(bot))
         try:
             await bot.load_extension("economy")
+            print("Economy cog loaded successfully.")
         except commands.ExtensionAlreadyLoaded:
             pass
         bot.slash_loaded = True
+        
+
 
     for guild in bot.guilds:
         try:
@@ -1247,7 +1288,7 @@ async def on_message(message):
                 mem["LTS"] = summary.choices[0].message.content.strip()
             except:
                 pass
-
+        save_roast_memory()
         if uid in auto_roast:
             response = await bot_roast(
                 clean_text or "Roast me", uid, roast_mode.get(uid, "deep")
@@ -1262,6 +1303,7 @@ async def on_message(message):
             history.append({"user": clean_text})
             history.append({"bot": response})
             roast_history[uid] = history[-MAX_HISTORY:]
+            save_roast_memory()
             log(f"[ROAST SENT] {response}")
             await message.channel.send(response)
         else:
@@ -1271,6 +1313,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
