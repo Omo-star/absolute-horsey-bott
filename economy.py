@@ -668,12 +668,13 @@ class Economy(commands.Cog):
                 f"🦹 You **{action}** and earned **{reward} coins!**"
             )
         else:
-            loss = random.randint(30, 120)
+            balance = await get_balance(uid)
 
-            if random.random() < 0.15:
-                loss *= 2
-                msg = "🚨 Police chase! You got doubled fines!"
+            if random.random() < 0.75:
+                loss = balance
+                msg = "🚨 Police caught you! They seized ALL your coins!"
             else:
+                loss = random.randint(30, 120)
                 msg = "🚓 You got caught."
 
             await update_balance(uid, -loss)
