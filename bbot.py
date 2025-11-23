@@ -1128,13 +1128,8 @@ class SlashCommands(commands.Cog):
 @bot.event
 async def on_ready():
     await bot.add_cog(SlashCommands(bot))
-
-    log(f"Synced {len(synced)} commands to guild {guild.id}")
-
     synced_global = await bot.tree.sync()
-
     log(f"Synced {len(synced_global)} global commands")
-
     log(f"Bot ready as {bot.user}")
 
 
@@ -1266,6 +1261,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
