@@ -1132,6 +1132,7 @@ async def setup(bot):
 
 @bot.event
 async def on_ready():
+    await bot.add_cog(SlashCommands(bot))
     await bot.tree.sync()
     log(f"Bot ready as {bot.user}")
 
@@ -1264,6 +1265,7 @@ async def on_message(message):
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
