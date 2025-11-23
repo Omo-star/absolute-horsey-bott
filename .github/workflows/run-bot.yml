@@ -15,18 +15,22 @@ jobs:
   run-bot:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write   # REQUIRED so we can commit/push the state file
+
     env:
       PYTHONUNBUFFERED: 1
       GROQ: ${{ secrets.GROQ }}
       DEEPINFRA: ${{ secrets.DEEPINFRA }}
       OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
       DISCORDKEY: ${{ secrets.DISCORDKEY }}
-      GITHUB: ${{ secrets.GITHUB }}
       OPENAI: ${{ secrets.OPENAI }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true   # needed for git push
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -36,5 +40,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run the bot (LIVE LOGGING)
-        run: python -u bbot.py
+      - name: Run Discord Bot
+        run: timeout 21000 python -u bbot.py
+
+      - name: Commit bot state
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add state.json
+          git commit -m "Update bot state" || echo "No changes"
+
+      - name: Push changes
+        run: git push
