@@ -15,21 +15,24 @@ def load_state():
     with open(STATE_FILE, "r") as f:
         return json.load(f)
 
-def save_state(state):
+def save_state():
+    global state
     with open(STATE_FILE, "w") as f:
         json.dump(state, f, indent=2)
+
 state = load_state()
+
 def get_user(uid: int):
+    global state
     uid = str(uid)
+
     if uid not in state["users"]:
         state["users"][uid] = {
             "balance": 0,
             "last_daily": None
         }
-        save_state(state)
-        state = load_state()
+        save_state() 
     return state["users"][uid]
-
 
 async def get_balance(user_id: int) -> int:
     return get_user(user_id)["balance"]
