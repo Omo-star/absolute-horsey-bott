@@ -1259,13 +1259,16 @@ async def on_message(message):
             await message.channel.send(response)
         return
         
+@bot.event
 async def setup_hook():
     await bot.load_extension("economy")
+
 
 bot.setup_hook = setup_hook
 
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
