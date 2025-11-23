@@ -856,4 +856,6 @@ class Economy(commands.Cog):
 
 
 async def setup(bot):
+    print("Loading Economy Cog...")
     await bot.add_cog(Economy(bot))
+    print("Economy Cog Loaded!")
