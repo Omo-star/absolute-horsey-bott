@@ -22,6 +22,18 @@ def save_state():
 
 state = load_state()
 
+def set_cooldown(user_id: int, key: str, hours: int):
+    user = get_user(user_id)
+    user[key] = (datetime.datetime.utcnow() + datetime.timedelta(hours=hours)).isoformat()
+    save_state()
+
+def get_cooldown(user_id: int, key: str):
+    user = get_user(user_id)
+    ts = user.get(key)
+    if not ts:
+        return None
+    return datetime.datetime.fromisoformat(ts)
+
 def get_user(uid: int):
     global state
     uid = str(uid)
@@ -30,7 +42,9 @@ def get_user(uid: int):
         state["users"][uid] = {
             "balance": 0,
             "last_daily": None,
-            "last_work": None
+            "last_work": None,
+            "fish_cooldown": None,
+            "hunt_cooldown": None
         }
         save_state() 
     return state["users"][uid]
@@ -181,7 +195,17 @@ class Economy(commands.Cog):
     @app_commands.command(name="hunt", description="Go hunting with a rich loot table.")
     async def hunt(self, interaction: discord.Interaction):
         user_id = interaction.user.id
-
+        user = get_user(user_id)
+        cd = get_cooldown(user_id, "hunt_cooldown")
+        now = datetime.datetime.utcnow()
+        if cd and now < cd:
+            remaining = cd - now
+            hours = remaining.seconds // 3600
+            minutes = (remaining.seconds % 3600) // 60
+            return await interaction.response.send_message(
+                f"🦌 The wilderness is too dangerous right now!\n"
+                f"Try hunting again in **{hours}h {minutes}m**."
+            )
         loot_table = [
                 ("🐀 Rat", 10, "Common"),
                 ("🐁 Field Mouse", 12, "Common"),
@@ -289,24 +313,42 @@ class Economy(commands.Cog):
                 *([0.1] * 5)
         ]
 
-        catch = random.choices(loot_table, weights=weights, k=1)[0]
-        animal, base_reward, rarity = catch
+        animal, base_reward, rarity = random.choices(loot_table, weights=weights, k=1)[0]
+        strength = base_reward
+        escape_chance = min(0.75, max(0.10, strength / 3000))
+
+        if random.random() < escape_chance:
+            set_cooldown(user_id, "hunt_cooldown", 5)
+            return await interaction.response.send_message(
+                f"💨 **The {animal} escaped!**\n"
+                f"You're exhausted and must rest for **5 hours**."
+            )
+
 
         crit = random.random() < 0.10
-        reward = base_reward * (2 if crit else 1)
+        final_reward = base_reward * (2 if crit else 1)
 
         if random.random() < 0.05:
             return await interaction.response.send_message("💨 You missed everything. Skill issue.")
 
-        await update_balance(user_id, reward)
+        await update_balance(user_id, final_reward)
         await interaction.response.send_message(
-            f"🏹 You hunted a **{animal}** ({rarity}) and earned **{reward} coins!**"
+            f"🏹 You hunted a **{animal}** ({rarity}) and earned **{final_reward} coins!**"
             + (" 💥 **CRITICAL HIT!**" if crit else "")
         )
     @app_commands.command(name="fish", description="Go fishing with expanded loot!")
     async def fish(self, interaction: discord.Interaction):
         user_id = interaction.user.id
-
+        user = get_user(user_id)
+        cd = get_cooldown(user_id, "fish_cooldown")
+        now = datetime.datetime.utcnow()
+        if cd and now < cd:
+            remaining = cd - now
+            hours = remaining.seconds // 3600
+            minutes = (remaining.seconds % 3600) // 60
+            return await interaction.response.send_message(
+                f"🛑 Your **fishing rod is broken**! Try again in **{hours}h {minutes}m**."
+            )
         fish_table = [
                 ("🐟 Common Carp", 15, "Common"),
                 ("🐠 Clownfish", 25, "Common"),
@@ -415,6 +457,16 @@ class Economy(commands.Cog):
         ]
 
         fish, value, rarity = random.choices(fish_table, weights=weights, k=1)[0]
+
+        strength = value
+        break_chance = min(0.75, max(0.10, strength / 2000))
+
+        if random.random() < break_chance:
+            set_cooldown(user_id, "fish_cooldown", 5)
+            return await interaction.response.send_message(
+                f"💥 **Your fishing rod snapped while catching {fish}!**\n"
+                f"⏳ You can't fish for **5 hours**."
+            )
 
         jackpot = random.random() < 0.05
         if jackpot:
