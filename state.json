@@ -1,4 +1,11 @@
 {
-  "users": {}
+  "users": {
+    "1238242784679563265": {
+      "balance": 355,
+      "last_daily": "2025-11-23T20:41:39.109311",
+      "last_work": "2025-11-23T20:41:51.959277",
+      "fish_cooldown": null,
+      "hunt_cooldown": null
+    }
+  }
 }
-
