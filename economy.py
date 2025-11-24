@@ -10,10 +10,28 @@ import json, os
 STATE_FILE = "state.json"
 
 def load_state():
+    default = {
+        "users": {},
+        "items": {
+            "intercontinental_ballistic_missile": {"name": "Intercontinental Ballistic Missile", "price": 1000},
+            "red_button": {"name": "r̶̭̖͊̄̕é̶̖͝͝d̴̤̙̓̔̚ ̸̙̫̄̂͝ͅb̵̼͖͓͊̓͜ṵ̴̹̐͋t̴̳̘͖̎̊͘͝ț̴̨̰͒ò̵̗̠͊n̶͎̱̑͐̿ ̸̪̭̀̊̈́̓ơ̵̻̹̎̐f̶̠̗̭̻̓̎ ̵͔̣̖͓̐͋d̵̝̖͛̊͛e̸͉͚̹̺͐̍͘͘â̸̡̑̑͝t̴̛̝͍̊̀h̷̯͎̮̊", "price": 1500},
+            "mysterious_potion": {"name": "Mysterious Potion", "price": 2000},
+            "roast_protection": {"name": "Roast Protection Pill", "price": 5000},
+            "odd_box": {"name": "Interesting Box", "price": 5000}
+        }
+    }
+
     if not os.path.exists(STATE_FILE):
-        return {"users": {}}
+        return default
+
     with open(STATE_FILE, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    if "items" not in data:
+        data["items"] = default["items"]
+
+    return data
+
 
 def save_state():
     global state
@@ -44,7 +62,9 @@ def get_user(uid: int):
             "last_daily": None,
             "last_work": None,
             "fish_cooldown": None,
-            "hunt_cooldown": None
+            "hunt_cooldown": None,
+            "inventory": {},
+            "roast_protection_until": None
         }
         save_state() 
     return state["users"][uid]
@@ -170,7 +190,6 @@ class Economy(commands.Cog):
             await interaction.response.send_message("No data yet.")
             return
 
-        # Sort top 10 globally
         sorted_users = sorted(
             users.items(),
             key=lambda x: x[1]["balance"],
@@ -184,7 +203,6 @@ class Economy(commands.Cog):
             uid_int = int(uid)
             balance = data["balance"]
 
-            # Try to get from cache first
             member = None
             name = None
 
@@ -923,8 +941,145 @@ class Economy(commands.Cog):
         await interaction.response.send_message(
             f"{job}: You earned **{reward} coins!**{promo}"
         )
+    @app_commands.command(name="shop", description="View the item shop & buy some desctructive things.")
+    async def shop(self, interaction: discord.Interaction):
+        items = state.get("items", {})
 
+        if not items:
+            return await interaction.response.send_message("🛒 The shop is empty. Come back later.")
 
+        lines = []
+        for item_id, item in items.items():
+            lines.append(f"**{item['name']}** — {item['price']} coins\n`{item_id}`")
+
+        await interaction.response.send_message(
+            "🛍️ **Shop Items**\n\n" + "\n".join(lines)
+        )
+    @app_commands.command(name="buy", description="Buy an item from the shop.")
+    async def buy(self, interaction: discord.Interaction, item_id: str):
+        uid = interaction.user.id
+        user = get_user(uid)
+        items = state.get("items", {})
+
+        if item_id not in items:
+            return await interaction.response.send_message("❌ Unknown item ID. Better get glasses.")
+
+        item = items[item_id]
+        price = item["price"]
+
+        if user["balance"] < price:
+            return await interaction.response.send_message("❌ You don't have enough coins. Imagine being poor.")
+
+        user["balance"] -= price
+
+        inv = user.setdefault("inventory", {})
+        inv[item_id] = inv.get(item_id, 0) + 1
+
+        save_state()
+
+        await interaction.response.send_message(
+            f"🛒 You bought **{item['name']}** for **{price} coins!**"
+        )
+    @app_commands.command(name="inventory", description="View your inventory.")
+    async def inventory(self, interaction: discord.Interaction, user: discord.User = None):
+        target = user or interaction.user
+        data = get_user(target.id)
+
+        inv = data.get("inventory", {})
+
+        if not inv:
+            return await interaction.response.send_message(
+                f"📦 **{target.display_name}** has no items. Better pay off your rent."
+            )
+
+        lines = []
+        for item_id, count in inv.items():
+            item = state["items"].get(item_id, {"name": item_id})
+            lines.append(f"**{item['name']}** × {count}")
+
+        await interaction.response.send_message(
+            f"📦 **{target.display_name}'s Inventory**\n" + "\n".join(lines)
+        )
+    @app_commands.command(name="use", description="Use an item from your inventory.")
+    async def use_item(self, interaction: discord.Interaction, item_id: str, target: discord.User = None):
+        uid = interaction.user.id
+        user = get_user(uid)
+
+        inv = user.get("inventory", {})
+
+        if item_id not in inv or inv[item_id] <= 0:
+            return await interaction.response.send_message("❌ You don’t have that item.")
+
+        item = state["items"].get(item_id)
+        if not item:
+            return await interaction.response.send_message("❌ Invalid item ID.")
+
+        if item_id == "intercontinental_ballistic_missile":
+            if not target:
+                return await interaction.response.send_message("You must choose a target.")
+            await interaction.response.send_message(
+                f"💥 **{interaction.user.display_name} launched a missile at {target.display_name}!!!**\nhttps://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzF4a3E2MXc3cnR3ZnNzbHVzMWsyNWRkd28wa3FqZmQ0d2RubzJuYSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/XUFPGrX5Zis6Y/giphy.gif"
+            )
+            user["inventory"][item_id] -= 1
+
+        elif item_id == "red_button":
+            candidates = [
+                uid for uid in state["users"].keys()
+                if uid != str(interaction.user.id)
+            ]
+
+            chosen = random.choice(candidates) if candidates else str(interaction.user.id)
+            chosen_user = get_user(int(chosen))
+
+            stolen = min(2000, chosen_user["balance"])
+            chosen_user["balance"] -= stolen
+            user["balance"] += stolen
+
+            await interaction.response.send_message(
+                f"🔴 **{interaction.user.display_name} pressed the Red Button of Death!**\n"
+                f"💰 Stole **{stolen} coins** from <@{chosen}>!"
+            )
+
+            inv[item_id] -= 1
+
+        elif item_id == "mysterious_potion":
+            outcome = random.randint(1, 3)
+            if outcome == 1:
+                user["balance"] = 0
+                msg = "☠️ The potion exploded. You lost **ALL** your coins."
+            elif outcome == 2:
+                user["balance"] *= 2
+                msg = "✨ Your coins **doubled!**"
+            else:
+                user["balance"] *= 3
+                msg = "💎 Your coins **tripled!**"
+
+            await interaction.response.send_message(msg)
+            inv[item_id] -= 1
+
+        elif item_id == "roast_protection":
+            until = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
+            user["roast_protection_until"] = until.isoformat()
+
+            await interaction.response.send_message(
+                "🛡️ You are protected from being roasted for **3 hours**!"
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "odd_box":
+            rewards = random.sample(list(state["items"].keys()), 2)
+
+            for r in rewards:
+                inv[r] = inv.get(r, 0) + 1
+
+            await interaction.response.send_message(
+                f"🎁 You opened an Interesting Box!\nYou received:\n"
+                + "\n".join([f"- **{state['items'][r]['name']}**" for r in rewards])
+            )
+
+            inv[item_id] -= 1
+
+        save_state()
 
 async def setup(bot):
     print("Loading Economy Cog...")
