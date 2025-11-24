@@ -976,29 +976,58 @@ class Economy(commands.Cog):
         )
     @app_commands.command(name="buy", description="Buy an item from the shop.")
     async def buy(self, interaction: discord.Interaction, item_id: str):
+        import asyncio
+
+        await interaction.response.defer()
+
         uid = interaction.user.id
         user = get_user(uid)
         items = state.get("items", {})
 
         if item_id not in items:
-            return await interaction.response.send_message("❌ Unknown item ID. Better get glasses.")
+            return await interaction.followup.send("❌ Unknown item ID.")
 
         item = items[item_id]
         price = item["price"]
 
         if user["balance"] < price:
-            return await interaction.response.send_message("❌ You don't have enough coins. Imagine being poor.")
+            return await interaction.followup.send("❌ You're too broke for that.")
 
         user["balance"] -= price
-
         inv = user.setdefault("inventory", {})
         inv[item_id] = inv.get(item_id, 0) + 1
-
         save_state()
 
-        await interaction.response.send_message(
-            f"🛒 You bought **{item['name']}** for **{price} coins!**"
+        base_frames = [
+            "📦",
+            " 📦",
+            "  📦",
+            " 📦",
+            "📦",
+            "📦\n",     
+            "\n📦",     
+            " 📦",
+            "  📦",
+            " 📦",
+            "📦"
+        ]
+
+        frames = base_frames * 2
+
+        msg = await interaction.followup.send("📦", wait=True)
+        for frame in frames:
+            await asyncio.sleep(0.18)
+            await msg.edit(content=frame)
+
+        reveal = (
+            f"🎉 **The box opens!**\n"
+            f"✨ You received: **{item['name']}**\n"
+            f"📦 Added to your inventory.\n"
         )
+
+        await asyncio.sleep(0.3)
+        await msg.edit(content=reveal)
+
     @app_commands.command(name="inventory", description="View your inventory.")
     async def inventory(self, interaction: discord.Interaction, user: discord.User = None):
         target = user or interaction.user
