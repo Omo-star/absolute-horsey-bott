@@ -1,19 +1,22 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 0,
+      "balance": 3996,
       "last_daily": "2025-11-23T20:41:39.109311",
-      "last_work": "2025-11-24T13:08:45.915004",
+      "last_work": "2025-11-24T15:48:03.668284",
       "fish_cooldown": "2025-11-24T18:53:58.085329",
       "hunt_cooldown": "2025-11-24T18:53:11.946745",
       "inventory": {
         "intercontinental_ballistic_missile": 0,
         "odd_box": 0,
-        "red_button": 0
+        "red_button": 0,
+        "ancient_snack": 0,
+        "cookie_unstable": 0,
+        "glitched_coin": 1
       }
     },
     "1350372198992314451": {
-      "balance": 100,
+      "balance": 363,
       "last_daily": null,
       "last_work": null,
       "fish_cooldown": "2025-11-24T18:54:10.527218",
@@ -51,6 +54,86 @@
     "odd_box": {
       "name": "Interesting Box",
       "price": 5000
+    },
+    "quantum_marshmallow": {
+      "name": "Quantum Marshmallow",
+      "price": 350
+    },
+    "time_bending_hourglass": {
+      "name": "Time-Bending Hourglass",
+      "price": 1200
+    },
+    "void_pebble": {
+      "name": "Pebble From The Void",
+      "price": 900
+    },
+    "cursed_duck": {
+      "name": "C\u035du\u0358r\u035fs\u0315e\u0362d\u0337 D\u0340u\u0338c\u0362k\u0321 \u0360of\u0327 W\u035dh\u035ei\u0321sp\u0340e\u0328r\u0334s",
+      "price": 1600
+    },
+    "pocket_dimension_seed": {
+      "name": "Pocket Dimension Seed",
+      "price": 2400
+    },
+    "ethereal_lantern": {
+      "name": "Ethereal Lantern",
+      "price": 800
+    },
+    "glitched_coin": {
+      "name": "G\u0335l\u0334i\u0336t\u0335c\u0337h\u0337e\u0337d\u0336 \u0336C\u0335o\u0335i\u0336n\u0338",
+      "price": 666
+    },
+    "orb_of_unlikely_events": {
+      "name": "Orb of Unlikely Events",
+      "price": 1100
+    },
+    "sentient_spoon": {
+      "name": "Sentient Spoon",
+      "price": 700
+    },
+    "chaos_sandwich": {
+      "name": "C\u0362h\u0328a\u0361o\u0328s\u0337 \u0328S\u0358a\u0358n\u0321d\u0337w\u0336i\u0361c\u0341h",
+      "price": 1300
+    },
+    "lurking_shadow_fragment": {
+      "name": "Shadow Fragment",
+      "price": 1850
+    },
+    "rainbow_thunder_crystal": {
+      "name": "Rainbow Crystal",
+      "price": 1500
+    },
+    "mechanical_gremlin": {
+      "name": "Mechanical Gremlin",
+      "price": 900
+    },
+    "antigravity_rubber_ducky": {
+      "name": "Anti-Gravity Rubber Ducky",
+      "price": 500
+    },
+    "forgotten_scroll": {
+      "name": "Forgotten Scroll of Maybe-Magic",
+      "price": 1400
+    },
+    "ancient_snack": {
+      "name": "Ancient Snack of Eternity",
+      "price": 300
+    },
+    "starlit_compass": {
+      "name": "Compass of Starlit Paths",
+      "price": 950
+    },
+    "cryptic_cube": {
+      "name": "Cryptic Cube",
+      "price": 1250
+    },
+    "cookie_unstable": {
+      "name": "Cookie",
+      "price": 550
+    },
+    "paradox_clock": {
+      "name": "P\u035da\u035cr\u031ba\u0322d\u0358o\u0322x\u0337 \u0360C\u0360l\u0334o\u0360c\u0328k\u0340",
+      "price": 2000
     }
   }
 }
