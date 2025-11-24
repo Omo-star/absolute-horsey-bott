@@ -1,7 +1,7 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 3173,
+      "balance": 1000,
       "last_daily": "2025-11-23T20:41:39.109311",
       "last_work": "2025-11-24T15:48:03.668284",
       "fish_cooldown": "2025-11-24T18:53:58.085329",
@@ -13,12 +13,17 @@
         "ancient_snack": 0,
         "cookie_unstable": 0,
         "glitched_coin": 0,
-        "mechanical_gremlin": 0
-      }
+        "mechanical_gremlin": 0,
+        "cursed_duck": 0,
+        "forgotten_scroll": 0,
+        "lurking_shadow_fragment": 0,
+        "void_pebble": 0
+      },
+      "hunt_shadow_boost": "2025-11-24T18:46:16.678894"
     },
     "1350372198992314451": {
-      "balance": 363,
-      "last_daily": null,
+      "balance": -3101,
+      "last_daily": "2025-11-24T17:55:19.753959",
       "last_work": null,
       "fish_cooldown": "2025-11-24T18:54:10.527218",
       "hunt_cooldown": null,
@@ -26,7 +31,7 @@
       "roast_protection_until": null
     },
     "1220934047794987048": {
-      "balance": 242,
+      "balance": -4378,
       "last_daily": "2025-11-24T13:53:24.232118",
       "last_work": null,
       "fish_cooldown": null,
