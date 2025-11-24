@@ -47,8 +47,7 @@ def load_state():
     with open(STATE_FILE, "r") as f:
         data = json.load(f)
 
-    if "items" not in data:
-        data["items"] = default["items"]
+    data["items"] = default["items"]
 
     return data
 
