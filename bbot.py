@@ -237,7 +237,7 @@ GITHUB_API_KEY = (
 )
 
 # OpenAI client using secret named OPENAI
-openai_client = OpenAI(api_key=os.getenv("OPENAI"))
+openai_client = None
 
 # hopeful fix? dummy key for OpenAI client libs that expect this env var
 if "OPENAI_API_KEY" not in os.environ:
@@ -292,11 +292,7 @@ GEMINI_MODELS = [
     "gemini-2.0-pro",
 ]
 
-OPENAI_MODELS = [
-    "openai:gpt-oss-120b",
-    "openai:gpt-oss-20b",
-    "openai:gpt-5-nano"
-]
+OPENAI_MODELS = []
 
 hf_tgi_client = None
 HF_TGI_URL = os.getenv("HF_TGI_URL")
@@ -553,38 +549,11 @@ async def ai_spice(text: str) -> float:
             return score
     except Exception:
         pass
-    try:    
-        score = await spice_openai(text)
-        if score is not None:
-            return score
-    except Exception:
-        pass
 
     return calculate_spiciness(text)
 
 async def spice_openai(text: str):
-    try:
-        messages = [
-            {"role": "system", "content": 
-                    "You are a roast-quality analyzer. "
-                    "Your job is to read a roast and score its intensity from 0 to 100. "
-                    "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
-                    "Only output a single integer number with no explanation."
-                    "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."},
-            {"role": "user", "content": text},
-        ]
-        resp = openai_client.chat.completions.create(
-            model="gpt-5-nano",
-            messages=messages,
-            max_tokens=5,
-            temperature=0,
-        )
-        raw = resp.choices[0].message.content.strip()
-        num = re.search(r"\d+", raw)
-        return float(num.group()) if num else None
-    except Exception as e:
-        log(f"[SPICE:OPENAI] fail: {e}")
-        return None
+    return None
 
 
 async def spice_github(text: str):
@@ -1325,6 +1294,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
