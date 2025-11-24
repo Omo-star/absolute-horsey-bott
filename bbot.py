@@ -12,6 +12,7 @@ import time
 import datetime
 import json
 from math import sqrt
+from economy import get_user
 MEMORY_FILE = "roast_memory.json"
 
 def load_roast_memory():
@@ -1324,6 +1325,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
