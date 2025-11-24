@@ -93,7 +93,19 @@ class SlashCommands(commands.Cog):
                 member = interaction.guild.get_member(int(uid))
                 if member is None:
                     continue
+                target_data = get_user(member.id)
+                prot = target_data.get("roast_protection_until")
 
+                if prot:
+                    try:
+                        until = datetime.datetime.fromisoformat(prot)
+                        if datetime.datetime.utcnow() < until:
+                            await interaction.followup.send(
+                                f"🛡️ {member.display_name} is protected from roasting!"
+                            )
+                            return
+                    except Exception:
+                        pass
                 hint = clean_prompt or f"Roast {member.display_name}"
                 response = await bot_roast(hint, member.id, mode)
                 out.append(f"**{member.display_name}:** {response}")
@@ -1312,6 +1324,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
