@@ -17,7 +17,27 @@ def load_state():
             "red_button": {"name": "r̶̭̖͊̄̕é̶̖͝͝d̴̤̙̓̔̚ ̸̙̫̄̂͝ͅb̵̼͖͓͊̓͜ṵ̴̹̐͋t̴̳̘͖̎̊͘͝ț̴̨̰͒ò̵̗̠͊n̶͎̱̑͐̿ ̸̪̭̀̊̈́̓ơ̵̻̹̎̐f̶̠̗̭̻̓̎ ̵͔̣̖͓̐͋d̵̝̖͛̊͛e̸͉͚̹̺͐̍͘͘â̸̡̑̑͝t̴̛̝͍̊̀h̷̯͎̮̊", "price": 1500},
             "mysterious_potion": {"name": "Mysterious Potion", "price": 2000},
             "roast_protection": {"name": "Roast Protection Pill", "price": 5000},
-            "odd_box": {"name": "Interesting Box", "price": 5000}
+            "odd_box": {"name": "Interesting Box", "price": 5000},
+            "quantum_marshmallow": {"name": "Quantum Marshmallow", "price": 350},
+            "time_bending_hourglass": {"name": "Time-Bending Hourglass", "price": 1200},
+            "void_pebble": {"name": "Pebble From The Void", "price": 900},
+            "cursed_duck": {"name": "C͝u͘r͟s̕e͢d̷ D̀u̸c͢k̡ ͠of̧ W͝h͞i̡sp̀ęr̴s", "price": 1600},
+            "pocket_dimension_seed": {"name": "Pocket Dimension Seed", "price": 2400},
+            "ethereal_lantern": {"name": "Ethereal Lantern", "price": 800},
+            "glitched_coin": {"name": "G̵l̴i̶t̵c̷h̷e̷d̶ ̶C̵o̵i̶n̸", "price": 666},
+            "orb_of_unlikely_events": {"name": "Orb of Unlikely Events", "price": 1100},
+            "sentient_spoon": {"name": "Sentient Spoon", "price": 700},
+            "chaos_sandwich": {"name": "C͢h̨a͡ǫs̷ ̨S͘a͘n̡d̷w̶i͡ćh", "price": 1300},
+            "lurking_shadow_fragment": {"name": "Shadow Fragment", "price": 1850},
+            "rainbow_thunder_crystal": {"name": "Rainbow Crystal", "price": 1500},
+            "mechanical_gremlin": {"name": "Mechanical Gremlin", "price": 900},
+            "antigravity_rubber_ducky": {"name": "Anti-Gravity Rubber Ducky", "price": 500},
+            "forgotten_scroll": {"name": "Forgotten Scroll of Maybe-Magic", "price": 1400},
+            "ancient_snack": {"name": "Ancient Snack of Eternity", "price": 300},
+            "starlit_compass": {"name": "Compass of Starlit Paths", "price": 950},
+            "cryptic_cube": {"name": "Cryptic Cube", "price": 1250},
+            "cookie_unstable": {"name": "Cookie", "price": 550},
+            "paradox_clock": {"name": "P͝a͜r̛a̢d͘o̢x̷ ͠C͠l̴o͠c̨k̀", "price": 2000}
         }
     }
 
@@ -1077,6 +1097,239 @@ class Economy(commands.Cog):
                 + "\n".join([f"- **{state['items'][r]['name']}**" for r in rewards])
             )
 
+            inv[item_id] -= 1
+            
+        elif item_id == "quantum_marshmallow":
+            reward = random.randint(0, 500)
+            user["balance"] += reward
+            await interaction.response.send_message(
+                f"✨ You consumed the **Quantum Marshmallow** and temporarily existed in 14 dimensions.\n"
+                f"You earned **{reward} coins** from the experience."
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "time_bending_hourglass":
+            for key in ["last_work", "fish_cooldown", "hunt_cooldown", "last_daily"]:
+                ts = user.get(key)
+                if ts:
+                    try:
+                        old = datetime.datetime.fromisoformat(ts)
+                        new = old - (old - datetime.datetime.utcnow()) * 0.5
+                        user[key] = new.isoformat()
+                    except:
+                        pass
+            await interaction.response.send_message(
+                "⏳ You flipped the **Time-Bending Hourglass**.\n"
+                "Your cooldowns have been **reduced by 50%**!"
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "void_pebble":
+            await interaction.response.send_message(
+                random.choice([
+                    "🌑 You threw the **Void Pebble**. It fell upward. That shouldn't happen.",
+                    "🕳️ The pebble vanished forever. So did your hopes.",
+                    "🔮 The pebble whispered… *\"nice throw\"*."
+                ])
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "cursed_duck":
+            candidates = [
+                uid for uid in state["users"].keys()
+                if uid != str(interaction.user.id)
+            ]
+            if candidates:
+                chosen = random.choice(candidates)
+                chosen_user = get_user(int(chosen))
+                stolen = random.randint(0, 3000)
+                chosen_user["balance"] -= stolen
+                user["balance"] += stolen
+                msg = f"🐤 The **Cursed Duck** screamed at <@{chosen}> and stole **{stolen} coins** for you!"
+            else:
+                msg = "🐤 The Cursed Duck screamed at nobody. It felt awkward."
+
+            await interaction.response.send_message(msg)
+            inv[item_id] -= 1
+
+        elif item_id == "pocket_dimension_seed":
+            reward = random.randint(0, 5000)
+            user["balance"] += reward
+            await interaction.response.send_message(
+                f"🌱 You planted the **Pocket Dimension Seed** and opened a tiny universe.\n"
+                f"You looted **{reward} coins** from inside."
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "ethereal_lantern":
+            user["lantern_boost"] = (datetime.datetime.utcnow() + datetime.timedelta(hours=1)).isoformat()
+            await interaction.response.send_message(
+                "🕯️ The **Ethereal Lantern** glows.\nYour next gamble has **+20% winnings** for 1 hour!"
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "glitched_coin":
+            outcome = random.choice(["good", "bad", "neutral"])
+            if outcome == "good":
+                gain = random.randint(10, 5000)
+                user["balance"] += gain
+                msg = f"💾 The Glitched Coin duplicated itself! You earned **{gain} coins**!"
+            elif outcome == "bad":
+                loss = random.randint(10, 100000)
+                user["balance"] = max(0, user["balance"] - loss)
+                msg = f"⚠️ The Glitched Coin corrupted! You lost **{loss} coins**."
+            else:
+                msg = "🌀 The Glitched Coin flickered and did nothing. Nice."
+
+            await interaction.response.send_message(msg)
+            inv[item_id] -= 1
+
+        elif item_id == "orb_of_unlikely_events":
+            roll = random.randint(1, 3)
+            if roll == 1:
+                gain = random.randint(0, 10000)
+                user["balance"] += gain
+                msg = f"🔮 A miracle! You gained **{gain} coins**!"
+            elif roll == 2:
+                loss = max(5000, user["balance"])
+                user["balance"] -= loss
+                msg = f"🐸 A frog materialized and stole **{loss} coins**."
+            else:
+                msg = "⭐ Nothing happened. Statistically the rarest outcome?"
+
+            await interaction.response.send_message(msg)
+            inv[item_id] -= 1
+
+        elif item_id == "sentient_spoon":
+            await interaction.response.send_message(
+                "🥄 The Sentient Spoon whispers:\n**'stop using discord commands and touch grass.'**"
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "chaos_sandwich":
+            mode = random.randint(1, 3)
+            if mode == 1:
+                user["balance"] = random.randint(0, 10000)
+                msg = "🥪 Chaos Sandwich rewrote your timeline. Your balance is now *random*. Yum!"
+            elif mode == 2:
+                user["balance"] += 300
+                msg = "🥪 The sandwich spit out 300 coins. Yay!"
+            else:
+                loss = 5000
+                user["balance"] = max(0, user["balance"] - loss)
+                msg = f"🥪 The sandwich bit you. You dropped **{loss} coins**."
+
+            await interaction.response.send_message(msg)
+            inv[item_id] -= 1
+
+        elif item_id == "lurking_shadow_fragment":
+            user["hunt_shadow_boost"] = (datetime.datetime.utcnow() + datetime.timedelta(hours=1)).isoformat()
+            await interaction.response.send_message(
+                "🌑 A shadow follows you now. Your next **hunt** has **+15% success**."
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "rainbow_thunder_crystal":
+            gain = random.randint(0, 3000)
+            user["balance"] += gain
+            await interaction.response.send_message(
+                f"🌈⚡ The crystal zaps you with pride energy.\nYou gained **{gain} coins**!"
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "mechanical_gremlin":
+            action = random.choice(["steal", "eat", "dance"])
+            if action == "steal":
+                candidates = [
+                    uid for uid in state["users"].keys()
+                    if uid != str(interaction.user.id)
+                ]
+                if candidates:
+                    chosen = random.choice(candidates)
+                    chosen_user = get_user(int(chosen))
+                    stolen = max(chosen_user["balance"], 1500)
+                    chosen_user["balance"] -= stolen
+                    user["balance"] += stolen
+                    msg = f"🤖 Your Mechanical Gremlin stole **{stolen} coins** from <@{chosen}>!"
+                else:
+                    msg = "🤖 The Gremlin tried to steal but found nobody."
+
+            elif action == "eat":
+                loss = 1200
+                user["balance"] = max(0, user["balance"] - loss)
+                msg = f"🤖 The Gremlin malfunctioned and ate **{loss} coins**."
+
+            else:
+                msg = "🤖 The Gremlin danced enthusiastically. No effect."
+
+            await interaction.response.send_message(msg)
+            inv[item_id] -= 1
+
+        elif item_id == "antigravity_rubber_ducky":
+            reward = random.randint(0, 1000)
+            user["balance"] += reward
+            await interaction.response.send_message(
+                f"🦆✨ The Anti-Gravity Ducky floated away and dropped **{reward} coins** for you."
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "forgotten_scroll":
+            gain = random.randint(0, 3000)
+            user["balance"] += gain
+            await interaction.response.send_message(
+                f"📜 You read the **Forgotten Scroll**.\nYou gained **{gain} coins** because knowledge is power."
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "ancient_snack":
+            roll = random.randint(1, 3)
+            if roll == 1:
+                gain = random.randint(0, 500)
+                user["balance"] += gain
+                msg = f"🍪 You ate the Ancient Snack. It tasted eternal. You earned **{gain} coins**."
+            elif roll == 2:
+                user["balance"] = max(0, user["balance"] - 500)
+                msg = "🍘 The snack turned to dust. You lost **500 coins**."
+            else:
+                user["balance"] += 50
+                msg = "🍪 Surprisingly tasty! You gained **50 coins**."
+
+            await interaction.response.send_message(msg)
+            inv[item_id] -= 1
+
+        elif item_id == "starlit_compass":
+            user["fish_buff"] = (datetime.datetime.utcnow() + datetime.timedelta(hours=1)).isoformat()
+            await interaction.response.send_message(
+                "🧭 The **Starlit Compass** glows.\nYour next fishing reward is **doubled**!"
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "cryptic_cube":
+            roll = random.randint(1, 3)
+            if roll == 1:
+                user["balance"] += 2000
+                msg = "🧊 The Cube granted you **2000 coins**."
+            elif roll == 2:
+                loss = 10000
+                user["balance"] = max(0, user["balance"] - loss)
+                msg = f"🧊 The Cube demanded tribute. You lost **{loss} coins**."
+            else:
+                msg = "🧊 The Cube hums ominously. Nothing happens."
+
+            await interaction.response.send_message(msg)
+            inv[item_id] -= 1
+
+        elif item_id == "cookie_unstable":
+            await interaction.response.send_message(
+                "🍪 You ate the **??? Cookie**. Everyone is uncomfy. Including you."
+            )
+            inv[item_id] -= 1
+
+        elif item_id == "paradox_clock":
+            user["paradox_buff"] = (datetime.datetime.utcnow() + datetime.timedelta(hours=2)).isoformat()
+            await interaction.response.send_message(
+                "⏰ Reality bends.\nYour next daily/work/battle gives **2× coins**!"
+            )
             inv[item_id] -= 1
 
         save_state()
