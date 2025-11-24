@@ -773,20 +773,33 @@ class Economy(commands.Cog):
             return await interaction.response.send_message(
                 f"🦹 You **{action}** and earned **{reward} coins!**"
             )
-        else:
-            balance = await get_balance(uid)
-
-            if random.random() < 0.75:
-                loss = balance
-                msg = "🚨 Police caught you! They seized ALL your coins!"
             else:
-                loss = random.randint(30, 120)
-                msg = "🚓 You got caught."
+                user = get_user(uid)
+                balance = user["balance"]
+                if random.random() < 0.75:
 
-            await update_balance(uid, -loss)
-            return await interaction.response.send_message(
-                f"{msg} You lost **{loss} coins.**"
-            )
+                    if balance > 0:
+                        loss = balance
+                        user["balance"] = 0
+                    else:
+                        loss = 0
+
+                    save_state()
+
+                    msg = "🚨 Police caught you! They seized ALL your coins!"
+                    return await interaction.response.send_message(
+                        f"{msg} You lost **{loss} coins.**"
+                    )
+
+                else:
+                    loss = random.randint(30, 120)
+                    msg = "🚓 You got caught."
+
+                await update_balance(uid, -loss)
+                return await interaction.response.send_message(
+                    f"{msg} You lost **{loss} coins.**"
+                )
+
     @app_commands.command(name="slots", description="Spin the enhanced slot machine!")
     async def slots(self, interaction: discord.Interaction, bet: int):
         uid = interaction.user.id
@@ -1204,7 +1217,7 @@ class Economy(commands.Cog):
                 msg = f"💾 The Glitched Coin duplicated itself! You earned **{gain} coins**!"
             elif outcome == "bad":
                 loss = random.randint(10, 100000)
-                user["balance"] = max(0, user["balance"] - loss)
+                user["balance"] -= loss
                 msg = f"⚠️ The Glitched Coin corrupted! You lost **{loss} coins**."
             else:
                 msg = "🌀 The Glitched Coin flickered and did nothing. Nice."
