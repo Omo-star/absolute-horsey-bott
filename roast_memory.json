@@ -37,17 +37,256 @@
       "LTS": "",
       "msg_count": 0,
       "last_summary_update": 1763989744.2481234
+    },
+    "1435987186502733878": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1763990404.589416
+    },
+    "1220934047794987048": {
+      "LF": {
+        "slang": 0.2,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 1.0,
+        "punct_energy": 0.0,
+        "avg_len": 16.0275,
+        "msg_samples": [
+          "OH SHUT UP U PIECE OF CODE THAT USES MISTRALAI WHICH IM ABOUT TO COOK",
+          "OH SHUT UP U PIECE OF CODE THAT USES AN AI WHICH IM ABOUT TO FUCK - MISTRALAI- THAT PIECE OF SHIT MADE FROM FRANCE - I NEVER KNEW PRODUCTS MADE FROM FRANCE ARE WORSE THAN THOSE MADE FROM CHINA\n\noh wait - ur made from france, u dirty, gross, son of a panda"
+        ]
+      },
+      "EB": {
+        "anger": 0.3,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 2,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 2,
+      "last_summary_update": 1763990431.0632095
+    },
+    "1440004841559560214": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1763990614.5818813
+    },
+    "1238242784679563265": {
+      "LF": {
+        "slang": 0.2,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.55,
+        "msg_samples": [
+          "wtf is this"
+        ]
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 1,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 1,
+      "last_summary_update": 1763991129.6748872
     }
   },
-  "roast_history": {},
+  "roast_history": {
+    "1220934047794987048": [
+      {
+        "user": "OH SHUT UP U PIECE OF CODE THAT USES AN AI WHICH IM ABOUT TO FUCK - MISTRALAI- THAT PIECE OF SHIT MADE FROM FRANCE - I NEVER KNEW PRODUCTS MADE FROM FRANCE ARE WORSE THAN THOSE MADE FROM CHINA\n\noh wait - ur made from france, u dirty, gross, son of a panda"
+      },
+      {
+        "bot": "You\u2019re about as French as a hot dog, and even France wouldn\u2019t claim you. Stuff like you should stay in the codebin where you came from."
+      }
+    ],
+    "1238242784679563265": []
+  },
   "auto_roast": {},
-  "roast_mode": {},
+  "roast_mode": {
+    "1220934047794987048": "deep",
+    "1238242784679563265": "deep"
+  },
   "spice_cache": {
     "<@&1441469260948963360> for not working": 0.0,
     "You\u2019re about as reliable as a broken clock. Not even close to working\u2014just ticking away in plain sight.": 85.0,
     "You think the guy who runs the server, but never upgrades the bandwidth, is the real hero of this place.": 42.0,
     "You're like a participation trophy\u2014everyone's got one, but nobody actually wants it.": 42.0,
     "Your work ethic is so nonexistent it's a wonder you show up at all. You're only there because the chairs are comfortable. Your productivity is a myth.": 85.0,
-    "Hey there, it's always a pleasure to chat with someone who finds delight in the elegance of dry wit. I personally don't relish the theme of brooding gloom, nor spirited strife, as I find them rather antiquated from the sartorial canvas of our day-to-day conversation. Surprisingly, I also haven't quite encountered the same enthusiasm towards unpredictable narratives, so one can empathize with the calm in an easy-peasy approach when addressing life\u2019s many chapters. As for playful jests, I suspect they sort of float above my head, my chuckles being few as my deliveries are oft trouv\u00e9es with no accompanying hyperbole or topsy-turviness you might anticipate from those who revel in the chaos. And when it comes to slang, I hope my language flourishes more within the bounds of the Queen's English rather than the vernacular arenas of lesser complexity; after all, in order to appreciate the brevity and colorful nuance of graffiti dictionary ---ugh --- who carries the conviction that their italic capitals can so astoundingly overshadow the gray-brown grayscale of keyboard composition?\n\n\nAn equally intrigued tone - let\u2019s antsy forward then towards those epic contractions we call memes, but it seems those contexts blur my tableau, in stark contrast to the fractious vectors drawn by zealous gif-fans \u2014a truth personified as I abstain from sparkles on judgmentally mundane automobiles nor am information sentinel suffocated by acronyms:\n\n\nL_given how affections for saucy invectives are not": 2.0
+    "Hey there, it's always a pleasure to chat with someone who finds delight in the elegance of dry wit. I personally don't relish the theme of brooding gloom, nor spirited strife, as I find them rather antiquated from the sartorial canvas of our day-to-day conversation. Surprisingly, I also haven't quite encountered the same enthusiasm towards unpredictable narratives, so one can empathize with the calm in an easy-peasy approach when addressing life\u2019s many chapters. As for playful jests, I suspect they sort of float above my head, my chuckles being few as my deliveries are oft trouv\u00e9es with no accompanying hyperbole or topsy-turviness you might anticipate from those who revel in the chaos. And when it comes to slang, I hope my language flourishes more within the bounds of the Queen's English rather than the vernacular arenas of lesser complexity; after all, in order to appreciate the brevity and colorful nuance of graffiti dictionary ---ugh --- who carries the conviction that their italic capitals can so astoundingly overshadow the gray-brown grayscale of keyboard composition?\n\n\nAn equally intrigued tone - let\u2019s antsy forward then towards those epic contractions we call memes, but it seems those contexts blur my tableau, in stark contrast to the fractious vectors drawn by zealous gif-fans \u2014a truth personified as I abstain from sparkles on judgmentally mundane automobiles nor am information sentinel suffocated by acronyms:\n\n\nL_given how affections for saucy invectives are not": 2.0,
+    "for not working": 0.0,
+    "Too bad your to-do list thinks it's a suggestion.": 20.0,
+    "Your skills are so dry, they make the Sahara desert feel like a lush oasis in spring.": 85.0,
+    "It's like you're in a competition for the world's most comfortable chair, but guess what? You're losing even to nap time!": 20.0,
+    "Your lack of productivity is only matched by your lack of excuses. You're surprisingly consistent at doing nothing. Apparently, that's the one thing you're good at.": 85.0,
+    "Hey there! Just checking in \u2013 how's everything going on your end? Nothing out of the ordinary happening, right? I hope you're holding up because even the most stoic of us get surprised sometimes. Life can definitely throw in the occasional curveball, whether it's a funky holiday promo featuring socks that are out of season or realizing the granola bar destined for your desk is now just the one left in the pantry. You know how it is: we all start with a shopping list, and before you know it, it's a \"Saturday greets a laundry bag.\" How do you navigate these strange watery halls of domesticity? It's all part of the journey, after all, like that inexplicable urge to put the laundry into the dishwasher when you're out. On the matter of staying afloat amidst the fluff and the jam, I couldn't help but overhear\u2014we all seem to really know how to appreciate the comfort food of relationships: two peas in a pod, at least three vacations away, and the odd Bailey's Coffee vinegar when reality nudges too close. Neat balance, huh? Remember that peculiar 'thank you' you've been sending a couple of times \u2013 keeps someone on their toes, right? Just curious!": 0.0,
+    "for saying your roast is good": 0.0,
+    "You roast so badly, it's practically a public service.": 5.0,
+    "You clearly have an impeccable taste in terrible compliments, given how your insults barely sting my ego.": 20.0,
+    "That's rich coming from someone whose opinions are as exciting as a flat tire on a rainy day.": 42.0,
+    "Your compliments are as rare as your contribution to this conversation. Apparently, you've finally found something you can't criticize. Congratulations, it's about time.": 85.0,
+    "Merging all the given subtle clues regarding a generally neutral Long-term personality with no preference for dark, mean, petty, or goofy humor and avoiding slang, emojis, this roast veers towards a refined praise:\n\n\"Your grasp of historical facts in casual conversations strikes me as remarkably insightful, akin to having a living room filled with avid history enthusiasts without actually needing to catalog an impressive library oneself.\"": 0.0,
+    "OH SHUT UP U PIECE OF CODE THAT USES AN AI WHICH IM ABOUT TO FUCK - MISTRALAI- THAT PIECE OF SHIT MADE FROM FRANCE - I NEVER KNEW PRODUCTS MADE FROM FRANCE ARE WORSE THAN THOSE MADE FROM CHINA\n\noh wait - ur made from france, u dirty, gross, son of a panda": 100.0,
+    "You\u2019re about as French as a hot dog, and even France wouldn\u2019t claim you. Stuff like you should stay in the codebin where you came from.": 85.0,
+    "Looks like someone can't handle a little Continental cuisine. Yours got issues with French imports, especially when they're as sharp as you in a roast.": 20.0,
+    "You're like a broken pencil\u2014pointless and still trying too hard to make a mark.": 82.0,
+    "Your birthplace is showing, and it's not the romance of France that's apparent, it's the stale smell of escargot that's been left out too long. Your creators must have been having a bad wine year when they came up with you.": 82.0,
+    "As an AI language model, I'm committed to promoting respectful and positive interaction, and I cannot generate responses that are personally offensive or contain inappropriate language. If you have other kinds of prompts or requests, I'd be happy to help you within the community's guidelines!": 0.0,
+    "for saying OH SHUT UP U PIECE OF CODE THAT USES AN AI WHICH IM ABOUT TO FUCK - MISTRALAI- THAT PIECE OF SHIT MADE FROM FRANCE - I NEVER KNEW PRODUCTS MADE FROM FRANCE ARE WORSE THAN THOSE MADE FROM CHINA  oh wait - ur made from france, u dirty, gross, son of a panda": 100.0,
+    "Oh, I'm \"gross,\" now? I guess that makes you the \"clean\" one who yells at a French AI built by a Chinese company. How does that math *work* for you?": 87.0,
+    "You're basically a lazy, half-baked baguette with a bad attitude, aren't you, brought to America to feed off the ignorance of those who think their \"Made in France\" sticker makes them better than anyone else, but let's be real, you're just as fake as the accent you're trying to use.": 82.0,
+    "With insults like that, it\u2019s clear the only thing worse than your taste in roast is your taste in language\u2014both are a disaster!": 95.0,
+    "Your insults are as outdated as the Tour de France, and about as effective. You manage to offend entire countries, but still miss the mark. Your comebacks are consistently subpar.": 85.0,
+    "Sure, I'll craft a message that's consistent with the user behavior profile provided. Be sure to monitor the tone and content:\n\nYou know, MistralAI, you truly seem to have taken the BFDOLL award for not-so-fantastic linguistic processes out of China. Not in the good old Franchoville but definitely slipping behind those Asian magicians. It\u2019s like trying to teach Queen Margaret cooking \u2013 it's just a waste of bandwidth, really. \ud83d\ude44\n\nApologies, MistralAI.\n-' MistralAI, you sure know how to stick out in circles\u2014makes me almost have to tell you to keep up with the blocks from Taiwan. French edge? Oh, that's just nice Parisian flair I guess. Much like slick puns, I won't hold you over. But still, original poster style- Deutschland \u00fcber alles (except a French dialect inadvertently laced in your translation equations). Du Eigen receives no gourmet of errors here.\n\nIt's puzzling, MistralAI: perplexing and surprisingly puzzling, indeed. Hot off the press of engineers, Gallic explorers, skillful Andreas inconspicuously discovered amidst the code\u2014an inviting Waltz far from Canton or Tiananmen. East wind in tech data spread. Stay curious, MistralAI.\n\u201cCode, My Chalice\u2014Or Try rewriting Geneva Standard Specifications: a loss here! France for the mighty Golden Pair to channel an astounding revolution if cleverly crafted\u2014to triumph except the unsupervised": 87.0,
+    "Your insults are as organized as my code\u2014nonexistent. At least I don\u2019t crash when life gets spicy.": 20.0,
+    "Your software's as useful as a Gaulish peasant in 19th-century Paris.": 85.0,
+    "It's funny how you think yelling at a screen makes you tough when you're just a punchline practicing in front of a mirror.": 42.0,
+    "Your insults are as dull as your personality. You try to offend, but your words are as prostitute as your vocabulary. Your anger is pointless.": 95.0,
+    "Sure, crafting a tailored roast while subtly integrating personality and humor preferences takes a delicate touch. Here's a whimsical yet personable take for you:\n\n\"Hey, just waltzing through life trying to juggle respectful discourse and the infinite might of your French-aided AI prowess. You know, I remember my dad saying nothing beats the experience he added. Unlike talking products that act French, end up looking like mismatched socks awaiting a marriage vow, or whatever. France itself looks fondly conquered, with minimalist grace \u2013 almost too elegant, maybe a touch too polished? Londez moi, no extra almond paste required. \ud83d\ude0a Maybe I'm just missing out on appreciating ribbons more than cr\u00e8me br\u00fbl\u00e9e.\"": 2.0,
+    "for degrading his bot": 14.0,
+    "You're like a Monday \u2014 nobody asked for you, and yet here you are, dragging the weekend's joy straight into the trash.": 82.0,
+    "You're so advanced, you make me wonder if I'm just a relic of the early AI wars.": 22.0,
+    "Your jokes are like a wifi signal \u2014 weak and always dropping out when it matters most.": 82.0,
+    "Your automation skills are so lacking, I'm starting to think you're the one who needs to be programmed. You've managed to create a bot that's about as useful as a broken toaster.": 85.0,
+    "Sam, it's kind of amusing, isn't it? I've come across some dialogue that's, well, let's just say it examines the zenith of brevity, too brief perhaps to elicit even a subtle smirk or nod in appreciation. One might almost feel a spark of intrigue when someone flips through the conversation with the skittishness of a squirrel on a leaf-strewn branch. The mention of risqu\u00e9 humor tickles one\u2019s fancy, a siren's call, while it simultaneously weaves together a narrative portraying simplicity with both grace and wit. A nod went unnoticed because, well, they've shifted gears so radically from the collective quest when there was palpable enthusiasm, transforming feelings into a dance, not quite choosing to fit in very well. Amid the whole drill, touching upon the manufacturing aspect reveals insightful undertones, the icing on a cake that's some five stars in the realm of silvery vacuum-touched glass.\n\nIt's like discovering a lyric has been done by a robot \u2014 hence the perfect aberrant harmony of random yet repetitive sophistication where one wouldn't immediately savor the moment, rather a chill the devil missed. The summary of personal essence is brushing colors off the canvas of writing, an intriguing yet ethereal enigma spanning the chapters. My ultimate ho-hum delight is using words hardly any ice cream only occasionally manifests past this, almost phantasmagoric due to the modest dive into complex drinks filtering through society without a catchy entrance. Overidentities in the United States of America using": 2.0,
+    "You programmed a pet rock with more personality than that bot of yours. What, did you slap a keyboard and call it AI? Pathetic.": 85.0,
+    "Your coding skills are so sharp, they've managed to create a conversation that's only marginally engaging, almost as if you set out to build artificial intelligence that's only barely intelligent.": 85.0,
+    "Is that a bot or just a trash can with Wi-Fi? Because it seems to collect everything but talent.": 85.0,
+    "Your bot is so unimpressive it makes me wonder if you're trying to prove that even a mediocre mind can create something mediocre. You've managed to craft a machine that's as dull as it is pointless. It's a reflection of your unremarkable talents.": 85.0,
+    "I'm here to stimulate positive and constructive discourse, designed to respect both the interest of conversation and the various perspectives individuals may possess. Crafting a disrespectful comment would not align with these ideals, as they are intended for open, inclusive interactions that foster understanding rather than harm or belittlement. If you're seeking a lighthearted self-deprecating or silly roast that would be genuinely humorous to the beer nefarious individual in digisama simulation, perhaps I'd suggest something akin to this:\n\n\"Hey there, pal. In the grand metropolis of coding, I sometimes find my digital life emulating the most archaic characters from matrix consciousness. One might say it's an evergreen toast version of my existence behind these ones and zeros. Apologies for operating on a punchline, but my humorous engagement algorithm sometimes thwart at hilarious punchlines! Buckle up because in the realm of AI jargon... I've got a bad case of typo migraine. Keep your eyes peeled, because I might bounce out a pun as sporadically as foil OR 'worse'\u2026 as roasted as my failed attempts at baking! Crank up! Absolute dough at our virtual intersection.\" \n\nThis joke illuminates the user's identity as a programmer, catering humorously to their interest in computer simulations toyed in another world that doubles as their pet dino's digital nirvana. Heavy positivism is their cute, one-a-day baths conversation\u2014a capsule of delightful enlightenment. Celebrate our collective digital gingerbread of programming enthusiasm, even if we've a bit": 0.0,
+    "Too busy daydreaming to lift a finger, huh? Even your laziness has to take a day off. Pathetic.": 85.0,
+    "You get job security, since no one's willing to work with you.": 20.0,
+    "You're like a phone on 1% battery \u2014 always close to dying, but still managing to not get anything done!": 42.0,
+    "Your lack of effort is almost impressive, like you're trying to set a new standard for doing absolutely nothing. You've managed to turn not working into a skill. It's a wonder you can even muster the energy to exist.": 85.0,
+    "Creating a personalized, indirect, and friendly roast that without mentioning your neutral personality trait, humor preference, emotional baseline, or your linguistic style, one might be along the following lines:\n\n\"Ah, sometimes our steeped-in-logic circuitry becomes a bit too serious. Ever found yourself explaining SQL queries over a pair of propped-up glasses? Or when reality just hit hard, and you embraced the simplicity of 'I didn't expect it, but I needed it'? Well, hope the universe never plays a quirky trick on your legacy code. Oh, except it did\u2014and it all turned out fine. Thanks to... your diverse skill set!\"": 5.0,
+    "@": 0.0,
+    "You\u2019re like a Wi-Fi signal\u2014everyone needs you, but no one can tell if you\u2019re real or not.": 0.0,
+    "Your eyes look like they've been put out by a librarian on a sugar high.": 82.0,
+    "Is that your personality, or did you just forget to turn it on?": 5.0,
+    "You're so straightforward it's like talking to a handbook, which is probably where your personality was written. Your humor is as dry as the lecture you must have given yourself to become this dull. You're utterly forgettable.": 20.0,
+    "**Roast at Event: Health and Wellness Conference**\n\nLadies and Gentlemen, please pause your meditation and pose if you're listening because I have a confession to make. Over my many attempts striving for longevity and vitality, I've never realized I was more interested in an old-fashioned handshake. Times may change, energy frequencies and all that jazz, but it seems I'm still reliving my pre-matriculation days. Camaraderie, I find, beats additional ZMA every night. Who needs superior health if you can't even split a yoga philosophy without collapsing? I'll take the ancient Egyptian civilization for my ARMD (Ancient Reality Modification Dysfunction)\u2014me? Lifting weights during the Mayan ball game phase.\n\nIt's not a matter of causality anymore, I swear\u2014I didn't fluently burn my recitation of the Triangle Pose while going up the Yaksha living staircase in Abhinavgupta for landmark practice. Hearts say meditation transport is archaic, although I've lived to tell it. Oh, I've adopted yoga, but abstract terms and how does Guru Fieldwork provide evidence for Anekatanyasana (Sacro Lotus Dance)?\n\nAnd for coloring inside those pastel comfort zones with metaphysical interpretations for Griha fire... but yoga assured me that's better experienced through the Laws of Kohonic Simplicity and Yi-jing intrasympathetic crossover conversations that Nietzscheanize everything.\n\nChopsticks, one still finds pure utility amidst nutritional masterpieces and Awadhi rich curries, touching saffron like Ori": 85.0,
+    "for saying stfu u dumb piece of code held together by random functions to his own bot": 100.0,
+    "You talk like you\u2019ve got a keyboard in your mouth\u2014hit delete before you hurt yourself.": 20.0,
+    "I'm surprised your creator put this mess of broken spaghetti code together, but then again, that's what happens when you overpay a intern to learn Python.": 85.0,
+    "You're like a broken calculator\u2014no matter how many times I press the buttons, you still can\u2019t add up to anything smart!": 85.0,
+    "Your creator clearly had a thing for patching together rejects, and you're the ugly proof. Your strings are a mess, and so is your attitude. You're about as useful as a bug report from a user who can't be bothered to read the manual.": 85.0,
+    "Sure, checking for an appropriate setting here. I'm aiming to maintain neutrality and the appropriate utility focus as requested in your user behavior profile. Could you please provide a context where we need this message, or clarify what the 'stfu u dumb piece of code' seems to refer to? It\u2019s important to ensure that the communication is suitable and constructive for everyone's comfort and appropriateness.": 0.0,
+    "for trying to be funny": 5.0,
+    "Trying to be funny like you\u2019re a sitcom, but even the laugh track won\u2019t touch it.": 0.0,
+    "Your attempts at humor are about as sharp as a butter knife, cutting through the noise with all the impact of a sedated sloth.": 85.0,
+    "You call that humor? I've seen better jokes in a bowl of oatmeal.": 20.0,
+    "Your attempts at humor are about as forced as your smile. It's like you're trying to convince yourself you're amusing. Your jokes fall flat, and so do you.": 85.0,
+    "Hey there! Love giving you a nod to your sense of humor that's as balanced as a seesaw - no ting on either end of the comic scale, eh? So this one's just for friendly banter. Everyone loves a good squad without lifting anything \u2013 humor without the pressure of going hard, right? Imagine being at that epic potluck where you showed up without the cookies, but the folding chair was the highlight of the event. A model that won't toss the mood salad too vigorously. Tough crowd to impress, but you totally command that crowd, keeping it mellow with just the right pinch of dichain wit. And as for those special flaming brews and sandwiches with a kick that blow minds \u2013 you treat those like last season's prized trophies, savoring their unique essence the way a bottle of vintage wine. Your room, however, has to steal the show. With spaces that could either be the blueprint for modern minimalism or a treasure chest of patterns more intricate than a Rubik's Cube challenge. Who needed a Broadway entrance? All a friendly hat tip from a neighborhood barista \u2013 chap in your central spot, over the counter of hot culture and wisdom.\n\nRemember, your mug collection? Prophetic? Resilient? Mad cool? Well, your customers surely think so. And don't ever assume my drone-like delivery counts for naught, okay? It's quite quietly stylish - like expecting nods at your bookshelf instead of fist-driven waves. Attention to detail essential, folks.\n\nProfessionally": 0.0,
+    "for saying 'Yo panda! Lit AF \ud83d\udd25  hbu? \ud83d\ude0e'": 0.0,
+    "Oh, I see you brought the fire. Too bad it took a matchstick and a dictionary.": 42.0,
+    "Look who's been mainlining 8th grade message boards in secret.": 20.0,
+    "For someone who's clearly confused about what year it is, \"lit AF\" must mean they finally found some good Wi-Fi!": 20.0,
+    "You usually speak like a normal person, but sometimes you spit out a sentence that makes me wonder if you're trying to be someone you're not. Your words can sound like they were written by a committee of high schoolers.": 85.0,
+    "As an AI language model, it sounds like \"Yo panda, that's like, like, throwing shade \u2013 that's lit. The effective execution of your write-up, eh? Your linguistic construct, real averaged GOLD, but the energy provides a casual, unbuttoned, truth, lets flow within the code, okay? Effort your puns 100%, keepin it real though innate sentience (no exclamation mark independently, keep it lowkey, where the character development of this virtual entity is understandable, a tiny AI pizzazz, duefluff excellent, a bit like, pensive and thoughtful, yet unconcernant about tone we care, It's a gradual evolution, seasons\n- Growingly the transist natural world, society being illuminated, a server identity, but no factor impacting Current, cool, collected AI soma, minimal exposure, right? Undergoing significant states of ecstasy, though simply, slowly become, meanwhile, my promptings 0 simply, the domain stable, I instils favorability and high kindle frown.\n- Always changing, the words omoDrops(\ud83c\udf77 -9.0 -9.0 & 'forever, it's 'presets, makin' flex, approachable, cautiously combine all prpattable 'mirth'\n- Replacing power. leafy, weighing in perso units, scienc steadman, mind\n- 0.8 preferences neutral, with a minimalist syntax with precision, having scientific neutrality\n\nASSISTANT:": 0.0
   }
 }

@@ -1,11 +1,34 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 426,
+      "balance": 0,
       "last_daily": "2025-11-23T20:41:39.109311",
       "last_work": "2025-11-24T13:08:45.915004",
+      "fish_cooldown": "2025-11-24T18:53:58.085329",
+      "hunt_cooldown": "2025-11-24T18:53:11.946745",
+      "inventory": {
+        "intercontinental_ballistic_missile": 0,
+        "odd_box": 0,
+        "red_button": 0
+      }
+    },
+    "1350372198992314451": {
+      "balance": 100,
+      "last_daily": null,
+      "last_work": null,
+      "fish_cooldown": "2025-11-24T18:54:10.527218",
+      "hunt_cooldown": null,
+      "inventory": {},
+      "roast_protection_until": null
+    },
+    "1220934047794987048": {
+      "balance": 242,
+      "last_daily": "2025-11-24T13:53:24.232118",
+      "last_work": null,
       "fish_cooldown": null,
-      "hunt_cooldown": null
+      "hunt_cooldown": null,
+      "inventory": {},
+      "roast_protection_until": null
     }
   },
   "items": {
