@@ -773,32 +773,33 @@ class Economy(commands.Cog):
             return await interaction.response.send_message(
                 f"🦹 You **{action}** and earned **{reward} coins!**"
             )
-            else:
-                user = get_user(uid)
-                balance = user["balance"]
-                if random.random() < 0.75:
+        else:
+            user = get_user(uid)
+            balance = user["balance"]
 
-                    if balance > 0:
-                        loss = balance
-                        user["balance"] = 0
-                    else:
-                        loss = 0
-
-                    save_state()
-
-                    msg = "🚨 Police caught you! They seized ALL your coins!"
-                    return await interaction.response.send_message(
-                        f"{msg} You lost **{loss} coins.**"
-                    )
-
+            if random.random() < 0.75:
+                if balance > 0:
+                    loss = balance
+                    user["balance"] = 0
                 else:
-                    loss = random.randint(30, 120)
-                    msg = "🚓 You got caught."
+                    loss = 0
 
-                await update_balance(uid, -loss)
+                save_state()
+
+                msg = "🚨 Police caught you! They seized ALL your coins!"
                 return await interaction.response.send_message(
                     f"{msg} You lost **{loss} coins.**"
                 )
+
+            else:
+                loss = random.randint(30, 120)
+                msg = "🚓 You got caught."
+
+            await update_balance(uid, -loss)
+            return await interaction.response.send_message(
+                f"{msg} You lost **{loss} coins.**"
+            )
+
 
     @app_commands.command(name="slots", description="Spin the enhanced slot machine!")
     async def slots(self, interaction: discord.Interaction, bet: int):
