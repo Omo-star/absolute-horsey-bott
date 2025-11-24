@@ -1,8 +1,53 @@
 {
-  "user_memory": {},
+  "user_memory": {
+    "1238242784679563265": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1763989744.2481234
+    }
+  },
   "roast_history": {},
   "auto_roast": {},
   "roast_mode": {},
-  "spice_cache": {}
+  "spice_cache": {
+    "<@&1441469260948963360> for not working": 0.0,
+    "You\u2019re about as reliable as a broken clock. Not even close to working\u2014just ticking away in plain sight.": 85.0,
+    "You think the guy who runs the server, but never upgrades the bandwidth, is the real hero of this place.": 42.0,
+    "You're like a participation trophy\u2014everyone's got one, but nobody actually wants it.": 42.0,
+    "Your work ethic is so nonexistent it's a wonder you show up at all. You're only there because the chairs are comfortable. Your productivity is a myth.": 85.0,
+    "Hey there, it's always a pleasure to chat with someone who finds delight in the elegance of dry wit. I personally don't relish the theme of brooding gloom, nor spirited strife, as I find them rather antiquated from the sartorial canvas of our day-to-day conversation. Surprisingly, I also haven't quite encountered the same enthusiasm towards unpredictable narratives, so one can empathize with the calm in an easy-peasy approach when addressing life\u2019s many chapters. As for playful jests, I suspect they sort of float above my head, my chuckles being few as my deliveries are oft trouv\u00e9es with no accompanying hyperbole or topsy-turviness you might anticipate from those who revel in the chaos. And when it comes to slang, I hope my language flourishes more within the bounds of the Queen's English rather than the vernacular arenas of lesser complexity; after all, in order to appreciate the brevity and colorful nuance of graffiti dictionary ---ugh --- who carries the conviction that their italic capitals can so astoundingly overshadow the gray-brown grayscale of keyboard composition?\n\n\nAn equally intrigued tone - let\u2019s antsy forward then towards those epic contractions we call memes, but it seems those contexts blur my tableau, in stark contrast to the fractious vectors drawn by zealous gif-fans \u2014a truth personified as I abstain from sparkles on judgmentally mundane automobiles nor am information sentinel suffocated by acronyms:\n\n\nL_given how affections for saucy invectives are not": 2.0
+  }
 }
-

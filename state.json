@@ -1,11 +1,33 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 355,
+      "balance": 426,
       "last_daily": "2025-11-23T20:41:39.109311",
-      "last_work": "2025-11-23T20:41:51.959277",
+      "last_work": "2025-11-24T13:08:45.915004",
       "fish_cooldown": null,
       "hunt_cooldown": null
+    }
+  },
+  "items": {
+    "intercontinental_ballistic_missile": {
+      "name": "Intercontinental Ballistic Missile",
+      "price": 1000
+    },
+    "red_button": {
+      "name": "r\u0336\u034a\u0315\u0304\u032d\u0316e\u0336\u035d\u0341\u035d\u0316d\u0334\u0313\u031a\u0314\u0324\u0319 \u0338\u0304\u035d\u0302\u0319\u0345\u032bb\u0335\u034a\u0313\u035c\u033c\u0356\u0353u\u0334\u0310\u034b\u0330\u0339t\u0334\u0358\u030e\u030a\u035d\u0333\u0318\u0356t\u0334\u0352\u0326\u0328\u0330o\u0335\u0300\u034a\u0317\u0320n\u0336\u0311\u0350\u033f\u034e\u0331 \u0338\u0340\u030a\u0344\u0313\u032a\u032do\u0335\u030e\u031b\u0310\u033b\u0339f\u0336\u0313\u030e\u0320\u0317\u032d\u033b \u0335\u0310\u034b\u0354\u0323\u0316\u0353d\u0335\u035b\u030a\u035b\u031d\u0316e\u0338\u0358\u0350\u0358\u030d\u0349\u035a\u0339\u033aa\u0338\u0302\u035d\u0311\u0311\u0321t\u0334\u030a\u0340\u031b\u031d\u034dh\u0337\u030a\u032f\u034e\u032e",
+      "price": 1500
+    },
+    "mysterious_potion": {
+      "name": "Mysterious Potion",
+      "price": 2000
+    },
+    "roast_protection": {
+      "name": "Roast Protection Pill",
+      "price": 5000
+    },
+    "odd_box": {
+      "name": "Interesting Box",
+      "price": 5000
     }
   }
 }
