@@ -64,6 +64,5 @@ jobs:
       - name: Push changes
         if: always()
         run: |
-          git pull --rebase || true
           git push --force-with-lease
 
