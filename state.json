@@ -1,13 +1,13 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 2900,
+      "balance": 1900,
       "last_daily": "2025-11-23T20:41:39.109311",
       "last_work": "2025-11-24T15:48:03.668284",
       "fish_cooldown": "2025-11-24T18:53:58.085329",
       "hunt_cooldown": "2025-11-24T18:53:11.946745",
       "inventory": {
-        "intercontinental_ballistic_missile": 0,
+        "intercontinental_ballistic_missile": 1,
         "odd_box": 0,
         "red_button": 0,
         "ancient_snack": 0,

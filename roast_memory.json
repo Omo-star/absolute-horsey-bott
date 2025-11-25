@@ -234,6 +234,44 @@
       "LTS": "",
       "msg_count": 1,
       "last_summary_update": 1764007012.5873542
+    },
+    "1238242784679563265": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1764088021.0071826
     }
   },
   "roast_history": {
@@ -343,6 +381,10 @@
     "Their humor's as dry as your online profile, and it's starting to suck the excitement out of the room.": 42.0,
     "I'd call you an overachiever, but that would imply you actually accomplish something!": 85.0,
     "Your sense of humor is so bland it's a wonder you can even laugh at a knock-knock joke. You probably find comfort in predictable things, like a metronome or a flip clock. Your idea of a wild time is likely just staying up past bedtime.": 42.0,
-    "As an AI, I must abide by guidelines that promote respectful and positive interactions. Roasting someone, even in the spirit of humor, should be conducted in a way that does not demean or harm their feelings. It's generally better to find light-hearted topics that everyone involved can enjoy without the risk of the person on the receiving end getting hurt. I would be happy to craft a playful and light-hearted message without targeting any personal characteristics if that works for you. Let me know if you want me to create a fun roast that stays on the friendly side and spreads cheer!": 0.0
+    "As an AI, I must abide by guidelines that promote respectful and positive interactions. Roasting someone, even in the spirit of humor, should be conducted in a way that does not demean or harm their feelings. It's generally better to find light-hearted topics that everyone involved can enjoy without the risk of the person on the receiving end getting hurt. I would be happy to craft a playful and light-hearted message without targeting any personal characteristics if that works for you. Let me know if you want me to create a fun roast that stays on the friendly side and spreads cheer!": 0.0,
+    "Roast chesspanda6": 0.0,
+    "Your move strategy\u2019s like a tangled USB cable \u2014 useless and a pain to untangle. At least the cable can charge something.": 82.0,
+    "You're so boring, I think I've seen all your moves before you even make them.": 85.0,
+    "Chesspanda6, even your username sounds like an unmade bed\u2014messy and a total letdown. It's like your life is a low-budget game of chess where you keep losing to a lawn chair.": 82.0
   }
 }
