@@ -647,7 +647,7 @@ async def spice_groq(text: str):
                 log(f"[SPICE:GROQ] sync fail: {e}")
                 return None
 
-        resp = await asyncio.wait_for(loop.run_in_executor(None, call), timeout=5)
+        resp = await asyncio.wait_for(loop.run_in_executor(None, call), timeout=10)
 
         if not resp:
             return None
@@ -756,6 +756,8 @@ async def fetch_vortex_roasts(session, content: str):
 
 async def gather_api_roasts(prompt):
     log("[APIs] Gathering candidates...")
+    log(f"[API] gather_api_roasts START prompt='{prompt}'")
+
     try:
         async with aiohttp.ClientSession() as session:
             tasks = [
@@ -795,7 +797,7 @@ async def gather_api_roasts(prompt):
 
         for c in candidates:
             log(f"[CANDIDATE] {c['source']} -> {c['text']}")
-
+    
         return candidates
 
     except Exception as e:
@@ -1002,6 +1004,7 @@ async def hf_completion(model, messages):
 
 
 async def gather_all_llm_roasts(prompt, user_id):
+    log(f"[LLM] gather_all_llm_roasts START prompt='{prompt}'")
     context = [
         {
             "role": "system",
@@ -1042,6 +1045,7 @@ async def gather_all_llm_roasts(prompt, user_id):
         sources.append(f"GITHUB:{m}")
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
+    log(f"[LLM] {len(tasks)} LLM tasks started")
 
     candidates = []
 
@@ -1057,6 +1061,8 @@ async def gather_all_llm_roasts(prompt, user_id):
             continue
         if txt and len(txt.strip()) > 2:
             candidates.append({"source": src, "text": txt.strip()})
+    log(f"[LLM] FINISHED — {len(candidates)} valid candidates")
+
     return candidates
 
 
@@ -1103,19 +1109,41 @@ async def bot_chat(msg):
 
 
 async def embed_text(text):
+    loop = asyncio.get_event_loop()
+
+    def blocking_call():
+        try:
+            return groq_client.embeddings.create(
+                model="nomic-embed-text",
+                input=text
+            )
+        except:
+            return None
+
     try:
-        resp = groq_client.embeddings.create(model="nomic-embed-text", input=text)
-        return resp.data[0].embedding
-    except:
+        resp = await asyncio.wait_for(
+            loop.run_in_executor(None, blocking_call),
+            timeout=30
+        )
+        return resp.data[0].embedding if resp else None
+
+    except asyncio.TimeoutError:
         return None
 
 
+
 async def bot_roast(msg, uid, mode):
-    log(f"[ROAST] User: {uid} | Mode: {mode}")
+    log(f"[ROAST] ENTER | User={uid} | Mode={mode} | Prompt='{msg}'")
+
+    if msg is None:
+        log("[ROAST] ERROR: msg is None")
+    if msg.strip() == "":
+        log("[ROAST] ERROR: msg is EMPTY STRING")
 
     try:
+        log("[ROAST] Calculating user_spice...")
         user_spice = await fast_spice(msg)
-        log(f"[ROAST-O-METER] AI User Score (0-100): {user_spice:.1f}")
+        log(f"[ROAST] user_spice={user_spice}")
 
         if mode == "fast":
             candidates = await gather_api_roasts(msg)
@@ -1349,6 +1377,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
