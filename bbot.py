@@ -417,28 +417,20 @@ async def safe_completion(model, messages):
     if model.startswith("gemini"):
         if not gemini_client:
             return None
-        try:
-            user_input = "\n".join(
-                m["content"] for m in messages if m["role"] == "user"
-            )
-            if model.startswith("gemini"):
-                if not gemini_client:
-                    return None
-                try:
-                    user_input = "\n".join(
-                        m["content"] for m in messages if m["role"] == "user"
-                    )
 
-                    resp = await gemini_client.generate_content_async(user_input)
+        def call():
+            try:
+                user_input = "\n".join(
+                    m["content"] for m in messages if m["role"] == "user"
+                )
+                resp = gemini_client.generate_content(user_input)
+                return make_chat_response(resp.text)
+            except Exception as e:
+                log(f"[GEMINI ERROR] {e}")
+                return None
 
-                    return make_chat_response(resp.text)
-                except Exception as e:
-                    log(f"[GEMINI ERROR] {e}")
-                    return None
+        return await loop.run_in_executor(None, call)
 
-        except Exception as e:
-            log(f"[GEMINI ERROR] {e}")
-            return None
 
     if model in GROQ_MODELS:
 
@@ -1308,6 +1300,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
