@@ -1012,10 +1012,15 @@ async def gather_all_llm_roasts(prompt, user_id):
             "content": ROAST_SYSTEM_PROMPT
         },
         {
+            "role": "assistant",
+            "content": build_memory_prompt(user_id)
+        },
+        {
             "role": "user",
-            "content": build_memory_prompt(user_id) + "\n\n" + prompt
+            "content": prompt
         },
     ]
+
 
 
     tasks = []
@@ -1378,6 +1383,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
