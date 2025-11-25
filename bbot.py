@@ -625,32 +625,44 @@ async def spice_github(text: str):
 
 async def spice_groq(text: str):
     try:
-        resp = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a roast-quality analyzer. "
-                        "Your job is to read a roast and score its intensity from 0 to 100. "
-                        "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
-                        "Only output a single integer number with no explanation."
-                        "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
-                    ),
-                },
-                {"role": "user", "content": text},
-            ],
-            max_tokens=5,
-            temperature=0,
-        )
+        loop = asyncio.get_event_loop()
+
+        def call():
+            try:
+                return groq_client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "Rate this roast 0-100. Only output a number."
+                            ),
+                        },
+                        {"role": "user", "content": text},
+                    ],
+                    max_tokens=5,
+                    temperature=0,
+                )
+            except Exception as e:
+                log(f"[SPICE:GROQ] sync fail: {e}")
+                return None
+
+        resp = await asyncio.wait_for(loop.run_in_executor(None, call), timeout=5)
+
+        if not resp:
+            return None
 
         raw = resp.choices[0].message.content.strip()
         num = re.search(r"\d+", raw)
         return float(num.group()) if num else None
 
+    except asyncio.TimeoutError:
+        log("[SPICE:GROQ] TIMEOUT")
+        return None
     except Exception as e:
         log(f"[SPICE:GROQ] fail: {e}")
         return None
+
 
 
 async def spice_gemini(text: str):
@@ -1337,6 +1349,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
