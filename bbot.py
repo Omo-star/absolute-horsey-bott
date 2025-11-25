@@ -282,15 +282,17 @@ GROQ_MODELS = [
 ]
 
 GITHUB_MODELS = [
-    "gpt-4o-mini",
-    "llama-3.3-70b-instruct",
-    "phi-4-mini-instruct",
+    "gpt-4o-mini",            
+    "phi-4-mini-instruct",    
+    "llama-3.1-8b-instruct"   
 ]
 
+
 GEMINI_MODELS = [
-    "gemini-2.0-flash",
-    "gemini-2.0-pro",
+    "gemini-2.0-flash",      
+    "gemini-1.5-pro"           
 ]
+
 
 OPENAI_MODELS = []
 
@@ -420,7 +422,7 @@ async def safe_completion(model, messages):
             user_input = "\n".join(
                 m["content"] for m in messages if m["role"] == "user"
             )
-            resp = gemini_client.generate_content(user_input)
+            resp = gemini_client.generate_content_async(user_input)
             return make_chat_response(resp.text)
         except Exception as e:
             log(f"[GEMINI ERROR] {e}")
@@ -1294,6 +1296,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
