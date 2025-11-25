@@ -62,6 +62,20 @@ intents.message_content = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+import google.generativeai as genai
+
+def load_available_gemini_models():
+    try:
+        models = genai.list_models()
+        available = []
+        for m in models:
+            if "generateContent" in getattr(m, "supported_generation_methods", []):
+                available.append(m.name)
+        return available
+    except Exception as e:
+        print("Failed to list Gemini models:", e)
+        return []
+
 def extract_text_with_logging(model_name, resp):
     """Try every known response format and log what actually exists."""
     try:
@@ -325,11 +339,7 @@ GITHUB_MODELS = [
 ]
 
 
-GEMINI_MODELS = [
-    "gemini-2.0-flash",      
-    "gemini-1.5-pro"           
-]
-
+GEMINI_MODELS = load_available_gemini_models()
 
 OPENAI_MODELS = []
 
@@ -1377,6 +1387,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
