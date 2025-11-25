@@ -25,6 +25,7 @@ jobs:
       OPENAI: ${{ secrets.OPENAI }}
       GITHUB: ${{ secrets.GITHUB }}
       PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout code
