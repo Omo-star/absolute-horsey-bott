@@ -425,7 +425,7 @@ async def safe_completion(model, messages):
             except Exception as e:
                 log(f"[OPENAI ERROR:{actual}] {e}")
                 return None
-        return await loop.run_in_executor(None, call)
+        return await asyncio.wait_for(loop.run_in_executor(None, call), timeout=9)
 
     # new prefix handling !
     if model.startswith("groq:"):
@@ -444,7 +444,7 @@ async def safe_completion(model, messages):
                 log(f"[GROQ ERROR:{actual}] {e}")
                 return None
 
-        return await loop.run_in_executor(None, call)
+        return await asyncio.wait_for(loop.run_in_executor(None, call), timeout=9)
 
     if model.startswith("github:"):
         if github_client is None:
@@ -465,7 +465,8 @@ async def safe_completion(model, messages):
                 log(f"[GITHUB ERROR:{actual}] {e}")
                 return None
 
-        return await asyncio.get_event_loop().run_in_executor(None, call)
+        return await asyncio.wait_for(loop.run_in_executor(None, call), timeout=30)
+
 
     # add gemini to models
     if model.startswith("gemini"):
@@ -483,7 +484,7 @@ async def safe_completion(model, messages):
                 log(f"[GEMINI ERROR] {e}")
                 return None
 
-        return await loop.run_in_executor(None, call)
+        return await asyncio.wait_for(loop.run_in_executor(None, call), timeout=9)
 
 
     if model in GROQ_MODELS:
@@ -501,7 +502,7 @@ async def safe_completion(model, messages):
                 log(f"[GROQ ERROR:{model}] {e}")
                 return None
 
-        return await loop.run_in_executor(None, call)
+        return await asyncio.wait_for(loop.run_in_executor(None, call), timeout=9)
 
     def call_or():
         try:
@@ -1366,6 +1367,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
