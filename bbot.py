@@ -283,8 +283,7 @@ GROQ_MODELS = [
 
 GITHUB_MODELS = [
     "gpt-4o-mini",            
-    "phi-4-mini-instruct",    
-    "llama-3.1-8b-instruct"   
+    "phi-4-mini-instruct",       
 ]
 
 
@@ -1296,6 +1295,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
