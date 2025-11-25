@@ -157,13 +157,24 @@ class SlashCommands(commands.Cog):
                 response = await bot_roast(hint, member.id, mode)
                 out.append(f"**{member.display_name}:** {response}")
 
-            await interaction.followup.send("\n".join(out))
+            final = "\n".join(x for x in out if x and x.strip())
+
+            if not final:
+                final = "Even all the models refused to roast 💀."
+
+            await interaction.followup.send(final)
+
             return
 
-        if text.strip():
-            resp = await bot_roast(text, interaction.user.id, mode)
-            await interaction.followup.send(resp)
-            return
+            if text.strip():
+                resp = await bot_roast(text, interaction.user.id, mode)
+
+                if not resp or not resp.strip():
+                    resp = "Even the AI models looked at you and said 'nah bro im good' 💀."
+
+    await interaction.followup.send(resp)
+    return
+
 
         await interaction.followup.send(
             "Use `/roast @User`, `/roast @User @Other`, or `/roast your text here`"
@@ -1367,6 +1378,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
