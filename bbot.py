@@ -352,7 +352,6 @@ NORMAL_CHAT_MODELS = [
     "gemini-2.0-flash",
     "gemini-2.0-pro",
     "github:gpt-4o-mini",
-    "github:llama-3.3-70b-instruct",
     "openai:gpt-4o-mini",
     "openai:gpt-4o"
 ]
@@ -419,7 +418,10 @@ async def safe_completion(model, messages):
                     max_tokens=300,
                     temperature=1.1
                 )
-                return make_chat_response(resp.choices[0].message.content)
+                raw = extract_text_with_logging(model, resp)
+                return make_chat_response(raw)
+
+
             except Exception as e:
                 log(f"[OPENAI ERROR:{actual}] {e}")
                 return None
@@ -434,7 +436,10 @@ async def safe_completion(model, messages):
                 resp = groq_client.chat.completions.create(
                     model=actual, messages=messages, max_tokens=300, temperature=1.1
                 )
-                return make_chat_response(resp.choices[0].message.content)
+                raw = extract_text_with_logging(model, resp)
+                return make_chat_response(raw)
+
+
             except Exception as e:
                 log(f"[GROQ ERROR:{actual}] {e}")
                 return None
@@ -452,7 +457,10 @@ async def safe_completion(model, messages):
                 resp = github_client.chat.completions.create(
                     model=actual, messages=messages, max_tokens=300, temperature=1.1
                 )
-                return make_chat_response(resp.choices[0].message.content)
+                raw = extract_text_with_logging(model, resp)
+                return make_chat_response(raw)
+
+
             except Exception as e:
                 log(f"[GITHUB ERROR:{actual}] {e}")
                 return None
@@ -485,7 +493,10 @@ async def safe_completion(model, messages):
                 resp = groq_client.chat.completions.create(
                     model=model, messages=messages, max_tokens=300, temperature=1.1
                 )
-                return make_chat_response(resp.choices[0].message.content)
+                raw = extract_text_with_logging(model, resp)
+                return make_chat_response(raw)
+
+    
             except Exception as e:
                 log(f"[GROQ ERROR:{model}] {e}")
                 return None
@@ -497,7 +508,10 @@ async def safe_completion(model, messages):
             resp = openrouter_client.chat.completions.create(
                 model=model, messages=messages, max_tokens=300, temperature=1.2
             )
-            return make_chat_response(resp.choices[0].message.content)
+            raw = extract_text_with_logging(model, resp)
+            return make_chat_response(raw)
+
+
         except Exception as e:
             if "500" in str(e):
                 raise Roast500Error()
@@ -729,7 +743,9 @@ async def get_openrouter_quick_roast(prompt):
                 temperature=1.25,
             ),
         )
-        return strip_reasoning(resp.choices[0].message.content)
+        raw = extract_text_with_logging("OR:quick", resp)
+        return strip_reasoning(raw)
+
     except Exception as e:
         log(f"[APIs] OpenRouter quick roast failed: {e}")
         return None
@@ -1088,7 +1104,9 @@ async def bot_chat(msg):
             log(f"[CHAT] Trying chat model: {model}")
             resp = await safe_completion(model, messages)
             if resp:
-                return strip_reasoning(resp.choices[0].message.content)
+                raw = extract_text_with_logging(model, resp)
+                return strip_reasoning(raw)
+
         except Roast500Error:
             log(f"[CHAT] {model} hit 500 Error, trying next.")
             continue
@@ -1348,6 +1366,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
