@@ -200,10 +200,8 @@
         "emoji_rate": 0.0,
         "all_caps_rate": 0.0,
         "punct_energy": 0.0,
-        "avg_len": 1.8,
-        "msg_samples": [
-          "roast <@1238242784679563265> for fun"
-        ]
+        "avg_len": 0.0,
+        "msg_samples": []
       },
       "EB": {
         "anger": 0.0,
@@ -220,8 +218,8 @@
         "meta": 0.0
       },
       "IS": {
-        "bot_mentions": 1,
-        "roast_requests": 1,
+        "bot_mentions": 0,
+        "roast_requests": 0,
         "self_roasts": 0,
         "escalation": 0.0
       },
@@ -230,8 +228,8 @@
         "texts": []
       },
       "LTS": "",
-      "msg_count": 1,
-      "last_summary_update": 1764007012.5873542
+      "msg_count": 0,
+      "last_summary_update": 1764092737.7909849
     },
     "1350372198992314451": {
       "LF": {
@@ -269,7 +267,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764092737.7909849
+      "last_summary_update": 1764093535.9770486
     }
   },
   "roast_history": {
@@ -388,6 +386,11 @@
     "You're like a Wi-Fi signal\u2014weak and never dependable.": 42.0,
     "Roast Velvet": 0.0,
     "Velvet, you know, some people are like a fine wine, improving with age. You're more like... milk. Eventually, you just expire. And nobody wants spoiled milk.": 42.0,
-    "Velvet, your personality has all the excitement of a wet sock. If dull were an Olympic sport, you'd take gold effortlessly!": 85.0
+    "Velvet, your personality has all the excitement of a wet sock. If dull were an Olympic sport, you'd take gold effortlessly!": 85.0,
+    "Velvet, your organizational skills must be legendary. I bet you alphabetize your spice rack... by Latin name. I also bet you know where you parked your car yesterday, which, honestly, is terrifying.": 85.0,
+    "Velvet, you're like a cloud\u2014puffy, white, and just so full of hot air.": 92.0,
+    "for thinking 'Velvet, you're like a cloud\u2014puffy, white, and just so full of hot air. ' is a compliment": 0.0,
+    "So, you think being compared to a cloud is a win? I guess in your world, formless and potentially harboring a thunderstorm is considered aspirational.": 85.0,
+    "You're like a broken pencil\u2014pointless and just wasting space.": 80.0
   }
 }
