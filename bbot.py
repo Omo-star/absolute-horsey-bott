@@ -1006,18 +1006,22 @@ async def gather_all_llm_roasts(prompt, user_id):
     sources = []
 
     for m in GEMINI_MODELS:
+        log(f"[LLM] requesting model {m}")
         tasks.append(safe_completion(m, context))
         sources.append(f"GM:{m}")
 
     for m in GROQ_MODELS:
+        log(f"[LLM] requesting model {m}")
         tasks.append(safe_completion(m, context))
         sources.append(f"GROQ:{m}")
 
     for m in OPENROUTER_MODELS:
+        log(f"[LLM] requesting model {m}")
         tasks.append(safe_completion(m, context))
         sources.append(f"OR:{m}")
 
     for m in OPENAI_MODELS:
+        log(f"[LLM] requesting model {m}")
         tasks.append(safe_completion(m, context))
         sources.append(f"OPENAI:{m}")
 
@@ -1333,6 +1337,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
