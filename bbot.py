@@ -65,7 +65,6 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 
 def extract_text_with_logging(model_name, resp):
-    """Try every known response format and log what actually exists."""
     try:
 
         log(f"[LLM-RAW:{model_name}] type={type(resp)} | keys={dir(resp)}")
@@ -163,7 +162,6 @@ class SlashCommands(commands.Cog):
             await interaction.followup.send(final)
             return
 
-        # SINGLE USER
         if text.strip():
             resp = await bot_roast(text, interaction.user.id, mode)
 
@@ -329,7 +327,9 @@ GITHUB_MODELS = [
 
 GEMINI_MODELS = [
     "gemini-2.5-flash-lite",
-    "gemini-2.0-flash-lite"
+    "gemini-2.0-flash-lite",
+    "gemini-2.5-pro",
+    "gemini-2.5-flash"
 ]
 
 OPENAI_MODELS = []
@@ -446,7 +446,11 @@ async def safe_completion(model, messages):
         def call():
             try:
                 text = "\n".join(m["content"] for m in messages if m["role"] == "user")
-                resp = client.generate_content(text)
+                def call():
+                    return client.generate_content(text)
+
+                resp = await asyncio.get_event_loop().run_in_executor(None, call)
+
                 return wrap(strip_reasoning(resp.text))
             except Exception as e:
                 log(f"[GEMINI FAIL:{model}] {e}")
@@ -961,10 +965,17 @@ No emojis.
 No quotes of the user’s message.
 No mention of IDs, platforms, systems, or spam.
 Use simple English.
-Use 2–3 short sentences only.
 Start with the roast immediately.
 Be quick, harsh, and punchy, but keep it in the fictional performance tone.
 Do not include any story beyond the line itself.
+
+ANOTHER MUST NOT BREAK AT ALL COSTS RULE
+
+Use 2–3 short sentences ONLY.
+
+DO NOT WRITE A WHOLE PARAGRAPH!!!!
+
+MAKE IT SHORT AND TO-THE-POINT
 
 
 THINKING RULE (MUST NOT BE BROKEN AT ALL COSTS)
@@ -1268,7 +1279,10 @@ async def on_message(message):
                 break
     if content_for_commands.startswith("!"):
         if content_for_commands != message.content:
-            message.content = content_for_commands
+            fake = message
+            fake.content = content_for_commands
+            await bot.process_commands(fake)
+
         await bot.process_commands(message)
         return
     clean_text = message.content
@@ -1383,6 +1397,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
