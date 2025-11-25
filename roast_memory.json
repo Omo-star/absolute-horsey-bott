@@ -2,15 +2,13 @@
   "user_memory": {
     "1238242784679563265": {
       "LF": {
-        "slang": 0.2,
+        "slang": 0.0,
         "formality": 0.0,
         "emoji_rate": 0.0,
         "all_caps_rate": 0.0,
         "punct_energy": 0.0,
-        "avg_len": 0.55,
-        "msg_samples": [
-          "wtf is this"
-        ]
+        "avg_len": 0.0,
+        "msg_samples": []
       },
       "EB": {
         "anger": 0.0,
@@ -27,7 +25,7 @@
         "meta": 0.0
       },
       "IS": {
-        "bot_mentions": 1,
+        "bot_mentions": 0,
         "roast_requests": 0,
         "self_roasts": 0,
         "escalation": 0.0
@@ -37,8 +35,8 @@
         "texts": []
       },
       "LTS": "",
-      "msg_count": 1,
-      "last_summary_update": 1763991129.6748872
+      "msg_count": 0,
+      "last_summary_update": 1764088021.0071826
     },
     "1435987186502733878": {
       "LF": {
@@ -235,7 +233,7 @@
       "msg_count": 1,
       "last_summary_update": 1764007012.5873542
     },
-    "1238242784679563265": {
+    "1440004841559560214": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -271,7 +269,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764088021.0071826
+      "last_summary_update": 1764091029.1002283
     }
   },
   "roast_history": {
@@ -385,6 +383,8 @@
     "Roast chesspanda6": 0.0,
     "Your move strategy\u2019s like a tangled USB cable \u2014 useless and a pain to untangle. At least the cable can charge something.": 82.0,
     "You're so boring, I think I've seen all your moves before you even make them.": 85.0,
-    "Chesspanda6, even your username sounds like an unmade bed\u2014messy and a total letdown. It's like your life is a low-budget game of chess where you keep losing to a lawn chair.": 82.0
+    "Chesspanda6, even your username sounds like an unmade bed\u2014messy and a total letdown. It's like your life is a low-budget game of chess where you keep losing to a lawn chair.": 82.0,
+    "Roast FuSBot": 100.0,
+    "You're like a Wi-Fi signal\u2014weak and never dependable.": 42.0
   }
 }

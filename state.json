@@ -38,6 +38,15 @@
       "hunt_cooldown": null,
       "inventory": {},
       "roast_protection_until": null
+    },
+    "1440004841559560214": {
+      "balance": 0,
+      "last_daily": null,
+      "last_work": null,
+      "fish_cooldown": null,
+      "hunt_cooldown": null,
+      "inventory": {},
+      "roast_protection_until": null
     }
   },
   "items": {
