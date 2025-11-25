@@ -229,9 +229,49 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764092737.7909849
+      "last_summary_update": 1764093535.9770486
     },
     "1350372198992314451": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 4.6000000000000005,
+        "msg_samples": [
+          "roast <@1238242784679563265> for being a coward and not accepting the correspondance game :/"
+        ]
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 1,
+        "roast_requests": 1,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 1,
+      "last_summary_update": 1764094846.5753455
+    },
+    "1238242784679563265": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -267,7 +307,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764093535.9770486
+      "last_summary_update": 1764094946.6433578
     }
   },
   "roast_history": {
@@ -391,6 +431,19 @@
     "Velvet, you're like a cloud\u2014puffy, white, and just so full of hot air.": 92.0,
     "for thinking 'Velvet, you're like a cloud\u2014puffy, white, and just so full of hot air. ' is a compliment": 0.0,
     "So, you think being compared to a cloud is a win? I guess in your world, formless and potentially harboring a thunderstorm is considered aspirational.": 85.0,
-    "You're like a broken pencil\u2014pointless and just wasting space.": 80.0
+    "You're like a broken pencil\u2014pointless and just wasting space.": 80.0,
+    "for trying to be cool": 20.0,
+    "Trying to be cool is like wearing sunglasses at night\u2014just makes you look ridiculous and a little lost.": 92.0,
+    "Alright, so... you're here. That's a start, I guess. I mean, you made it. That's probably the most interesting thing that's happened today.\n\nAnd trying to be cool, huh? Well, I admire the... effort. It's like watching a documentary about a slow-moving, relatively uninteresting creature \u2013 fascinating in its own way, I suppose.": 85.0,
+    "Alright, let's see what we've got here. Trying to be cool, huh? That's ambitious. It's like watching a meticulously constructed Jenga tower that's already wobbling precariously. You've got all the pieces in place, you're just... hoping nobody breathes too heavily in the wrong direction. The effort is noted, though. Truly, it is. Keep at it, and maybe one day you'll stumble into something resembling \"cool\" by accident. Or maybe not. Either way, it's a performance worth observing.": 92.0,
+    "for not accepting my chess challnege and being a coward": 0.0,
+    "You call yourself a contender, but I\u2019ve seen more fight in a limp lettuce. Chess is not just a game; it's a battlefield, and you just want to watch from the sidelines.": 92.0,
+    "Alright, so... chess, huh? The game of kings and all that. Seems like you're more comfortable observing the court from the *outside*. Perhaps you're still studying the rules... in a textbook, maybe?\n\nLook, I get it. Some people prefer to admire the battlefield from a safe distance. Just, you know... next time the challenge is laid down, maybe consider at least *thinking* about a counter move. It might be a worthwhile mental exercise. \n\nBut hey, no worries. We can always analyze the game later, after *I've* had a chance to play it. And win, naturally. \ud83d\ude09": 85.0,
+    "Velvet, they say you're neutral, which I guess means you're like a beige wall \u2013 always there, but never really making a statement. I'm not sure if it's a strength or just a lack of effort. Anyway, keep being... you.": 85.0,
+    "Velvet, your ideas are like those socks nobody wears \u2014 mismatched and a total bore.": 85.0,
+    "Ah, a true strategist, it seems. So engrossed in the intricate dance of the board, you can't be bothered with the minor skirmishes of a mere human? I suppose it takes a certain... fortitude... to engage with someone whose strategic prowess might, *hypothetically*, lead to a less-than-ideal outcome. Perhaps the thrill of the intellectual pursuit is simply too demanding when faced with the raw, unadulterated pressure of a direct confrontation. No matter, your strategic contemplation is truly a sight to behold, from a safe, objective distance, of course.": 92.0,
+    "for trying to roast but failing horribly": 20.0,
+    "Your jokes are like a light switch in a blackout\u2014nobody's laughing, and they're all just waiting for the next flicker.": 92.0,
+    "Alright, let's give this a shot.\n\nSo, you were aiming for a roast, huh? Interesting. It's almost like you meticulously planned out the most... *unremarkable* approach possible. Seriously, the sheer lack of anything that might even *resemble* a spark of wit is truly something to behold. It's like watching someone try to light a fire with damp paper and a prayer. Impressive in its own way, I suppose.\n\nYou know, I've seen more edge on a perfectly spherical potato. The effort is... there. Vaguely. Like a whisper in a hurricane. It\u2019s a bold strategy, trying to offend by being utterly, completely, and profoundly... normal. I\u2019m almost impressed by the dedication to *not* making a dent.\n\nIf this was an attempt to get under someone's skin, I'd say you succeeded in getting *under* the concept of \"under.\" It's a masterclass in delivering... precisely nothing of consequence. Honestly, it's a triumph of neutrality. You managed to be so non-offensive, I'm not even sure I'm supposed to be doing this. Is this even a roast, or are we just having a very dull conversation?\n\nKeep trying, I guess. Maybe one day you'll stumble upon something that doesn't feel like beige wallpaper. Until then, bravo on this\u2026 unique brand of failure.": 98.0
   }
 }
