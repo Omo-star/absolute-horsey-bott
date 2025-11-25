@@ -107,7 +107,6 @@ def extract_text_with_logging(model_name, resp):
         log(f"[LLM-EXTRACT-FAIL:{model_name}] {e}")
         return ""
 
-
 class SlashCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -120,17 +119,13 @@ class SlashCommands(commands.Cog):
     @app_commands.describe(
         text="Mention users and/or add text. Example: '@User1 @User2 make it brutal'"
     )
-    async def roast(
-        self,
-        interaction: discord.Interaction,
-        text: str
-    ):
+    async def roast(self, interaction: discord.Interaction, text: str):
         await interaction.response.defer()
 
         mode = roast_mode.get(interaction.user.id, "deep")
 
         mention_ids = re.findall(r"<@!?(\d+)>", text)
-        mention_ids = list(dict.fromkeys(mention_ids))  
+        mention_ids = list(dict.fromkeys(mention_ids))
 
         if mention_ids:
             out = []
@@ -140,6 +135,7 @@ class SlashCommands(commands.Cog):
                 member = interaction.guild.get_member(int(uid))
                 if member is None:
                     continue
+
                 target_data = get_user(member.id)
                 prot = target_data.get("roast_protection_until")
 
@@ -151,43 +147,37 @@ class SlashCommands(commands.Cog):
                                 f"🛡️ {member.display_name} is protected from roasting!"
                             )
                             return
-                    except Exception:
+                    except:
                         pass
+
                 hint = clean_prompt or f"Roast {member.display_name}"
                 response = await bot_roast(hint, member.id, mode)
                 out.append(f"**{member.display_name}:** {response}")
 
             final = "\n".join(x for x in out if x and x.strip())
-
             if not final:
                 final = "Even all the models refused to roast 💀."
 
             await interaction.followup.send(final)
-
             return
 
-            if text.strip():
-                resp = await bot_roast(text, interaction.user.id, mode)
+        # SINGLE USER
+        if text.strip():
+            resp = await bot_roast(text, interaction.user.id, mode)
 
-                if not resp or not resp.strip():
-                    resp = "Even the AI models looked at you and said 'nah bro im good' 💀."
+            if not resp or not resp.strip():
+                resp = "Even the AI models looked at you and said 'nah bro I'm good' 💀."
 
-    await interaction.followup.send(resp)
-    return
-
+            await interaction.followup.send(resp)
+            return
 
         await interaction.followup.send(
             "Use `/roast @User`, `/roast @User @Other`, or `/roast your text here`"
         )
 
-
-
-
     # /data
     @app_commands.command(name="data", description="See roast memory profile for a user.")
-    async def data(self, interaction: discord.Interaction,
-                   target: discord.User):
-
+    async def data(self, interaction: discord.Interaction, target: discord.User):
         mem = get_user_memory(target.id)
 
         lf = mem["LF"]
@@ -231,14 +221,10 @@ class SlashCommands(commands.Cog):
 
         await interaction.response.send_message(text)
 
-
     # /autor
     @app_commands.command(name="autor", description="Enable or disable auto-roast.")
-    async def autor(self, interaction: discord.Interaction,
-                    mode: str):
-
+    async def autor(self, interaction: discord.Interaction, mode: str):
         mode = mode.lower()
-
         if mode == "on":
             auto_roast[interaction.user.id] = True
             save_roast_memory()
@@ -250,13 +236,9 @@ class SlashCommands(commands.Cog):
         else:
             await interaction.response.send_message("Use `/autor on` or `/autor off`.")
 
-
     # /roastmode
-    @app_commands.command(name="roastmode",
-                          description="Set your roast mode: fast, deep, or adjustable.")
-    async def roastmode(self, interaction: discord.Interaction,
-                        mode: str):
-
+    @app_commands.command(name="roastmode", description="Set your roast mode.")
+    async def roastmode(self, interaction: discord.Interaction, mode: str):
         mode = mode.lower()
         if mode not in ["fast", "deep", "adjustable"]:
             await interaction.response.send_message("Modes: fast, deep, adjustable")
@@ -269,7 +251,6 @@ class SlashCommands(commands.Cog):
         await interaction.response.send_message(
             f"🔥 Roast Mode: **{mode.upper()}**. Use /stoproast to stop."
         )
-
 
     # /stoproast
     @app_commands.command(name="stoproast", description="Turn off roast mode.")
@@ -418,122 +399,96 @@ def make_chat_response(text):
 async def safe_completion(model, messages):
     loop = asyncio.get_event_loop()
 
-    # OpenAI direct handler
-    if model.startswith("openai:"):
-        actual = model.split("openai:", 1)[1]
-        def call():
-            try:
-                resp = openai_client.chat.completions.create(
-                    model=actual,
-                    messages=messages,
-                    max_tokens=300,
-                    temperature=1.1
-                )
-                raw = extract_text_with_logging(model, resp)
-                return make_chat_response(raw)
+    async def run_blocking(fn):
+        try:
+            return await asyncio.wait_for(loop.run_in_executor(None, fn), timeout=12)
+        except Exception as e:
+            log(f"[TIMEOUT/ERROR:{model}] {e}")
+            return None
+
+    def wrap(text):
+        if not text:
+            text = "I'm malfunctioning so hard even my roast code gave up."
+        class Msg: pass
+        class Ch: pass
+        class Resp: pass
+        m = Msg(); c = Ch(); r = Resp()
+        m.content = text
+        c.message = m
+        r.choices = [c]
+        return r
 
 
-            except Exception as e:
-                log(f"[OPENAI ERROR:{actual}] {e}")
-                return None
-        return await asyncio.wait_for(loop.run_in_executor(None, call), timeout=9)
-
-    # new prefix handling !
     if model.startswith("groq:"):
         actual = model.split("groq:", 1)[1]
 
         def call():
             try:
                 resp = groq_client.chat.completions.create(
-                    model=actual, messages=messages, max_tokens=300, temperature=1.1
+                    model=actual, messages=messages, max_tokens=250, temperature=1.0
                 )
-                raw = extract_text_with_logging(model, resp)
-                return make_chat_response(raw)
-
-
+                txt = extract_text_with_logging(model, resp)
+                return wrap(strip_reasoning(txt))
             except Exception as e:
-                log(f"[GROQ ERROR:{actual}] {e}")
+                log(f"[GROQ FAIL:{actual}] {e}")
                 return None
 
-        return await asyncio.wait_for(loop.run_in_executor(None, call), timeout=9)
+        return await run_blocking(call)
+
+
+    if model.startswith("gemini"):
+        try:
+            client = genai.GenerativeModel(model)
+        except:
+            return wrap("Gemini failed to initialize.")
+
+        def call():
+            try:
+                text = "\n".join(m["content"] for m in messages if m["role"] == "user")
+                resp = client.generate_content(text)
+                return wrap(strip_reasoning(resp.text))
+            except Exception as e:
+                log(f"[GEMINI FAIL:{model}] {e}")
+                return None
+
+        return await run_blocking(call)
+
 
     if model.startswith("github:"):
         if github_client is None:
-            log("[GITHUB] Skipping GitHub model — no valid API key.")
-            return None
+            return wrap("GitHub model unavailable.")
+
         actual = model.split("github:", 1)[1]
 
         def call():
             try:
                 resp = github_client.chat.completions.create(
-                    model=actual, messages=messages, max_tokens=300, temperature=1.1
+                    model=actual, messages=messages, max_tokens=250, temperature=1.1
                 )
-                raw = extract_text_with_logging(model, resp)
-                return make_chat_response(raw)
-
-
+                txt = extract_text_with_logging(model, resp)
+                return wrap(strip_reasoning(txt))
             except Exception as e:
-                log(f"[GITHUB ERROR:{actual}] {e}")
+                log(f"[GITHUB FAIL:{actual}] {e}")
                 return None
 
-        return await asyncio.wait_for(loop.run_in_executor(None, call), timeout=30)
+        return await run_blocking(call)
 
-
-    # add gemini to models
-    if model.startswith("gemini"):
-        if not gemini_client:
-            return None
-
-        def call():
-            try:
-                user_input = "\n".join(
-                    m["content"] for m in messages if m["role"] == "user"
-                )
-                resp = gemini_client.generate_content(user_input)
-                return make_chat_response(resp.text)
-            except Exception as e:
-                log(f"[GEMINI ERROR] {e}")
-                return None
-
-        return await asyncio.wait_for(loop.run_in_executor(None, call), timeout=9)
-
-
-    if model in GROQ_MODELS:
-
-        def call():
-            try:
-                resp = groq_client.chat.completions.create(
-                    model=model, messages=messages, max_tokens=300, temperature=1.1
-                )
-                raw = extract_text_with_logging(model, resp)
-                return make_chat_response(raw)
-
-    
-            except Exception as e:
-                log(f"[GROQ ERROR:{model}] {e}")
-                return None
-
-        return await asyncio.wait_for(loop.run_in_executor(None, call), timeout=9)
 
     def call_or():
         try:
             resp = openrouter_client.chat.completions.create(
-                model=model, messages=messages, max_tokens=300, temperature=1.2
+                model=model,
+                messages=messages,
+                max_tokens=250,
+                temperature=1.2
             )
-            raw = extract_text_with_logging(model, resp)
-            return make_chat_response(raw)
-
-
+            txt = extract_text_with_logging(model, resp)
+            return wrap(strip_reasoning(txt))
         except Exception as e:
-            if "500" in str(e):
-                raise Roast500Error()
-            log(f"[OR ERROR:{model}] {e}")
+            log(f"[OR FAIL:{model}] {e}")
             return None
 
-    try:
-        return await loop.run_in_executor(None, call_or)
-    except Roast500Error:
-        raise
+    return await run_blocking(call_or)
 
 
 INSULT_KEYWORDS = [
@@ -1378,6 +1333,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
