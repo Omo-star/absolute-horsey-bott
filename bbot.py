@@ -421,8 +421,21 @@ async def safe_completion(model, messages):
             user_input = "\n".join(
                 m["content"] for m in messages if m["role"] == "user"
             )
-            resp = gemini_client.generate_content_async(user_input)
-            return make_chat_response(resp.text)
+            if model.startswith("gemini"):
+                if not gemini_client:
+                    return None
+                try:
+                    user_input = "\n".join(
+                        m["content"] for m in messages if m["role"] == "user"
+                    )
+
+                    resp = await gemini_client.generate_content_async(user_input)
+
+                    return make_chat_response(resp.text)
+                except Exception as e:
+                    log(f"[GEMINI ERROR] {e}")
+                    return None
+
         except Exception as e:
             log(f"[GEMINI ERROR] {e}")
             return None
@@ -1295,6 +1308,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
