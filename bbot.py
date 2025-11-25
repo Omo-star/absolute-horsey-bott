@@ -438,25 +438,19 @@ async def safe_completion(model, messages):
 
 
     if model.startswith("gemini"):
-        try:
-            client = genai.GenerativeModel(model)
-        except:
-            return wrap("Gemini failed to initialize.")
-
         def call():
             try:
                 text = "\n".join(m["content"] for m in messages if m["role"] == "user")
-                def call():
-                    return client.generate_content(text)
 
-                resp = await asyncio.get_event_loop().run_in_executor(None, call)
+                client = genai.GenerativeModel(model)
+                resp = client.generate_content(text)
 
                 return wrap(strip_reasoning(resp.text))
             except Exception as e:
                 log(f"[GEMINI FAIL:{model}] {e}")
                 return None
-
         return await run_blocking(call)
+
 
 
     if model.startswith("github:"):
@@ -1397,6 +1391,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
