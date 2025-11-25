@@ -62,6 +62,52 @@ intents.message_content = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+def extract_text_with_logging(model_name, resp):
+    """Try every known response format and log what actually exists."""
+    try:
+
+        log(f"[LLM-RAW:{model_name}] type={type(resp)} | keys={dir(resp)}")
+
+        text = None
+
+        try:
+            c = resp.choices[0]
+            log(f"[LLM-CHOICE:{model_name}] choice keys={dir(c)}")
+
+            if hasattr(c, "message") and hasattr(c.message, "content") and c.message.content:
+                text = c.message.content
+                log(f"[LLM-EXTRACT:{model_name}] message.content FOUND: {text[:120]}")
+                return text
+
+            if hasattr(c, "text") and c.text:
+                text = c.text
+                log(f"[LLM-EXTRACT:{model_name}] choice.text FOUND: {text[:120]}")
+                return text
+
+        except Exception as e:
+            log(f"[LLM-CHOICE-ERROR:{model_name}] {e}")
+
+        if hasattr(resp, "text") and resp.text:
+            text = resp.text
+            log(f"[LLM-EXTRACT:{model_name}] resp.text FOUND: {text[:120]}")
+            return text
+        if hasattr(resp, "output_text") and resp.output_text:
+            text = resp.output_text
+            log(f"[LLM-EXTRACT:{model_name}] resp.output_text FOUND: {text[:120]}")
+            return text
+
+        if isinstance(resp, str):
+            log(f"[LLM-EXTRACT:{model_name}] raw str FOUND: {resp[:120]}")
+            return resp
+
+        log(f"[LLM-EXTRACT:{model_name}] NO TEXT FOUND (empty)")
+        return ""
+
+    except Exception as e:
+        log(f"[LLM-EXTRACT-FAIL:{model_name}] {e}")
+        return ""
+
+
 class SlashCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -1004,7 +1050,9 @@ async def gather_all_llm_roasts(prompt, user_id):
         if isinstance(resp, Exception) or resp is None:
             continue
         try:
-            txt = strip_reasoning(resp.choices[0].message.content)
+            raw = extract_text_with_logging(src, resp)
+            txt = strip_reasoning(raw)
+
         except Exception as e:
             log(f"[LLM] parse fail from {src}: {e}")
             continue
@@ -1300,6 +1348,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
