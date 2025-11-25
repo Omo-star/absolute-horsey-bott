@@ -1017,7 +1017,7 @@ async def gather_all_llm_roasts(prompt, user_id):
             "content": ROAST_SYSTEM_PROMPT
         },
         {
-            "role": "assistant",
+            "role": "system",
             "content": build_memory_prompt(user_id)
         },
         {
@@ -1391,6 +1391,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
