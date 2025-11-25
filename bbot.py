@@ -601,6 +601,7 @@ async def spice_github(text: str):
                     "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
                     "Only output a single integer number with no explanation."
                     "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
+                    "You deduct heavy points if the roast is longer then 1-3 sentences, and award to short roasts which are more effective."
                 ),
             },
             {"role": "user", "content": text},
@@ -634,7 +635,12 @@ async def spice_groq(text: str):
                         {
                             "role": "system",
                             "content": (
-                                "Rate this roast 0-100. Only output a number."
+                                "You are a roast-quality analyzer. "
+                                "Your job is to read a roast and score its intensity from 0 to 100. "
+                                "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
+                                "Only output a single integer number with no explanation."
+                                "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
+                                "You deduct heavy points if the roast is longer then 1-3 sentences, and award to short roasts which are more effective."
                             ),
                         },
                         {"role": "user", "content": text},
@@ -670,11 +676,12 @@ async def spice_gemini(text: str):
 
     try:
         prompt = (
-            "You are a roast-quality analyzer. "
-            "Your job is to read a roast and score its intensity from 0 to 100. "
-            "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
-            "Only output a single integer number with no explanation."
-            "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
+                "You are a roast-quality analyzer. "
+                "Your job is to read a roast and score its intensity from 0 to 100. "
+                "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
+                "Only output a single integer number with no explanation."
+                "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
+                "You deduct heavy points if the roast is longer then 1-3 sentences, and award to short roasts which are more effective."
         )
 
         resp = gemini_client.generate_content(prompt + "\n\n" + text)
@@ -1391,6 +1398,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
