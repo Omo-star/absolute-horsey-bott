@@ -559,139 +559,51 @@ async def fast_spice(text: str) -> float:
     save_roast_memory()
     return score
 
-
 async def ai_spice(text: str) -> float:
-    try:
-        score = await spice_groq(text)
-        if score is not None:
-            return score
-    except Exception:
-        pass
-
-    try:
-        score = await spice_github(text)
-        if score is not None:
-            return score
-    except Exception:
-        pass
-
-    try:
-        score = await spice_gemini(text)
-        if score is not None:
-            return score
-    except Exception:
-        pass
-
-    return calculate_spiciness(text)
-
-async def spice_openai(text: str):
-    return None
-
-
-async def spice_github(text: str):
-    try:
-        if not github_client:
-            return None
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a roast-quality analyzer. "
-                    "Your job is to read a roast and score its intensity from 0 to 100. "
-                    "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
-                    "Only output a single integer number with no explanation."
-                    "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
-                    "You deduct heavy points if the roast is longer then 1-3 sentences, and award to short roasts which are more effective."
-                ),
-            },
-            {"role": "user", "content": text},
-        ]
-        resp = await asyncio.get_event_loop().run_in_executor(
-            None,
-            lambda: github_client.chat.completions.create(
-                model="phi-4-mini-instruct",
-                messages=messages,
-                max_tokens=5,
-                temperature=0,
-            ),
-        )
-        raw = resp.choices[0].message.content.strip()
-        num = re.search(r"\d+", raw)
-        return float(num.group()) if num else None
-    except Exception as e:
-        log(f"[SPICE] fail: {e}")
-        return None
-
+    score = await spice_groq(text)
+    if score is not None:
+        return score
+    log("[SPICE:GROQ] failed!")
+    return 0.0
 
 async def spice_groq(text: str):
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a roast-quality analyzer. "
+                "Your job is to read a roast and score its intensity from 0 to 100. "
+                "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
+                "Only output a single integer number with no explanation. "
+                "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast. "
+                "IMPORTANT: YOU MUST ALWAYS GIVE 0-10 SCORE if the roast is longer then 1-3 sentences, AND AWARD POINTS to short roasts which are more effective."
+            )
+        },
+        {"role": "user", "content": text}
+    ]
+
     try:
         loop = asyncio.get_event_loop()
 
         def call():
-            try:
-                return groq_client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": (
-                                "You are a roast-quality analyzer. "
-                                "Your job is to read a roast and score its intensity from 0 to 100. "
-                                "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
-                                "Only output a single integer number with no explanation."
-                                "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
-                                "You deduct heavy points if the roast is longer then 1-3 sentences, and award to short roasts which are more effective."
-                            ),
-                        },
-                        {"role": "user", "content": text},
-                    ],
-                    max_tokens=5,
-                    temperature=0,
-                )
-            except Exception as e:
-                log(f"[SPICE:GROQ] sync fail: {e}")
-                return None
+            return groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=messages,
+                max_tokens=5,
+                temperature=0.0
+            )
 
-        resp = await asyncio.wait_for(loop.run_in_executor(None, call), timeout=10)
-
-        if not resp:
-            return None
-
+        resp = await asyncio.wait_for(loop.run_in_executor(None, call), timeout=4)
         raw = resp.choices[0].message.content.strip()
-        num = re.search(r"\d+", raw)
-        return float(num.group()) if num else None
 
-    except asyncio.TimeoutError:
-        log("[SPICE:GROQ] TIMEOUT")
-        return None
+        m = re.search(r"\d{1,3}", raw)
+        if m:
+            return float(m.group())
     except Exception as e:
-        log(f"[SPICE:GROQ] fail: {e}")
-        return None
+        log(f"[SPICE:GROQ] ERROR {e}")
 
+    return None
 
-
-async def spice_gemini(text: str):
-    if not gemini_client:
-        return None
-
-    try:
-        prompt = (
-                "You are a roast-quality analyzer. "
-                "Your job is to read a roast and score its intensity from 0 to 100. "
-                "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
-                "Only output a single integer number with no explanation."
-                "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast."
-                "You deduct heavy points if the roast is longer then 1-3 sentences, and award to short roasts which are more effective."
-        )
-
-        resp = gemini_client.generate_content(prompt + "\n\n" + text)
-        raw = resp.text.strip()
-
-        num = re.search(r"\d+", raw)
-        return float(num.group()) if num else None
-    except Exception as e:
-        log(f"[SPICE:GEMINI] fail: {e}")
-        return None
 
 
 async def fetch_url(session, url, json_key=None, is_text=False):
@@ -1398,6 +1310,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
