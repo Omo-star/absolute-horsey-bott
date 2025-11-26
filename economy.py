@@ -8,6 +8,12 @@ import random
 import json, os
 
 STATE_FILE = "state.json"
+def get_pray_boost(user_id: int):
+    user = get_user(user_id)
+    pray_points = user.get("pray", 0)
+
+    boost = 1 + min(pray_points * 0.015, 0.20)
+    return boost
 
 def load_state():
     default = {
@@ -83,7 +89,9 @@ def get_user(uid: int):
             "fish_cooldown": None,
             "hunt_cooldown": None,
             "inventory": {},
-            "roast_protection_until": None
+            "roast_protection_until": None,
+            "pray": 0,
+            "last_pray": None,
         }
         save_state() 
     return state["users"][uid]
@@ -112,13 +120,222 @@ class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="balance", description="Check your coin balance.")
+    @app_commands.command(name="balance", description="Check your horsenncy balance.")
     async def balance(self, interaction: discord.Interaction, user: discord.User = None):
         target = user or interaction.user
-        coins = await get_balance(target.id)
+        horsenncy = await get_balance(target.id)
         await interaction.response.send_message(
-            f"💰 **{target.display_name}** has **{coins} coins**."
+            f"💴 **{target.display_name}** has **{horsenncy} horsenncy**."
         )
+    @app_commands.command(name="blackjack", description="Bet horsenncy on a blackjack game!")
+    async def blackjack(self, interaction: discord.Interaction, bet: int):
+        uid = interaction.user.id
+        balance = await get_balance(uid)
+
+        if bet <= 0:
+            return await interaction.response.send_message("Bet must be positive.")
+        if bet > balance:
+            return await interaction.response.send_message("You don't have enough horsenncy.")
+
+        suits = ["♠", "♥", "♦", "♣"]
+        ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+
+        deck = [(r, s) for s in suits for r in ranks]
+        random.shuffle(deck)
+
+        def draw():
+            if not deck:
+                new_deck = [(r, s) for s in suits for r in ranks]
+                random.shuffle(new_deck)
+                deck.extend(new_deck)
+            return deck.pop()
+
+        def card_value(rank: str) -> int:
+            if rank == "A":
+                return 11
+            if rank in ["J", "Q", "K"]:
+                return 10
+            return int(rank)
+
+        def hand_value(hand):
+            total = 0
+            aces = 0
+            for r, _ in hand:
+                v = card_value(r)
+                total += v
+                if r == "A":
+                    aces += 1
+            while total > 21 and aces > 0:
+                total -= 10
+                aces -= 1
+            return total
+
+        CARD_H = 5
+
+        def build_card(rank: str, suit: str, hidden: bool = False):
+            if hidden:
+                return [
+                    "┌─────┐",
+                    "│░░░░░│",
+                    "│░░░░░│",
+                    "│░░░░░│",
+                    "└─────┘",
+                ]
+
+            top =  f"┌─────┐"
+            r_left = f"{rank:<2}"[:2]
+            r_right = f"{rank:>2}"[-2:]
+            line2 = f"│{r_left}   │"
+            line3 = f"│  {suit}  │"
+            line4 = f"│   {r_right}│"
+            bottom = "└─────┘"
+            return [top, line2, line3, line4, bottom]
+
+        def join_cards(hand, hide_second=False):
+            if not hand:
+                return "(no cards)"
+            lines = [""] * CARD_H
+            for idx, (r, s) in enumerate(hand):
+                hidden = hide_second and idx == 1
+                card_lines = build_card(r, s, hidden=hidden)
+                for i in range(CARD_H):
+                    lines[i] += card_lines[i] + " "
+            return "\n".join(lines)
+
+
+        gradients = [
+            "🟪🟦🟩🟨🟥",
+            "🟥🟧🟨🟩🟦",
+            "🟦🟩🟨🟧🟥",
+        ]
+
+
+        player = [draw(), draw()]
+        dealer = [draw(), draw()]
+
+        pray_boost = get_pray_boost(uid)
+
+        def make_embed(phase: int, game_state: str, reveal_dealer: bool = False):
+            dealer_total = hand_value(dealer)
+            player_total = hand_value(player)
+
+            gradient = gradients[phase % len(gradients)]
+
+            if reveal_dealer:
+                dealer_label = f"[{dealer_total}]"
+                dealer_table = join_cards(dealer, hide_second=False)
+            else:
+                dealer_label = f"[{card_value(dealer[0][0])} + ❓]"
+                dealer_table = join_cards(dealer, hide_second=True)
+
+            player_label = f"[{player_total}]"
+            player_table = join_cards(player, hide_second=False)
+
+            desc = (
+                f"{gradient}\n"
+                f"**Bet:** {bet} horsenncy\n\n"
+                f"🃏 **Dealer** {dealer_label}\n"
+                f"```\n{dealer_table}\n```\n"
+                f"👤 **{interaction.user.display_name}** {player_label}\n"
+                f"```\n{player_table}\n```\n"
+                f"{gradient}\n\n"
+                f"{game_state}"
+            )
+
+            embed = discord.Embed(
+                title="🎴 Blackjack",
+                description=desc,
+                color=discord.Color.purple()
+            )
+            return embed
+
+        class BlackjackView(discord.ui.View):
+            def __init__(self):
+                super().__init__(timeout=40)
+                self.phase = 0 
+
+            async def update_embed(self, inter: discord.Interaction, state_text: str, reveal: bool = False, keep_view=True):
+                embed = make_embed(self.phase, state_text, reveal_dealer=reveal)
+                self.phase += 1
+                if keep_view:
+                    await inter.response.edit_message(embed=embed, view=self)
+                else:
+                    await inter.response.edit_message(embed=embed, view=None)
+
+            @discord.ui.button(label="Hit", style=discord.ButtonStyle.success)
+            async def hit(self, button_inter: discord.Interaction, button: discord.ui.Button):
+                if button_inter.user.id != uid:
+                    return await button_inter.response.send_message("Not your game.", ephemeral=True)
+
+                player.append(draw())
+                total = hand_value(player)
+
+                if total > 21:
+
+                    await update_balance(uid, -bet)
+                    self.clear_items()
+                    await self.update_embed(
+                        button_inter,
+                        state_text=f"💀 **BUST!** You lost **{bet} horsenncy.**",
+                        reveal=True,
+                        keep_view=False
+                    )
+                    return
+
+
+                await self.update_embed(
+                    button_inter,
+                    state_text="🕐 Hit taken. Decide your fate…",
+                    reveal=False,
+                    keep_view=True
+                )
+
+            @discord.ui.button(label="Stand", style=discord.ButtonStyle.primary)
+            async def stand(self, button_inter: discord.Interaction, button: discord.ui.Button):
+                if button_inter.user.id != uid:
+                    return await button_inter.response.send_message("Not your game.", ephemeral=True)
+
+                self.clear_items()
+
+
+                await self.update_embed(
+                    button_inter,
+                    state_text="🃏 Revealing dealer's hand…",
+                    reveal=False,
+                    keep_view=True
+                )
+
+                await asyncio.sleep(0.4)
+                embed_mid = make_embed(self.phase, "🃏 The card begins to flip…", reveal_dealer=False)
+                self.phase += 1
+                await button_inter.message.edit(embed=embed_mid, view=self)
+
+
+                await asyncio.sleep(0.4)
+
+                while hand_value(dealer) < 17:
+                    dealer.append(draw())
+
+                p_total = hand_value(player)
+                d_total = hand_value(dealer)
+
+                if d_total > 21 or p_total > d_total:
+                    winnings = int(bet * pray_boost)
+                    await update_balance(uid, winnings)
+                    result_text = f"🎉 **You win!** You earned **{winnings} horsenncy.**"
+                elif p_total == d_total:
+                    result_text = "🤝 **Push!** Your horsenncy is safe this time."
+                else:
+                    await update_balance(uid, -bet)
+                    result_text = f"💀 **Dealer wins.** You lost **{bet} horsenncy.**"
+
+                final_embed = make_embed(self.phase, result_text, reveal_dealer=True)
+                self.phase += 1
+                await button_inter.message.edit(embed=final_embed, view=None)
+
+        view = BlackjackView()
+        start_embed = make_embed(phase=0, game_state="🕐 *Game in progress… choose **Hit** or **Stand** below.*", reveal_dealer=False)
+        await interaction.response.send_message(embed=start_embed, view=view)
 
     @app_commands.command(name="daily", description="Claim your daily reward.")
     async def daily(self, interaction: discord.Interaction):
@@ -142,10 +359,10 @@ class Economy(commands.Cog):
         await update_balance(uid, reward)
         await set_daily_timestamp(uid)
         await interaction.response.send_message(
-            f"🎁 **Daily Reward:** You received **{reward} coins!**"
+            f"🎁 **Daily Reward:** You received **{reward} horsenncy!**"
         )
 
-    @app_commands.command(name="give", description="Give coins to another user.")
+    @app_commands.command(name="give", description="Give horsenncy to another user.")
     async def give(self, interaction: discord.Interaction, user: discord.User, amount: int):
         if amount <= 0:
             await interaction.response.send_message("Amount must be positive.")
@@ -155,20 +372,20 @@ class Economy(commands.Cog):
         sender_balance = await get_balance(sender.id)
 
         if sender.id == user.id:
-            await interaction.response.send_message("You cannot give coins to yourself.")
+            await interaction.response.send_message("You cannot give horsenncy to yourself. No money glitches here.")
             return
 
         if sender_balance < amount:
-            await interaction.response.send_message("You don't have enough coins.")
+            await interaction.response.send_message("You don't have enough horsenncy. Imagine being broke.")
             return
 
         await update_balance(sender.id, -amount)
         await update_balance(user.id, amount)
         await interaction.response.send_message(
-            f"🤝 {sender.display_name} gave **{amount} coins** to {user.display_name}!"
+            f"🤝 {sender.display_name} gave **{amount} horsenncy** to {user.display_name}!"
         )
 
-    @app_commands.command(name="coinflip", description="Bet coins on a coin flip.")
+    @app_commands.command(name="coinflip", description="Bet horsenncy on a coin flip.")
     async def coinflip(self, interaction: discord.Interaction, side: str, amount: int):
         side = side.lower()
         if side not in ["heads", "tails"]:
@@ -183,24 +400,77 @@ class Economy(commands.Cog):
             return
 
         if balance < amount:
-            await interaction.response.send_message("You don't have enough coins.")
+            await interaction.response.send_message("You don't have enough horsenncy.")
             return
 
         result = random.choice(["heads", "tails"])
         win = result == side
+        boost = get_pray_boost(uid)
 
         if win:
-            await update_balance(uid, amount)
+            await update_balance(uid, int(amount * boost))
             await interaction.response.send_message(
-                f"🎉 The coin landed on **{result}** — you won **{amount} coins!**"
+                f"🎉 The coin landed on **{result}** — you won **{amount} horsenncy!**"
             )
         else:
             await update_balance(uid, -amount)
             await interaction.response.send_message(
-                f"💀 The coin landed on **{result}** — you lost **{amount} coins.**"
+                f"💀 The coin landed on **{result}** — you lost **{amount} horsenncy.**"
             )
 
-    @app_commands.command(name="leaderboard", description="Top players by coins.")
+    @app_commands.command(name="pray", description="Pray to the overlord Horsey.")
+    async def pray(self, interaction: discord.Interaction):
+        uid = interaction.user.id
+        user = get_user(uid)
+
+        now = datetime.datetime.utcnow()
+
+        last = user.get("last_pray")
+        if last:
+            last_time = datetime.datetime.fromisoformat(last)
+            diff = (now - last_time).total_seconds()
+            if diff < 600:  
+                remaining = int(600 - diff)
+                minutes = remaining // 60
+                seconds = remaining % 60
+                return await interaction.response.send_message(
+                    f"⏳ You must wait **{minutes}m {seconds}s** before praying again. Praying too much will be suspicious."
+                )
+
+        user["last_pray"] = now.isoformat()
+
+        if random.random() < 0.10:
+            user["pray"] = 0
+            save_state()
+            corrupted_messages = [
+                "💀 **The Horsey god is displeased.**",
+                "🔥 A divine hoof stomps the ground. Your prayers crumble.",
+                "🌫️ A cold neigh echoes... your faith collapses.",
+                "⚡ Your prayer backfires violently. You hear a distant moo.",
+            ]
+            return await interaction.response.send_message(
+                random.choice(corrupted_messages)
+                + "\nYour **prayer points have been reset to 0.**"
+            )
+
+        user["pray"] += 1
+        save_state()
+
+        blessing_messages = [
+            "🌟 The overlord Horsey respects your worship.",
+            "🐴 A divine neigh echoes approvingly.",
+            "✨ You feel cosmic Horsey energy flowing through you.",
+            "🌤️ A gentle hoof pats your soul. Horsey invicta.",
+            "🎇 Reality flickers. Horsey approves."
+        ]
+        msg = random.choice(blessing_messages)
+
+        await interaction.response.send_message(
+            f"{msg}\nYou now have **{user['pray']} prayer points!**"
+        )
+
+    
+    @app_commands.command(name="leaderboard", description="Top players by horsenncy.")
     async def leaderboard(self, interaction: discord.Interaction):
 
         users = state["users"]
@@ -239,7 +509,7 @@ class Economy(commands.Cog):
 
             name = member.display_name if member else f"User {uid}"
 
-            lines.append(f"**#{rank}** — {name}: **{balance} coins**")
+            lines.append(f"**#{rank}** — {name}: **{balance} horsenncy**")
             rank += 1
 
         await interaction.response.send_message(
@@ -381,13 +651,16 @@ class Economy(commands.Cog):
 
         crit = random.random() < 0.10
         final_reward = base_reward * (2 if crit else 1)
+        boost = get_pray_boost(user_id)
+        final_reward = int(final_reward * boost)
+
 
         if random.random() < 0.05:
             return await interaction.response.send_message("💨 You missed everything. Skill issue.")
 
         await update_balance(user_id, final_reward)
         await interaction.response.send_message(
-            f"🏹 You hunted a **{animal}** ({rarity}) and earned **{final_reward} coins!**"
+            f"🏹 You hunted a **{animal}** ({rarity}) and earned **{final_reward} horsenncy!**"
             + (" 💥 **CRITICAL HIT!**" if crit else "")
         )
     @app_commands.command(name="fish", description="Go fishing with expanded loot!")
@@ -526,9 +799,12 @@ class Economy(commands.Cog):
         if jackpot:
             value *= 5
 
+        boost = get_pray_boost(user_id)
+        value = int(value * boost)
         await update_balance(user_id, value)
+
         await interaction.response.send_message(
-            f"🎣 You caught **{fish}** ({rarity}) worth **{value} coins!**"
+            f"🎣 You caught **{fish}** ({rarity}) worth **{value} horsenncy!**"
             + (" 🎉 **JACKPOT CATCH! x5 VALUE!**" if jackpot else "")
         )
     @app_commands.command(name="battle", description="Fight monsters RPG-style!")
@@ -638,22 +914,27 @@ class Economy(commands.Cog):
             monster = random.choice(monsters)
 
         name, reward, win_rate = monster
+        boost = get_pray_boost(uid)
+        win_rate *= boost
+        win_rate = min(win_rate, 0.95)
+
         win = random.random() < win_rate
 
         crit = random.random() < 0.12  
 
         if win:
             final_reward = reward * (2 if crit else 1)
+            final_reward = int(final_reward * boost)
             await update_balance(uid, final_reward)
             await interaction.response.send_message(
-                f"⚔️ You defeated **{name}** and earned **{final_reward} coins!**"
+                f"⚔️ You defeated **{name}** and earned **{final_reward} horsenncy!**"
                 + (" 💥 **CRITICAL STRIKE!**" if crit else "")
             )
         else:
             loss = random.randint(25, 80)
             await update_balance(uid, -loss)
             await interaction.response.send_message(
-                f"💀 **{name}** destroyed you. You dropped **{loss} coins**."
+                f"💀 **{name}** destroyed you. You dropped **{loss} horsenncy**."
             )
     @app_commands.command(name="crime", description="Commit a risky crime!")
     async def crime(self, interaction: discord.Interaction):
@@ -688,7 +969,7 @@ class Economy(commands.Cog):
                 ("Broke into a warehouse", 130),
                 ("Hijacked a scooter", 30),
                 ("Ran an illegal raffle", 70),
-                ("Stole rare coins", 90),
+                ("Stole rare horsenncy", 90),
                 ("Scammed a streamer donation", 75),
                 ("Illegally siphoned gas", 65),
                 ("Cracked a safe", 160),
@@ -760,18 +1041,22 @@ class Economy(commands.Cog):
 
         success_rate = 0.45
         action, reward = random.choice(crimes)
+        boost = get_pray_boost(uid) 
+        reward = int(reward * boost)
 
         if random.random() < 0.02:
             reward *= 10
             await update_balance(uid, reward)
             return await interaction.response.send_message(
-                f"💰💰 **LEGENDARY HEIST!** You stole **{reward} coins!!!**"
+                f"💰💰 **LEGENDARY HEIST!** You stole **{reward} horsenncy!!!**"
             )
-
+        success_rate *= boost
+        success_rate = min(success_rate, 0.90)
+        
         if random.random() < success_rate:
             await update_balance(uid, reward)
             return await interaction.response.send_message(
-                f"🦹 You **{action}** and earned **{reward} coins!**"
+                f"🦹 You **{action}** and earned **{reward} horsenncy!**"
             )
         else:
             user = get_user(uid)
@@ -786,9 +1071,9 @@ class Economy(commands.Cog):
 
                 save_state()
 
-                msg = "🚨 Police caught you! They seized ALL your coins!"
+                msg = "🚨 Police caught you! They seized ALL your horsenncy!"
                 return await interaction.response.send_message(
-                    f"{msg} You lost **{loss} coins.**"
+                    f"{msg} You lost **{loss} horsenncy.**"
                 )
 
             else:
@@ -797,7 +1082,7 @@ class Economy(commands.Cog):
 
             await update_balance(uid, -loss)
             return await interaction.response.send_message(
-                f"{msg} You lost **{loss} coins.**"
+                f"{msg} You lost **{loss} horsenncy.**"
             )
 
 
@@ -809,29 +1094,30 @@ class Economy(commands.Cog):
         if bet <= 0:
             return await interaction.response.send_message("Bet must be positive.")
         if bet > balance:
-            return await interaction.response.send_message("You don't have enough coins!")
+            return await interaction.response.send_message("You don't have enough horsenncy!")
 
         icons = ["🍒", "🍋", "🍇", "⭐", "💎", "🔥"]
         result = [random.choice(icons) for _ in range(3)]
+        boost = get_pray_boost(uid)
 
         await interaction.response.defer()
 
         if len(set(result)) == 1:
-            reward = bet * 7
+            reward = int(bet * 7 * boost)
             multiplier = "🔥 **MYTHIC TRIPLE MATCH!**" if result[0] == "🔥" else "**TRIPLE MATCH!**"
         elif len(set(result)) == 2:
-            reward = int(bet * 2.5)
+            reward = int(bet * 2.5 * boost)
             multiplier = "**DOUBLE MATCH!**"
         else:
             reward = -bet
             await update_balance(uid, reward)
             return await interaction.followup.send(
-                f"🎰 {' '.join(result)} | ❌ Loss! You lost **{bet} coins.**"
+                f"🎰 {' '.join(result)} | ❌ Loss! You lost **{bet} horsenncy.**"
             )
 
         await update_balance(uid, reward)
         await interaction.followup.send(
-            f"🎰 {' '.join(result)} | {multiplier} You earned **{reward} coins!**"
+            f"🎰 {' '.join(result)} | {multiplier} You earned **{reward} horsenncy!**"
         )
     @app_commands.command(name="work", description="Work jobs with promotions & raises!")
     async def work(self, interaction: discord.Interaction):
@@ -972,7 +1258,7 @@ class Economy(commands.Cog):
         save_state()
 
         await interaction.response.send_message(
-            f"{job}: You earned **{reward} coins!**{promo}"
+            f"{job}: You earned **{reward} horsenncy!**{promo}"
         )
     @app_commands.command(name="shop", description="View the item shop & buy some desctructive things.")
     async def shop(self, interaction: discord.Interaction):
@@ -983,7 +1269,7 @@ class Economy(commands.Cog):
 
         lines = []
         for item_id, item in items.items():
-            lines.append(f"**{item['name']}** — {item['price']} coins\n`{item_id}`")
+            lines.append(f"**{item['name']}** — {item['price']} horsenncy\n`{item_id}`")
 
         await interaction.response.send_message(
             "🛍️ **Shop Items**\n\n" + "\n".join(lines)
@@ -1099,7 +1385,7 @@ class Economy(commands.Cog):
 
             await interaction.response.send_message(
                 f"🔴 **{interaction.user.display_name} pressed the Red Button of Death!**\n"
-                f"💰 Stole **{stolen} coins** from <@{chosen}>!"
+                f"💰 Stole **{stolen} horsenncy** from <@{chosen}>!"
             )
 
             inv[item_id] -= 1
@@ -1108,13 +1394,13 @@ class Economy(commands.Cog):
             outcome = random.randint(1, 3)
             if outcome == 1:
                 user["balance"] = 0
-                msg = "☠️ The potion exploded. You lost **ALL** your coins."
+                msg = "☠️ The potion exploded. You lost **ALL** your horsenncy."
             elif outcome == 2:
                 user["balance"] *= 2
-                msg = "✨ Your coins **doubled!**"
+                msg = "✨ Your horsenncy **doubled!**"
             else:
                 user["balance"] *= 3
-                msg = "💎 Your coins **tripled!**"
+                msg = "💎 Your horsenncy **tripled!**"
 
             await interaction.response.send_message(msg)
             inv[item_id] -= 1
@@ -1146,7 +1432,7 @@ class Economy(commands.Cog):
             user["balance"] += reward
             await interaction.response.send_message(
                 f"✨ You consumed the **Quantum Marshmallow** and temporarily existed in 14 dimensions.\n"
-                f"You earned **{reward} coins** from the experience."
+                f"You earned **{reward} horsenncy** from the experience."
             )
             inv[item_id] -= 1
 
@@ -1187,7 +1473,7 @@ class Economy(commands.Cog):
                 stolen = random.randint(0, 3000)
                 chosen_user["balance"] -= stolen
                 user["balance"] += stolen
-                msg = f"🐤 The **Cursed Duck** screamed at <@{chosen}> and stole **{stolen} coins** for you!"
+                msg = f"🐤 The **Cursed Duck** screamed at <@{chosen}> and stole **{stolen} horsenncy** for you!"
             else:
                 msg = "🐤 The Cursed Duck screamed at nobody. It felt awkward."
 
@@ -1199,7 +1485,7 @@ class Economy(commands.Cog):
             user["balance"] += reward
             await interaction.response.send_message(
                 f"🌱 You planted the **Pocket Dimension Seed** and opened a tiny universe.\n"
-                f"You looted **{reward} coins** from inside."
+                f"You looted **{reward} horsenncy** from inside."
             )
             inv[item_id] -= 1
 
@@ -1215,11 +1501,11 @@ class Economy(commands.Cog):
             if outcome == "good":
                 gain = random.randint(10, 5000)
                 user["balance"] += gain
-                msg = f"💾 The Glitched Coin duplicated itself! You earned **{gain} coins**!"
+                msg = f"💾 The Glitched Coin duplicated itself! You earned **{gain} horsenncy**!"
             elif outcome == "bad":
                 loss = random.randint(10, 100000)
                 user["balance"] -= loss
-                msg = f"⚠️ The Glitched Coin corrupted! You lost **{loss} coins**."
+                msg = f"⚠️ The Glitched Coin corrupted! You lost **{loss} horsenncy**."
             else:
                 msg = "🌀 The Glitched Coin flickered and did nothing. Nice."
 
@@ -1231,11 +1517,11 @@ class Economy(commands.Cog):
             if roll == 1:
                 gain = random.randint(0, 10000)
                 user["balance"] += gain
-                msg = f"🔮 A miracle! You gained **{gain} coins**!"
+                msg = f"🔮 A miracle! You gained **{gain} horsenncy**!"
             elif roll == 2:
                 loss = max(5000, user["balance"])
                 user["balance"] -= loss
-                msg = f"🐸 A frog materialized and stole **{loss} coins**."
+                msg = f"🐸 A frog materialized and stole **{loss} horsenncy**."
             else:
                 msg = "⭐ Nothing happened. Statistically the rarest outcome?"
 
@@ -1255,11 +1541,11 @@ class Economy(commands.Cog):
                 msg = "🥪 Chaos Sandwich rewrote your timeline. Your balance is now *random*. Yum!"
             elif mode == 2:
                 user["balance"] += 300
-                msg = "🥪 The sandwich spit out 300 coins. Yay!"
+                msg = "🥪 The sandwich spit out 300 horsenncy. Yay!"
             else:
                 loss = 5000
                 user["balance"] = max(0, user["balance"] - loss)
-                msg = f"🥪 The sandwich bit you. You dropped **{loss} coins**."
+                msg = f"🥪 The sandwich bit you. You dropped **{loss} horsenncy**."
 
             await interaction.response.send_message(msg)
             inv[item_id] -= 1
@@ -1275,7 +1561,7 @@ class Economy(commands.Cog):
             gain = random.randint(0, 3000)
             user["balance"] += gain
             await interaction.response.send_message(
-                f"🌈⚡ The crystal zaps you with pride energy.\nYou gained **{gain} coins**!"
+                f"🌈⚡ The crystal zaps you with pride energy.\nYou gained **{gain} horsenncy**!"
             )
             inv[item_id] -= 1
 
@@ -1292,14 +1578,14 @@ class Economy(commands.Cog):
                     stolen = max(chosen_user["balance"], 1500)
                     chosen_user["balance"] -= stolen
                     user["balance"] += stolen
-                    msg = f"🤖 Your Mechanical Gremlin stole **{stolen} coins** from <@{chosen}>!"
+                    msg = f"🤖 Your Mechanical Gremlin stole **{stolen} horsenncy** from <@{chosen}>!"
                 else:
                     msg = "🤖 The Gremlin tried to steal but found nobody."
 
             elif action == "eat":
                 loss = 1200
                 user["balance"] = max(0, user["balance"] - loss)
-                msg = f"🤖 The Gremlin malfunctioned and ate **{loss} coins**."
+                msg = f"🤖 The Gremlin malfunctioned and ate **{loss} horsenncy**."
 
             else:
                 msg = "🤖 The Gremlin danced enthusiastically. No effect."
@@ -1311,7 +1597,7 @@ class Economy(commands.Cog):
             reward = random.randint(0, 1000)
             user["balance"] += reward
             await interaction.response.send_message(
-                f"🦆✨ The Anti-Gravity Ducky floated away and dropped **{reward} coins** for you."
+                f"🦆✨ The Anti-Gravity Ducky floated away and dropped **{reward} horsenncy** for you."
             )
             inv[item_id] -= 1
 
@@ -1319,7 +1605,7 @@ class Economy(commands.Cog):
             gain = random.randint(0, 3000)
             user["balance"] += gain
             await interaction.response.send_message(
-                f"📜 You read the **Forgotten Scroll**.\nYou gained **{gain} coins** because knowledge is power."
+                f"📜 You read the **Forgotten Scroll**.\nYou gained **{gain} horsenncy** because knowledge is power."
             )
             inv[item_id] -= 1
 
@@ -1328,13 +1614,13 @@ class Economy(commands.Cog):
             if roll == 1:
                 gain = random.randint(0, 500)
                 user["balance"] += gain
-                msg = f"🍪 You ate the Ancient Snack. It tasted eternal. You earned **{gain} coins**."
+                msg = f"🍪 You ate the Ancient Snack. It tasted eternal. You earned **{gain} horsenncy**."
             elif roll == 2:
                 user["balance"] = max(0, user["balance"] - 500)
-                msg = "🍘 The snack turned to dust. You lost **500 coins**."
+                msg = "🍘 The snack turned to dust. You lost **500 horsenncy**."
             else:
                 user["balance"] += 50
-                msg = "🍪 Surprisingly tasty! You gained **50 coins**."
+                msg = "🍪 Surprisingly tasty! You gained **50 horsenncy**."
 
             await interaction.response.send_message(msg)
             inv[item_id] -= 1
@@ -1350,11 +1636,11 @@ class Economy(commands.Cog):
             roll = random.randint(1, 3)
             if roll == 1:
                 user["balance"] += 2000
-                msg = "🧊 The Cube granted you **2000 coins**."
+                msg = "🧊 The Cube granted you **2000 horsenncy**."
             elif roll == 2:
                 loss = 10000
                 user["balance"] = max(0, user["balance"] - loss)
-                msg = f"🧊 The Cube demanded tribute. You lost **{loss} coins**."
+                msg = f"🧊 The Cube demanded tribute. You lost **{loss} horsenncy**."
             else:
                 msg = "🧊 The Cube hums ominously. Nothing happens."
 
@@ -1370,7 +1656,7 @@ class Economy(commands.Cog):
         elif item_id == "paradox_clock":
             user["paradox_buff"] = (datetime.datetime.utcnow() + datetime.timedelta(hours=2)).isoformat()
             await interaction.response.send_message(
-                "⏰ Reality bends.\nYour next daily/work/battle gives **2× coins**!"
+                "⏰ Reality bends.\nYour next daily/work/battle gives **2× horsenncy**!"
             )
             inv[item_id] -= 1
 
