@@ -68,19 +68,19 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
+          git fetch origin main
 
-          git fetch origin
-          git pull --rebase origin main
+          git reset --soft origin/main
+
           git add state.json roast_memory.json || true
 
           if ! git diff --cached --quiet; then
             git commit -m "Update bot state"
+            git push origin HEAD:main
           else
             echo "No state changes to commit."
           fi
 
-          # Push safely without rewriting history
-          git push origin main
 
 
 
