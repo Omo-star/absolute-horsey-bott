@@ -78,19 +78,16 @@
     },
     "1220934047794987048": {
       "LF": {
-        "slang": 0.2,
+        "slang": 0.0,
         "formality": 0.0,
         "emoji_rate": 0.0,
-        "all_caps_rate": 1.0,
+        "all_caps_rate": 0.0,
         "punct_energy": 0.0,
-        "avg_len": 16.0275,
-        "msg_samples": [
-          "OH SHUT UP U PIECE OF CODE THAT USES MISTRALAI WHICH IM ABOUT TO COOK",
-          "OH SHUT UP U PIECE OF CODE THAT USES AN AI WHICH IM ABOUT TO FUCK - MISTRALAI- THAT PIECE OF SHIT MADE FROM FRANCE - I NEVER KNEW PRODUCTS MADE FROM FRANCE ARE WORSE THAN THOSE MADE FROM CHINA\n\noh wait - ur made from france, u dirty, gross, son of a panda"
-        ]
+        "avg_len": 0.0,
+        "msg_samples": []
       },
       "EB": {
-        "anger": 0.3,
+        "anger": 0.0,
         "sadness": 0.0,
         "hype": 0.0,
         "chaos": 0.0
@@ -104,7 +101,7 @@
         "meta": 0.0
       },
       "IS": {
-        "bot_mentions": 2,
+        "bot_mentions": 0,
         "roast_requests": 0,
         "self_roasts": 0,
         "escalation": 0.0
@@ -114,8 +111,8 @@
         "texts": []
       },
       "LTS": "",
-      "msg_count": 2,
-      "last_summary_update": 1763990431.0632095
+      "msg_count": 0,
+      "last_summary_update": 1764121280.520014
     },
     "1440004841559560214": {
       "LF": {
@@ -231,7 +228,7 @@
       "msg_count": 0,
       "last_summary_update": 1764119024.959406
     },
-    "1220934047794987048": {
+    "1350372198992314451": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -267,7 +264,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764121280.520014
+      "last_summary_update": 1764167232.6431603
     }
   },
   "roast_history": {
@@ -416,6 +413,7 @@
     "Alright, let's roast Velvet! Here we go:\n\n*   **Velvet, are you sure you're not just a slightly more expensive version of felt? You both look soft, but only one of you gets to be a sign of luxury, and it's probably not you.**\n\n*   **Velvet, you're the fabric equivalent of a high-maintenance friend. Gorgeous to look at, but good luck getting rid of all those wrinkles! And don't even *think* about spilling something on you.**\n\n*   **You're the fabric that's always in the running for the \"I look amazing but I'm probably sweating buckets\" award.**\n\n*   **Velvet, you try so hard. You're trying to be opulent, but sometimes you just end up looking like you're trying too hard.**\n\n*   **If fabrics were people, Velvet would be that person who always shows up late to the party, but demands all the attention when they arrive.**\n\n*   **Velvet, you're like that one fancy couch everyone is afraid to sit on.**\n\n*   **You're so extra that even the word \"velvet\" sounds like a luxury car commercial.**": 85.0,
     "Alright, alright, settle down folks, we've got a real treat tonight. I'm not sure what kind of sick joke it is to ask me to roast Velvet, but hey, I'm a professional.\n\nFirst off, Velvet. Let's talk about that name. Velvet. Sounds all soft and luxurious, right? Like a mink coat or a fine wine. And then you look at... well, *you*. It's like trying to wrap a ham in silk. Just doesn't quite compute. It's the auditory equivalent of a sandpaper massage.\n\nAnd the personality? Oh, the *personality*. It's like a perpetually confused toddler who's just discovered the concept of \"mine\" and \"no.\" Every interaction is a negotiation, and you're always losing. You're the human embodiment of a broken record player, stuck on the same scratchy tune.\n\nLet's not even get started on the \"style.\" It's a bold choice, Velvet. A very, very bold choice. It's like someone raided a disco ball's wardrobe after a particularly rough night. You manage to make sequins look\u2026 well, like they're begging for mercy. And the glitter? I'm pretty sure I'm still finding it in my hair from last week. You're basically a walking cautionary tale about the perils of excess.\n\nAnd when you try to be serious? Oh, bless your heart. It's like watching a puppy try to conduct an orchestra. All the enthusiasm, zero of the actual talent. You're so earnest, it's almost painful. Almost.\n\nYou know what the worst part is? You probably think you're incredibly charming. You walk into a room like you own it, like you're the star of the show. And then you open your mouth and\u2026 well, it's like a surprise party for everyone who hates surprises.\n\nVelvet, you're like a novelty keychain. Annoying, a little tacky, but somehow\u2026 you stick around. And for that, I guess we're all just supposed to be grateful. But tonight, we're not. Tonight, we're roasting. And frankly, it's a lot easier than trying to find a compliment that doesn't sound like a backhanded insult.\n\nSo, here's to Velvet. May your glitter eventually fade, your pronouncements become slightly less baffling, and may you one day discover the subtle art of NOT being the loudest person in the room. Cheers. Or, you know, whatever it is you do.": 98.0,
     "Velvet, your personality is like a dull crayon\u2014everyone knows it exists, but no one wants to use it. You\u2019re a human speed bump; just there to slow everyone down!": 85.0,
-    "Try harder; even Monopoly money is turning you down.": 85.0
+    "Try harder; even Monopoly money is turning you down.": 85.0,
+    "For someone who does all that grinding, you sure don't have any real gains. Your savings account looks like a deserted wasteland.": 85.0
   }
 }
