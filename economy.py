@@ -94,8 +94,14 @@ def get_user(uid: int):
             "pray": 0,
             "last_pray": None,
         }
-        save_state() 
-    return state["users"][uid]
+        save_state()
+
+    user = state["users"][uid]
+    user.setdefault("pray", 0)
+    user.setdefault("last_pray", None)
+
+    return user
+
 
 async def get_balance(user_id: int) -> int:
     return get_user(user_id)["balance"]
