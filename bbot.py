@@ -274,7 +274,6 @@ GITHUB_API_KEY = (
     or ""
 )
 
-# OpenAI client using secret named OPENAI
 openai_client = None
 
 # hopeful fix? dummy key for OpenAI client libs that expect this env var
@@ -310,6 +309,38 @@ openrouter_client = OpenAI(
         "X-Title": "Discord Roast Bot",
     },
 )
+def compute_user_spice(uid: int) -> float:
+    mem = get_user_memory(uid)
+
+    hp = mem["HP"]
+    hp_score = (
+        hp["dark"] * 1.8 +
+        hp["mean"] * 1.5 +
+        hp["petty"] * 1.2 +
+        hp["simple"] * 0.5 +
+        hp["goofy"] * 0.3 +
+        hp["meta"] * 0.4
+    )
+
+    eb = mem["EB"]
+    eb_score = (
+        eb["anger"] * 1.2 +
+        eb["hype"] * 0.8 +
+        eb["chaos"] * 0.6
+    )
+
+    isec = mem["IS"]
+    is_score = (
+        isec["roast_requests"] * 0.7 +
+        isec["escalation"] * 2.0 +
+        isec["self_roasts"] * 1.0
+    )
+
+    total = hp_score + eb_score + is_score
+
+    spice = min(100, max(0, total))
+
+    return float(spice)
 
 GROQ_API_KEY = os.getenv("GROQ")
 groq_client = Groq(api_key=os.getenv("GROQ"))
@@ -551,13 +582,15 @@ def calculate_spiciness(text: str) -> float:
 
 
 async def fast_spice(text: str) -> float:
-    if text in spice_cache:
-        return spice_cache[text]
-
     score = await ai_spice(text)
-    spice_cache[text] = score
-    save_roast_memory()
-    return score
+
+    if score is not None and score > 0:
+        spice_cache[text] = score
+        save_roast_memory()
+
+    return score if score is not None else 0.0
+
+
 
 async def ai_spice(text: str) -> float:
     score = await spice_groq(text)
@@ -595,7 +628,7 @@ async def spice_groq(text: str):
 
         resp = await asyncio.wait_for(loop.run_in_executor(None, call), timeout=4)
         raw = resp.choices[0].message.content.strip()
-
+        log(f"[SPICE:GROQ RAW] '{raw}'")
         m = re.search(r"\d{1,3}", raw)
         if m:
             return float(m.group())
@@ -1060,6 +1093,10 @@ async def embed_text(text):
     except asyncio.TimeoutError:
         return None
 
+def enforce_short_roast(text: str) -> str:
+    sentences = re.split(r'(?<=[.!?]) +', text)
+    short = " ".join(sentences[:3]).strip()
+    return short[:1500] 
 
 
 async def bot_roast(msg, uid, mode):
@@ -1072,8 +1109,8 @@ async def bot_roast(msg, uid, mode):
 
     try:
         log("[ROAST] Calculating user_spice...")
-        user_spice = await fast_spice(msg)
-        log(f"[ROAST] user_spice={user_spice}")
+        user_spice = compute_user_spice(uid)
+        log(f"[ROAST] user_spice (dynamic) = {user_spice}")
 
         if mode == "fast":
             candidates = await gather_api_roasts(msg)
@@ -1107,11 +1144,23 @@ async def bot_roast(msg, uid, mode):
             if not llm_cands:
                 return "All LLMs failed. My circuits are fried."
 
-            spices = await asyncio.gather(*(fast_spice(c["text"]) for c in llm_cands))
+            def length_penalty(text):
+                s = re.split(r'(?<=[.!?]) +', text)
+                return len(s)
+
+            penalized = []
+            for c in llm_cands:
+                s_len = length_penalty(c["text"])
+                if s_len > 3:
+                    penalized.append(0.0)
+                else:
+                    penalized.append(await fast_spice(c["text"]))
+            spices = penalized
+
             best_idx = max(range(len(llm_cands)), key=lambda i: spices[i])
             best = llm_cands[best_idx]
             log(f"[DEEP] SELECTED from {best['source']} | {best['text']}")
-            return best["text"]
+            return enforce_short_roast(best["text"])
 
         elif mode == "adjustable":
             api_cands = await gather_api_roasts(msg)
@@ -1142,7 +1191,7 @@ async def bot_roast(msg, uid, mode):
 
             best = scored[0][2]
             log(f"[ADJUST] SELECTED from {best['source']} | {best['text']}")
-            return best["text"]
+            return enforce_short_roast(best["text"])
 
         else:
             return "Pick a roast mode first with !roastmode fast, deep, or adjustable."
@@ -1310,6 +1359,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
