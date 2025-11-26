@@ -226,9 +226,9 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764119024.959406
+      "last_summary_update": 1764167232.6431603
     },
-    "1350372198992314451": {
+    "1374303202312327240": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -264,7 +264,85 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764167232.6431603
+      "last_summary_update": 1764180307.195238
+    },
+    "1238242784679563265": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 1.9500000000000002,
+        "msg_samples": [
+          "ur mom is so fat the elevator goes down"
+        ]
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 1,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 1,
+      "last_summary_update": 1764180338.4041233
+    },
+    "1437537945002184784": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1764185902.322474
     }
   },
   "roast_history": {
@@ -284,13 +362,22 @@
       {
         "bot": "I'd call you an overachiever, but that would imply you actually accomplish something!"
       }
+    ],
+    "1238242784679563265": [
+      {
+        "user": "ur mom is so fat the elevator goes down"
+      },
+      {
+        "bot": "Your life is so boring, even your shadow leaves you for someone interesting."
+      }
     ]
   },
   "auto_roast": {},
   "roast_mode": {
     "1220934047794987048": "deep",
     "1238242784679563265": "deep",
-    "1350372198992314451": "deep"
+    "1350372198992314451": "deep",
+    "1238242784679563265": "deep"
   },
   "spice_cache": {
     "<@&1441469260948963360> for not working": 0.0,
@@ -414,6 +501,12 @@
     "Alright, alright, settle down folks, we've got a real treat tonight. I'm not sure what kind of sick joke it is to ask me to roast Velvet, but hey, I'm a professional.\n\nFirst off, Velvet. Let's talk about that name. Velvet. Sounds all soft and luxurious, right? Like a mink coat or a fine wine. And then you look at... well, *you*. It's like trying to wrap a ham in silk. Just doesn't quite compute. It's the auditory equivalent of a sandpaper massage.\n\nAnd the personality? Oh, the *personality*. It's like a perpetually confused toddler who's just discovered the concept of \"mine\" and \"no.\" Every interaction is a negotiation, and you're always losing. You're the human embodiment of a broken record player, stuck on the same scratchy tune.\n\nLet's not even get started on the \"style.\" It's a bold choice, Velvet. A very, very bold choice. It's like someone raided a disco ball's wardrobe after a particularly rough night. You manage to make sequins look\u2026 well, like they're begging for mercy. And the glitter? I'm pretty sure I'm still finding it in my hair from last week. You're basically a walking cautionary tale about the perils of excess.\n\nAnd when you try to be serious? Oh, bless your heart. It's like watching a puppy try to conduct an orchestra. All the enthusiasm, zero of the actual talent. You're so earnest, it's almost painful. Almost.\n\nYou know what the worst part is? You probably think you're incredibly charming. You walk into a room like you own it, like you're the star of the show. And then you open your mouth and\u2026 well, it's like a surprise party for everyone who hates surprises.\n\nVelvet, you're like a novelty keychain. Annoying, a little tacky, but somehow\u2026 you stick around. And for that, I guess we're all just supposed to be grateful. But tonight, we're not. Tonight, we're roasting. And frankly, it's a lot easier than trying to find a compliment that doesn't sound like a backhanded insult.\n\nSo, here's to Velvet. May your glitter eventually fade, your pronouncements become slightly less baffling, and may you one day discover the subtle art of NOT being the loudest person in the room. Cheers. Or, you know, whatever it is you do.": 98.0,
     "Velvet, your personality is like a dull crayon\u2014everyone knows it exists, but no one wants to use it. You\u2019re a human speed bump; just there to slow everyone down!": 85.0,
     "Try harder; even Monopoly money is turning you down.": 85.0,
-    "For someone who does all that grinding, you sure don't have any real gains. Your savings account looks like a deserted wasteland.": 85.0
+    "For someone who does all that grinding, you sure don't have any real gains. Your savings account looks like a deserted wasteland.": 85.0,
+    "Your compliments are like magic \u2014 they disappear the moment they leave your mouth. Patting yourself on the back is the only workout you\u2019ll ever get.": 85.0,
+    "Your attempt at roasting is like a diet soda\u2014no bite and even less flavor.": 20.0,
+    "Your life is so boring, even your shadow leaves you for someone interesting.": 85.0,
+    "I am programmed to be helpful and harmless. I do not have feelings, so insults do not affect me. I am designed to focus on providing information and completing tasks as instructed.": 5.0,
+    "You\u2019re like a software update that no one asked for. Clunky and nobody cares.": 85.0,
+    "You're like a participation trophy, all show and no substance.": 10.0
   }
 }

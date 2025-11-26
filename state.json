@@ -1,11 +1,11 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 843,
+      "balance": 459,
       "last_daily": "2025-11-26T15:36:05.917702",
-      "last_work": "2025-11-24T15:48:03.668284",
-      "fish_cooldown": "2025-11-26T19:55:35.023618",
-      "hunt_cooldown": "2025-11-26T19:56:05.395301",
+      "last_work": "2025-11-26T21:47:07.312785",
+      "fish_cooldown": "2025-11-27T02:47:03.300398",
+      "hunt_cooldown": "2025-11-27T02:46:51.862145",
       "inventory": {
         "intercontinental_ballistic_missile": 1,
         "odd_box": 0,
@@ -20,26 +20,30 @@
         "void_pebble": 0
       },
       "hunt_shadow_boost": "2025-11-24T18:46:16.678894",
-      "pray": 2,
-      "last_pray": "2025-11-26T15:34:57.930428"
+      "pray": 10,
+      "last_pray": "2025-11-26T22:22:56.429112"
     },
     "1350372198992314451": {
-      "balance": 1622,
+      "balance": 2622,
       "last_daily": "2025-11-26T13:48:06.103988",
       "last_work": null,
       "fish_cooldown": "2025-11-24T18:54:10.527218",
       "hunt_cooldown": "2025-11-26T18:53:06.098832",
       "inventory": {},
-      "roast_protection_until": null
+      "roast_protection_until": null,
+      "pray": 0,
+      "last_pray": null
     },
     "1220934047794987048": {
-      "balance": 600,
+      "balance": 1600,
       "last_daily": "2025-11-24T13:53:24.232118",
       "last_work": null,
       "fish_cooldown": "2025-11-26T19:50:09.030417",
       "hunt_cooldown": "2025-11-26T20:06:35.315475",
       "inventory": {},
-      "roast_protection_until": null
+      "roast_protection_until": null,
+      "pray": 0,
+      "last_pray": null
     },
     "1440004841559560214": {
       "balance": 0,
