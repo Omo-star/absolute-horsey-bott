@@ -304,7 +304,6 @@ class Economy(commands.Cog):
 
                 self.clear_items()
 
-
                 await self.update_embed(
                     button_inter,
                     state_text="🃏 Revealing dealer's hand…",
@@ -312,11 +311,12 @@ class Economy(commands.Cog):
                     keep_view=True
                 )
 
+                msg = button_inter.message
+
                 await asyncio.sleep(0.4)
                 embed_mid = make_embed(self.phase, "🃏 The card begins to flip…", reveal_dealer=False)
                 self.phase += 1
-                await button_inter.message.edit(embed=embed_mid, view=self)
-
+                await msg.edit(embed=embed_mid, view=self)
 
                 await asyncio.sleep(0.4)
 
@@ -338,7 +338,9 @@ class Economy(commands.Cog):
 
                 final_embed = make_embed(self.phase, result_text, reveal_dealer=True)
                 self.phase += 1
-                await button_inter.message.edit(embed=final_embed, view=None)
+                await msg.edit(embed=final_embed, view=None)
+
+
 
         view = BlackjackView()
         start_embed = make_embed(phase=0, game_state="🕐 *Game in progress… choose **Hit** or **Stand** below.*", reveal_dealer=False)
