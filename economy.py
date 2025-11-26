@@ -1095,7 +1095,7 @@ class Economy(commands.Cog):
             )
 
 
-    @app_commands.command(name="slots", description="Spin the enhanced slot machine!")
+    @app_commands.command(name="slots", description="Spin the ultra deluxe 3x3 slot machine!")
     async def slots(self, interaction: discord.Interaction, bet: int):
         uid = interaction.user.id
         balance = await get_balance(uid)
@@ -1106,28 +1106,169 @@ class Economy(commands.Cog):
             return await interaction.response.send_message("You don't have enough horsenncy!")
 
         icons = ["🍒", "🍋", "🍇", "⭐", "💎", "🔥"]
-        result = [random.choice(icons) for _ in range(3)]
         boost = get_pray_boost(uid)
 
         await interaction.response.defer()
 
-        if len(set(result)) == 1:
-            reward = int(bet * 7 * boost)
-            multiplier = "🔥 **MYTHIC TRIPLE MATCH!**" if result[0] == "🔥" else "**TRIPLE MATCH!**"
-        elif len(set(result)) == 2:
-            reward = int(bet * 2.5 * boost)
-            multiplier = "**DOUBLE MATCH!**"
-        else:
-            reward = -bet
-            await update_balance(uid, reward)
-            return await interaction.followup.send(
-                f"🎰 {' '.join(result)} | ❌ Loss! You lost **{bet} horsenncy.**"
-            )
+        grid = [[random.choice(icons) for _ in range(3)] for _ in range(3)]
 
-        await update_balance(uid, reward)
-        await interaction.followup.send(
-            f"🎰 {' '.join(result)} | {multiplier} You earned **{reward} horsenncy!**"
+        gradients = [
+            "🟪🟦🟩🟨🟥",
+            "🟥🟧🟨🟩🟦",
+            "🟦🟩🟨🟧🟥",
+        ]
+
+        def build_grid_display(reveal_cols: int):
+            lines = []
+            for r in range(3):
+                row_symbols = []
+                for c in range(3):
+                    if c <= reveal_cols:
+                        row_symbols.append(grid[r][c])
+                    else:
+                        row_symbols.append("⬛")
+                lines.append(" | ".join(row_symbols))
+            return "┌───────────────┐\n" + "\n".join(f"│ {line} │" for line in lines) + "\n└───────────────┘"
+
+        async def edit_spin_state(msg, step: int, reveal_cols: int, status: str):
+            gradient = gradients[step % len(gradients)]
+            grid_text = build_grid_display(reveal_cols)
+            desc = (
+                f"{gradient}\n"
+                f"**Bet:** {bet} horsenncy\n\n"
+                f"🎰 **Slots**\n"
+                f"```{grid_text}```\n"
+                f"{gradient}\n\n"
+                f"{status}"
+            )
+            embed = discord.Embed(
+                title="🎰 Ultra Slots",
+                description=desc,
+                color=discord.Color.purple()
+            )
+            await msg.edit(embed=embed)
+
+        gradient0 = gradients[0]
+        start_grid = build_grid_display(-1)
+        start_desc = (
+            f"{gradient0}\n"
+            f"**Bet:** {bet} horsenncy\n\n"
+            f"🎰 **Slots**\n"
+            f"```{start_grid}```\n"
+            f"{gradient0}\n\n"
+            f"Pulling the lever…"
         )
+        start_embed = discord.Embed(
+            title="🎰 Ultra Slots",
+            description=start_desc,
+            color=discord.Color.purple()
+        )
+        msg = await interaction.followup.send(embed=start_embed, wait=True)
+
+        await asyncio.sleep(0.4)
+        await edit_spin_state(msg, 0, 0, "Reel 1 is spinning violently…")
+        await asyncio.sleep(0.5)
+        await edit_spin_state(msg, 1, 1, "Reel 2 is trying to escape reality…")
+        await asyncio.sleep(0.5)
+        await edit_spin_state(msg, 2, 2, "Final reel locking in your fate…")
+        await asyncio.sleep(0.5)
+
+        middle_row = grid[1]
+        cols = [[grid[r][c] for r in range(3)] for c in range(3)]
+        diag1 = [grid[i][i] for i in range(3)]
+        diag2 = [grid[i][2 - i] for i in range(3)]
+
+        reward = 0
+        lines_hit = []
+
+        def all_same(seq):
+            return seq[0] == seq[1] == seq[2]
+
+        god_event = False
+        if random.random() < 0.004:
+            god_event = True
+            reward = int(bet * 40 * boost)
+            lines_hit.append("🌌 **HORSEY GOD JACKPOT x40!**")
+
+        if not god_event:
+            if all_same(middle_row):
+                sym = middle_row[0]
+                if sym == "🔥":
+                    reward = int(bet * 15 * boost)
+                    lines_hit.append("🔥 **MYTHIC BLAZING TRIPLE (middle row) x15!**")
+                elif sym == "💎":
+                    reward = int(bet * 10 * boost)
+                    lines_hit.append("💎 **ULTRA DIAMOND TRIPLE (middle row) x10!**")
+                else:
+                    reward = int(bet * 6 * boost)
+                    lines_hit.append("✨ **Middle Row Triple Match x6!**")
+
+            if reward == 0:
+                base_multi = 0
+
+                for idx, col in enumerate(cols):
+                    if all_same(col):
+                        sym = col[0]
+                        if sym == "🔥":
+                            base_multi = max(base_multi, 8)
+                            lines_hit.append(f"🔥 Column {idx+1} triple x8!")
+                        elif sym == "💎":
+                            base_multi = max(base_multi, 6)
+                            lines_hit.append(f"💎 Column {idx+1} triple x6!")
+                        else:
+                            base_multi = max(base_multi, 4)
+                            lines_hit.append(f"Column {idx+1} triple x4!")
+
+                for name, diag in [("↘", diag1), ("↙", diag2)]:
+                    if all_same(diag):
+                        sym = diag[0]
+                        if sym == "🔥":
+                            base_multi = max(base_multi, 10)
+                            lines_hit.append(f"🔥 Diagonal {name} triple x10!")
+                        elif sym == "💎":
+                            base_multi = max(base_multi, 8)
+                            lines_hit.append(f"💎 Diagonal {name} triple x8!")
+                        else:
+                            base_multi = max(base_multi, 5)
+                            lines_hit.append(f"Diagonal {name} triple x5!")
+
+                if base_multi > 0:
+                    reward = int(bet * base_multi * boost)
+
+        if reward <= 0 and not god_event:
+            await update_balance(uid, -bet)
+            final_status = f"❌ **No winning lines.** You lost **{bet} horsenncy.**"
+        else:
+            await update_balance(uid, reward)
+            if god_event:
+                final_status = (
+                    f"🌌 **HORSEY GOD INTERVENTION!**\n"
+                    f"You are blessed with **{reward} horsenncy!**"
+                )
+            else:
+                lines_text = "\n".join(lines_hit) if lines_hit else "Somehow you won but I forgot why."
+                final_status = (
+                    f"{lines_text}\n\n"
+                    f"💰 You earned **{reward} horsenncy!**"
+                )
+
+        final_grid = build_grid_display(2)
+        gradient_final = gradients[random.randint(0, len(gradients) - 1)]
+        final_desc = (
+            f"{gradient_final}\n"
+            f"**Bet:** {bet} horsenncy\n\n"
+            f"🎰 **SLOTS: Final Result**\n"
+            f"```{final_grid}```\n"
+            f"{gradient_final}\n\n"
+            f"{final_status}"
+        )
+        final_embed = discord.Embed(
+            title="🎰 SLOTS: Result",
+            description=final_desc,
+            color=discord.Color.purple()
+        )
+        await msg.edit(embed=final_embed)
+
     @app_commands.command(name="work", description="Work jobs with promotions & raises!")
     async def work(self, interaction: discord.Interaction):
         uid = interaction.user.id
