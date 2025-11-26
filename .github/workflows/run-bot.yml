@@ -48,21 +48,7 @@ jobs:
           timeout 21000 python -u bbot.py
           echo "Bot run complete."
 
-      - name: Commit bot state
-        if: always()
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          git add state.json roast_memory.json || true
-
-          if ! git diff --cached --quiet; then
-            git commit -m "Update bot state"
-          else
-            echo "No state changes to commit."
-          fi
-
-      - name: Commit bot state
+      - name: Commit & Push bot state
         if: always()
         run: |
           git config user.name "github-actions"
@@ -77,10 +63,5 @@ jobs:
             git commit -m "Update bot state"
             git push origin main
           else
-            echo "No changes to commit."
+            echo "No state changes to commit."
           fi
-
-
-
-
-
