@@ -62,24 +62,24 @@ jobs:
             echo "No state changes to commit."
           fi
 
-      - name: Push changes
+      - name: Commit bot state
         if: always()
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
           git fetch origin main
-
-          git reset --soft origin/main
+          git pull origin main --strategy-option theirs
 
           git add state.json roast_memory.json || true
 
           if ! git diff --cached --quiet; then
             git commit -m "Update bot state"
-            git push origin HEAD:main
+            git push origin main
           else
-            echo "No state changes to commit."
+            echo "No changes to commit."
           fi
+
 
 
 
