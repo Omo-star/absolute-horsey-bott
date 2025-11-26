@@ -1173,7 +1173,6 @@ class Economy(commands.Cog):
         await edit_spin_state(msg, 2, 2, "Final reel locking in your fate…")
         await asyncio.sleep(0.5)
 
-        middle_row = grid[1]
         cols = [[grid[r][c] for r in range(3)] for c in range(3)]
         diag1 = [grid[i][i] for i in range(3)]
         diag2 = [grid[i][2 - i] for i in range(3)]
@@ -1191,17 +1190,18 @@ class Economy(commands.Cog):
             lines_hit.append("🌌 **HORSEY GOD JACKPOT x40!**")
 
         if not god_event:
-            if all_same(middle_row):
-                sym = middle_row[0]
-                if sym == "🔥":
-                    reward = int(bet * 15 * boost)
-                    lines_hit.append("🔥 **MYTHIC BLAZING TRIPLE (middle row) x15!**")
-                elif sym == "💎":
-                    reward = int(bet * 10 * boost)
-                    lines_hit.append("💎 **ULTRA DIAMOND TRIPLE (middle row) x10!**")
-                else:
-                    reward = int(bet * 6 * boost)
-                    lines_hit.append("✨ **Middle Row Triple Match x6!**")
+            for idx, row in enumerate(grid):
+                if all_same(row):
+                    sym = row[0]
+                    if sym == "🔥":
+                        reward = int(bet * 15 * boost)
+                        lines_hit.append(f"🔥 **Mythic Blazing Triple (row {idx+1}) x15!**")
+                    elif sym == "💎":
+                        reward = int(bet * 10 * boost)
+                        lines_hit.append(f"💎 **Ultra Diamond Triple (row {idx+1}) x10!**")
+                    else:
+                        reward = int(bet * 6 * boost)
+                        lines_hit.append(f"✨ **Row {idx+1} Triple Match x6!**")
 
             if reward == 0:
                 base_multi = 0
