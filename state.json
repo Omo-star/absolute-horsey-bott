@@ -1,11 +1,11 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 1900,
+      "balance": 2074,
       "last_daily": "2025-11-23T20:41:39.109311",
       "last_work": "2025-11-24T15:48:03.668284",
-      "fish_cooldown": "2025-11-24T18:53:58.085329",
-      "hunt_cooldown": "2025-11-24T18:53:11.946745",
+      "fish_cooldown": "2025-11-26T06:27:08.179457",
+      "hunt_cooldown": "2025-11-26T06:26:58.397980",
       "inventory": {
         "intercontinental_ballistic_missile": 1,
         "odd_box": 0,
@@ -31,11 +31,11 @@
       "roast_protection_until": null
     },
     "1220934047794987048": {
-      "balance": 0,
+      "balance": 1500,
       "last_daily": "2025-11-24T13:53:24.232118",
       "last_work": null,
-      "fish_cooldown": null,
-      "hunt_cooldown": null,
+      "fish_cooldown": "2025-11-26T07:05:50.544064",
+      "hunt_cooldown": "2025-11-26T06:26:45.598873",
       "inventory": {},
       "roast_protection_until": null
     },
