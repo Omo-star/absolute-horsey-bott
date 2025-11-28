@@ -93,12 +93,14 @@ def get_user(uid: int):
             "roast_protection_until": None,
             "pray": 0,
             "last_pray": None,
+            "codepad": {}
         }
         save_state()
 
     user = state["users"][uid]
     user.setdefault("pray", 0)
     user.setdefault("last_pray", None)
+    user.setdefault("codepad", None)
 
     return user
 
