@@ -1,11 +1,11 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 4191,
+      "balance": 5094,
       "last_daily": "2025-11-27T21:10:31.094705",
-      "last_work": "2025-11-27T21:10:46.237258",
-      "fish_cooldown": "2025-11-28T02:10:50.355472",
-      "hunt_cooldown": "2025-11-28T02:11:09.802085",
+      "last_work": "2025-11-28T13:21:32.277452",
+      "fish_cooldown": "2025-11-28T18:21:00.439099",
+      "hunt_cooldown": "2025-11-28T18:21:27.589584",
       "inventory": {
         "intercontinental_ballistic_missile": 1,
         "odd_box": 0,
@@ -160,7 +160,7 @@
   },
   "codepad": {
     "1238242784679563265": {
-      "code.py": "print(\"hello world\")"
+      "code.py": "print(\"Yes, that is my PFP!\")"
     }
   }
 }
