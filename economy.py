@@ -530,69 +530,70 @@ class Economy(commands.Cog):
             "🏆 | **Top 10 Richest Users**\n" + "\n".join(lines)
         )
     @app_commands.command(name="team", description="Manage your battle team.")
-	@app_commands.describe(
-		action="add, remove, or list",
-		index="Index of the animal to add/remove (use /team list first)"
-	)
-	async def team(self, interaction: discord.Interaction, action: str, index: int = None):
-		uid = interaction.user.id
-		user = get_user(uid)
+    @app_commands.describe(
+        action="add, remove, or list",
+        index="Index of the animal to add/remove (use /team list first)"
+    )
+    async def team(self, interaction: discord.Interaction, action: str, index: int = None):
+        uid = interaction.user.id
+        user = get_user(uid)
 
-		action = action.lower()
-		owned = user.setdefault("owned_animals", [])
-		team = user.setdefault("team", [])
+        action = action.lower()
+        owned = user.setdefault("owned_animals", [])
+        team = user.setdefault("team", [])
 
-		if action not in ["add", "remove", "list"]:
-			return await interaction.response.send_message("❌ Invalid action. Use: add / remove / list")
+        if action not in ["add", "remove", "list"]:
+            return await interaction.response.send_message("❌ Invalid action. Use: add / remove / list")
 
-		if action == "list":
-			if not owned:
-				return await interaction.response.send_message("📭 You own no animals yet. Hunt some first!")
+        if action == "list":
+            if not owned:
+                return await interaction.response.send_message("📭 You own no animals yet. Hunt some first!")
 
-			msg = "😼 **Your Owned Animals**\n"
-			for i, a in enumerate(owned):
-				msg += f"`{i}` — {a['name']} ({a['rarity']}, {a['strength']} strength)\n"
+            msg = "😼 **Your Owned Animals**\n"
+            for i, a in enumerate(owned):
+                msg += f"`{i}` — {a['name']} ({a['rarity']}, {a['strength']} strength)\n"
 
-			msg += "\n🛡 **Your Team (max 8)**\n"
-			if team:
-				for t in team:
-					msg += f"- {t['name']} ({t['rarity']}, {t['strength']} strength)\n"
-			else:
-				msg += "*Your team is empty.*"
+            msg += "\n🛡 **Your Team (max 8)**\n"
+            if team:
+                for t in team:
+                    msg += f"- {t['name']} ({t['rarity']}, {t['strength']} strength)\n"
+            else:
+                msg += "*Your team is empty.*"
 
-			return await interaction.response.send_message(msg)
+            return await interaction.response.send_message(msg)
 
-		if action == "add":
-			if index is None:
-				return await interaction.response.send_message("Specify the animal index.")
+        if action == "add":
+            if index is None:
+                return await interaction.response.send_message("Specify the animal index.")
 
-			if index < 0 or index >= len(owned):
-				return await interaction.response.send_message("Invalid index.")
+            if index < 0 or index >= len(owned):
+                return await interaction.response.send_message("Invalid index.")
 
-			if len(team) >= 8:
-				return await interaction.response.send_message("❌ Your team is full (8 animals max).")
+            if len(team) >= 8:
+                return await interaction.response.send_message("❌ Your team is full (8 animals max).")
 
-			animal = owned[index]
-			team.append(animal)
-			save_state()
+            animal = owned[index]
+            team.append(animal)
+            save_state()
 
-			return await interaction.response.send_message(
-				f"✔️ **{animal['name']}** has been added to your team!"
-			)
+            return await interaction.response.send_message(
+                f"✔️ **{animal['name']}** has been added to your team!"
+            )
 
-		if action == "remove":
-			if index is None:
-				return await interaction.response.send_message("Specify the team index.")
+        if action == "remove":
+            if index is None:
+                return await interaction.response.send_message("Specify the team index.")
 
-			if index < 0 or index >= len(team):
-				return await interaction.response.send_message("Invalid team index.")
+            if index < 0 or index >= len(team):
+                return await interaction.response.send_message("Invalid team index.")
 
-			removed = team.pop(index)
-			save_state()
+            removed = team.pop(index)
+            save_state()
 
-			return await interaction.response.send_message(
-				f"❌ Removed **{removed['name']}** from your battle team."
-			)
+            return await interaction.response.send_message(
+                f"❌ Removed **{removed['name']}** from your battle team."
+            )
+
 
     @app_commands.command(name="hunt", description="Go hunting with a rich loot table.")
     async def hunt(self, interaction: discord.Interaction):
