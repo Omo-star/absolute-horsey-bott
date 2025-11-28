@@ -13,6 +13,7 @@ import datetime
 import json
 from math import sqrt
 from economy import get_user
+from economy import state, save_state
 MEMORY_FILE = "roast_memory.json"
 
 def load_roast_memory():
@@ -1240,6 +1241,11 @@ async def on_ready():
         print("Roast cog loaded successfully.")
     except Exception as e:
         print(f"FAILED to load roast cog: {e}")
+    try:
+        await bot.load_extension("code")
+        print("Codepad / IDE cog loaded successfully.")
+    except Exception as e:
+        print(f"FAILED to load Codepad cog: {e}")
 
     synced = await bot.tree.sync()
     print(f"Synced {len(synced)} global commands.")
@@ -1377,6 +1383,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
