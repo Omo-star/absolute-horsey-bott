@@ -93,7 +93,9 @@ def get_user(uid: int):
             "roast_protection_until": None,
             "pray": 0,
             "last_pray": None,
-            "codepad": {}
+            "codepad": {},
+            "owned_animals": {},
+            "team": {}
         }
         save_state()
 
@@ -101,7 +103,8 @@ def get_user(uid: int):
     user.setdefault("pray", 0)
     user.setdefault("last_pray", None)
     user.setdefault("codepad", None)
-
+    user.setdefault("owned_animals", None)
+    user.setdefault("team", None)
     return user
 
 
@@ -526,6 +529,70 @@ class Economy(commands.Cog):
         await interaction.response.send_message(
             "🏆 | **Top 10 Richest Users**\n" + "\n".join(lines)
         )
+    @app_commands.command(name="team", description="Manage your battle team.")
+	@app_commands.describe(
+		action="add, remove, or list",
+		index="Index of the animal to add/remove (use /team list first)"
+	)
+	async def team(self, interaction: discord.Interaction, action: str, index: int = None):
+		uid = interaction.user.id
+		user = get_user(uid)
+
+		action = action.lower()
+		owned = user.setdefault("owned_animals", [])
+		team = user.setdefault("team", [])
+
+		if action not in ["add", "remove", "list"]:
+			return await interaction.response.send_message("❌ Invalid action. Use: add / remove / list")
+
+		if action == "list":
+			if not owned:
+				return await interaction.response.send_message("📭 You own no animals yet. Hunt some first!")
+
+			msg = "😼 **Your Owned Animals**\n"
+			for i, a in enumerate(owned):
+				msg += f"`{i}` — {a['name']} ({a['rarity']}, {a['strength']} strength)\n"
+
+			msg += "\n🛡 **Your Team (max 8)**\n"
+			if team:
+				for t in team:
+					msg += f"- {t['name']} ({t['rarity']}, {t['strength']} strength)\n"
+			else:
+				msg += "*Your team is empty.*"
+
+			return await interaction.response.send_message(msg)
+
+		if action == "add":
+			if index is None:
+				return await interaction.response.send_message("Specify the animal index.")
+
+			if index < 0 or index >= len(owned):
+				return await interaction.response.send_message("Invalid index.")
+
+			if len(team) >= 8:
+				return await interaction.response.send_message("❌ Your team is full (8 animals max).")
+
+			animal = owned[index]
+			team.append(animal)
+			save_state()
+
+			return await interaction.response.send_message(
+				f"✔️ **{animal['name']}** has been added to your team!"
+			)
+
+		if action == "remove":
+			if index is None:
+				return await interaction.response.send_message("Specify the team index.")
+
+			if index < 0 or index >= len(team):
+				return await interaction.response.send_message("Invalid team index.")
+
+			removed = team.pop(index)
+			save_state()
+
+			return await interaction.response.send_message(
+				f"❌ Removed **{removed['name']}** from your battle team."
+			)
 
     @app_commands.command(name="hunt", description="Go hunting with a rich loot table.")
     async def hunt(self, interaction: discord.Interaction):
@@ -670,6 +737,13 @@ class Economy(commands.Cog):
             return await interaction.response.send_message("💨 You missed everything. Skill issue.")
 
         await update_balance(user_id, final_reward)
+        owned = user.setdefault("owned_animals", [])
+        owned.append({
+            "name": animal,
+            "rarity": rarity,
+            "strength": base_reward
+        })
+        save_state()
         await interaction.response.send_message(
             f"🏹 You hunted a **{animal}** ({rarity}) and earned **{final_reward} horsenncy!**"
             + (" 💥 **CRITICAL HIT!**" if crit else "")
@@ -927,7 +1001,15 @@ class Economy(commands.Cog):
         name, reward, win_rate = monster
         boost = get_pray_boost(uid)
         win_rate *= boost
-        win_rate = min(win_rate, 0.95)
+        team = user.setdefault("team", [])
+
+        team_strength = sum(a["strength"] for a in team)
+
+        team_bonus = min(0.25, team_strength / 8000)
+
+        win_rate *= (1 + team_bonus)
+        win_rate = min(win_rate, 0.98)
+
 
         win = random.random() < win_rate
 
