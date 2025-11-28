@@ -20,8 +20,9 @@
         "void_pebble": 0
       },
       "hunt_shadow_boost": "2025-11-24T18:46:16.678894",
-      "pray": 0,
-      "last_pray": "2025-11-27T22:11:24.157884"
+      "pray": 1,
+      "last_pray": "2025-11-28T00:11:27.930868",
+      "codepad": null
     },
     "1350372198992314451": {
       "balance": 3337,
@@ -155,6 +156,11 @@
     "paradox_clock": {
       "name": "P\u035da\u035cr\u031ba\u0322d\u0358o\u0322x\u0337 \u0360C\u0360l\u0334o\u0360c\u0328k\u0340",
       "price": 2000
+    }
+  },
+  "codepad": {
+    "1238242784679563265": {
+      "code.py": "print(\"hello world\")"
     }
   }
 }
