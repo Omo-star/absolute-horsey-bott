@@ -22,9 +22,9 @@
       "hunt_shadow_boost": "2025-11-24T18:46:16.678894",
       "pray": 1,
       "last_pray": "2025-11-28T00:11:27.930868",
-      "codepad": null,
-      "owned_animals": null,
-      "team": null
+      "codepad": {},
+      "owned_animals": [],
+      "team": []
     },
     "1350372198992314451": {
       "balance": 3752,
@@ -36,9 +36,9 @@
       "roast_protection_until": null,
       "pray": 1,
       "last_pray": "2025-11-27T10:06:52.630310",
-      "codepad": null,
-      "owned_animals": null,
-      "team": null
+      "codepad": {},
+      "owned_animals": [],
+      "team": []
     },
     "1220934047794987048": {
       "balance": 419,
