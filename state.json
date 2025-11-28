@@ -1,7 +1,7 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 5113,
+      "balance": 5542,
       "last_daily": "2025-11-27T21:10:31.094705",
       "last_work": "2025-11-28T13:21:32.277452",
       "fish_cooldown": "2025-11-28T18:21:00.439099",
@@ -23,11 +23,63 @@
       "pray": 1,
       "last_pray": "2025-11-28T00:11:27.930868",
       "codepad": {},
-      "owned_animals": [],
-      "team": []
+      "owned_animals": [
+        {
+          "name": "\ud83d\udc07 Bunny",
+          "rarity": "Common",
+          "strength": 20
+        },
+        {
+          "name": "\ud83d\udc09 Baby Dragon",
+          "rarity": "Epic",
+          "strength": 320
+        },
+        {
+          "name": "\ud83e\udd8e Lizard",
+          "rarity": "Common",
+          "strength": 14
+        },
+        {
+          "name": "\ud83d\udc15 Stray Dog",
+          "rarity": "Common",
+          "strength": 28
+        },
+        {
+          "name": "\ud83e\udd86 Duck",
+          "rarity": "Common",
+          "strength": 23
+        }
+      ],
+      "team": [
+        {
+          "name": "\ud83d\udc07 Bunny",
+          "rarity": "Common",
+          "strength": 20
+        },
+        {
+          "name": "\ud83d\udc09 Baby Dragon",
+          "rarity": "Epic",
+          "strength": 320
+        },
+        {
+          "name": "\ud83e\udd8e Lizard",
+          "rarity": "Common",
+          "strength": 14
+        },
+        {
+          "name": "\ud83d\udc15 Stray Dog",
+          "rarity": "Common",
+          "strength": 28
+        },
+        {
+          "name": "\ud83e\udd86 Duck",
+          "rarity": "Common",
+          "strength": 23
+        }
+      ]
     },
     "1350372198992314451": {
-      "balance": 3752,
+      "balance": 4026,
       "last_daily": "2025-11-26T13:48:06.103988",
       "last_work": "2025-11-27T10:15:35.575647",
       "fish_cooldown": "2025-11-27T14:32:31.690440",
@@ -37,7 +89,28 @@
       "pray": 1,
       "last_pray": "2025-11-27T10:06:52.630310",
       "codepad": {},
-      "owned_animals": [],
+      "owned_animals": [
+        {
+          "name": "\ud83e\udd8c Elk",
+          "rarity": "Rare",
+          "strength": 145
+        },
+        {
+          "name": "\ud83d\udc00 Rat",
+          "rarity": "Common",
+          "strength": 10
+        },
+        {
+          "name": "\ud83e\udda6 Otter",
+          "rarity": "Uncommon",
+          "strength": 68
+        },
+        {
+          "name": "\ud83e\udd8e Lizard",
+          "rarity": "Common",
+          "strength": 14
+        }
+      ],
       "team": []
     },
     "1220934047794987048": {
