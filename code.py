@@ -28,7 +28,8 @@ def sandbox_exec(code: str):
         "sum": sum,
         "math": math,
         "random": random,
-        "stats": stats,
+        "statistics": statistics,
+        "stats": statistics,
         "itertools": itertools
     }
 
@@ -52,6 +53,26 @@ def sandbox_exec(code: str):
 
     return "\n".join(output)
 
+class CodeEditModal(discord.ui.Modal, title="Edit Code File"):
+    filename: str
+
+    def __init__(self, filename, original):
+        super().__init__()
+        self.filename = filename
+
+        self.code = discord.ui.TextInput(
+            label=f"Editing {filename}",
+            style=discord.TextStyle.long,
+            default=original,
+            max_length=4000
+        )
+        self.add_item(self.code)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        pad = interaction.client.get_cog("Codepad").get_user_pad(interaction.user.id)
+        pad[self.filename] = self.code.value
+        save_state()
+        await interaction.response.send_message(f"✏️ Updated **{self.filename}**.")
 
 class Codepad(commands.Cog):
     def __init__(self, bot):
@@ -78,17 +99,16 @@ class Codepad(commands.Cog):
 
         await interaction.response.send_message(f"📄 Created file **{filename}**.")
 
-    @app_commands.command(name="code_edit", description="Edit or overwrite code in a file.")
-    async def code_edit(self, interaction: discord.Interaction, filename: str, content: str):
+    @app_commands.command(name="code_edit", description="Edit code in a popup editor.")
+    async def code_edit(self, interaction: discord.Interaction, filename: str):
         pad = self.get_user_pad(interaction.user.id)
 
         if filename not in pad:
             return await interaction.response.send_message("❌ File does not exist.")
 
-        pad[filename] = content
-        save_state()
+        modal = CodeEditModal(filename, pad[filename])
+        await interaction.response.send_modal(modal)
 
-        await interaction.response.send_message(f"✏️ Updated **{filename}**.")
 
     @app_commands.command(name="code_view", description="View code in a file.")
     async def code_view(self, interaction: discord.Interaction, filename: str):
