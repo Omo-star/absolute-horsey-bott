@@ -94,17 +94,17 @@ def get_user(uid: int):
             "pray": 0,
             "last_pray": None,
             "codepad": {},
-            "owned_animals": {},
-            "team": {}
+            "owned_animals": [],
+            "team": []
         }
         save_state()
 
     user = state["users"][uid]
     user.setdefault("pray", 0)
     user.setdefault("last_pray", None)
-    user.setdefault("codepad", None)
-    user.setdefault("owned_animals", None)
-    user.setdefault("team", None)
+    user.setdefault("codepad", {})
+    user.setdefault("owned_animals", [])
+    user.setdefault("team", [])
     return user
 
 
