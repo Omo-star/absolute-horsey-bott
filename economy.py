@@ -7,6 +7,33 @@ import datetime
 import asyncio
 import random
 import json, os
+STOCKS = {
+    "HRS":   {"name": "Horsey Corp",              "price": 120, "volatility": 0.05},
+    "MOO":   {"name": "Moo Industries",           "price": 80,  "volatility": 0.04},
+    "NAY":   {"name": "Neigh Technologies",       "price": 150, "volatility": 0.06},
+    "UDDR":  {"name": "UdderBank",                "price": 95,  "volatility": 0.03},
+
+    "HOOF":  {"name": "Hoof Logistics",           "price": 60,  "volatility": 0.07},
+    "HAY":   {"name": "HayStack Farms",           "price": 45,  "volatility": 0.05},
+    "WHNY":  {"name": "Whinny Media Group",       "price": 135, "volatility": 0.06},
+    "TROT":  {"name": "Trot Motors",              "price": 200, "volatility": 0.08},
+
+    "GALP":  {"name": "Gallop Aerospace",         "price": 260, "volatility": 0.09},
+    "MINT":  {"name": "Minty Pasture Drinks",     "price": 55,  "volatility": 0.05},
+    "CLVR":  {"name": "Clover Softworks",         "price": 110, "volatility": 0.045},
+    "BEEF":  {"name": "BEEF Defense Systems",     "price": 165, "volatility": 0.07},
+
+    "HNGR":  {"name": "Hungerhorse Foods",        "price": 70,  "volatility": 0.045},
+    "SALT":  {"name": "Salt Lick Mining Co.",     "price": 90,  "volatility": 0.05},
+    "GLUE":  {"name": "GlueTech Supplies",        "price": 30,  "volatility": 0.08},   
+    "PRNC":  {"name": "Prance Entertainment",     "price": 180, "volatility": 0.065},
+
+    "STBL":  {"name": "StableCoin Ltd.",          "price": 150, "volatility": 0.015},  
+    "CART":  {"name": "CartWheel Robotics",       "price": 220, "volatility": 0.07},
+    "MANE":  {"name": "Mane Fashion Group",       "price": 95,  "volatility": 0.055},
+    "WHIP":  {"name": "WhipSpeed AI Systems",     "price": 300, "volatility": 0.09},
+}
+
 
 STATE_FILE = "state.json"
 def get_pray_boost(user_id: int):
@@ -105,6 +132,7 @@ def get_user(uid: int):
     user.setdefault("codepad", {})
     user.setdefault("owned_animals", [])
     user.setdefault("team", [])
+    user.setdefault("stocks", {})
     return user
 
 
@@ -139,6 +167,225 @@ class Economy(commands.Cog):
         await interaction.response.send_message(
             f"💴 **{target.display_name}** has **{horsenncy} horsenncy**."
         )
+    @app_commands.command(name="stocks", description="View the ultra-horseyist Horsey Stock Exchange.")
+    async def stocks_main(self, interaction: discord.Interaction):
+
+        simulate_stock_prices()
+
+        MARKET_EMOJIS = {
+            "bull": "🐂📈",
+            "bear": "🐻📉",
+            "fire": "🔥🔥🔥",
+            "calm": "💤",
+            "chaos": "🌪️🤯",
+        }
+
+        mood_roll = random.random()
+        if mood_roll < 0.05:
+            market_mood = "fire"
+        elif mood_roll < 0.20:
+            market_mood = "bull"
+        elif mood_roll < 0.40:
+            market_mood = "bear"
+        elif mood_roll < 0.70:
+            market_mood = "calm"
+        else:
+            market_mood = "chaos"
+
+        def price_arrow(old, new):
+            if new > old:
+                return "📈"
+            elif new < old:
+                return "📉"
+            else:
+                return "➖"
+
+        def build_embed(user_id):
+            user = get_user(user_id)
+            embed = discord.Embed(
+                title=f"🏛️ HORSEY STOCK EXCHANGE — {MARKET_EMOJIS[market_mood]}",
+                color=discord.Color.gold()
+            )
+            desc = ""
+            for symbol, s in STOCKS.items():
+                old = s.get("last", s["price"])
+                new = s["price"]
+                arrow = price_arrow(old, new)
+                s["last"] = new
+
+                desc += (
+                    f"**{symbol}** — *{s['name']}*\n"
+                    f"    💵 **Price:** `{new}` horsenncy {arrow}\n"
+                    f"    🎲 Volatility: `{int(s['volatility']*100)}%`\n"
+                    f"    🧮 Market Cap: `{new * random.randint(5000, 12000):,}`\n"
+                    f"\n"
+                )
+
+            embed.description = desc
+
+            port = user.setdefault("stocks", {})
+            if port:
+                total_value = sum(
+                    amt * STOCKS[sym]["price"] for sym, amt in port.items()
+                )
+                ptext = f"**Portfolio Value:** `{total_value}` horsenncy\n\n"
+                for sym, amt in port.items():
+                    ptext += (
+                        f"• {sym} × {amt} "
+                        f"(Value: `{amt * STOCKS[sym]['price']}`)\n"
+                    )
+            else:
+                ptext = "*You own no stocks yet.*"
+
+            embed.add_field(name="📦 Your Portfolio", value=ptext, inline=False)
+            embed.set_footer(text="Press Refresh to update the market prices!")
+            return embed
+
+        class StocksView(discord.ui.View):
+            def __init__(self, uid):
+                super().__init__(timeout=80)
+                self.uid = uid
+
+            @discord.ui.button(label="Refresh Market", style=discord.ButtonStyle.green)
+            async def refresh(self, inter, btn):
+                if inter.user.id != self.uid:
+                    return await inter.response.send_message("Not your market screen.", ephemeral=True)
+                
+                await inter.response.defer()
+
+                for _ in range(3):
+                    simulate_stock_prices()
+                    await asyncio.sleep(0.3)
+
+                embed = build_embed(self.uid)
+                await inter.followup.edit_message(
+                    message_id=inter.message.id,
+                    embed=embed,
+                    view=self
+                )
+
+            @discord.ui.button(label="Buy Stock", style=discord.ButtonStyle.primary)
+            async def buy(self, inter, btn):
+                if inter.user.id != self.uid:
+                    return await inter.response.send_message("This is not your terminal.", ephemeral=True)
+                
+                await inter.response.send_message(
+                    "📈 Use `/stocks_buy SYMBOL AMOUNT` to purchase shares.",
+                    ephemeral=True
+                )
+
+            @discord.ui.button(label="Sell Stock", style=discord.ButtonStyle.danger)
+            async def sell(self, inter, btn):
+                if inter.user.id != self.uid:
+                    return await inter.response.send_message("This isn't your account!", ephemeral=True)
+                
+                await inter.response.send_message(
+                    "📉 Use `/stocks_sell SYMBOL AMOUNT` to sell shares.",
+                    ephemeral=True
+                )
+
+        embed = build_embed(interaction.user.id)
+        view = StocksView(interaction.user.id)
+        await interaction.response.send_message(embed=embed, view=view)
+    @app_commands.command(name="stocks_buy", description="Buy shares, and win or go broke!")
+    async def stocks_buy(self, interaction: discord.Interaction, symbol: str, amount: int):
+
+        symbol = symbol.upper()
+        if symbol not in STOCKS:
+            return await interaction.response.send_message("❌ Unknown stock symbol.")
+
+        if amount <= 0:
+            return await interaction.response.send_message("❌ Amount must be positive.")
+
+        stock = STOCKS[symbol]
+        price = stock["price"]
+        cost = price * amount
+
+        user = get_user(interaction.user.id)
+
+        if user["balance"] < cost:
+            return await interaction.response.send_message(
+                f"💸 You need `{cost}` horsenncy, but you only have `{user['balance']}`."
+            )
+
+        await interaction.response.defer()
+
+        frames = [
+            f"💼 Connecting to broker…",
+            f"💼 Calculating order…",
+            f"💼 Checking market liquidity…",
+            f"💼 Executing purchase of {amount}× {symbol}…",
+            f"📈 Finalizing...",
+        ]
+
+        msg = await interaction.followup.send("⌛ Processing order…", wait=True)
+        for f in frames:
+            await asyncio.sleep(0.4)
+            await msg.edit(content=f)
+
+        user["balance"] -= cost
+        port = user.setdefault("stocks", {})
+        port[symbol] = port.get(symbol, 0) + amount
+        save_state()
+
+        final_msg = (
+            f"✔️ **ORDER EXECUTED!**\n\n"
+            f"📈 Bought **{amount}**× **{symbol}**\n"
+            f"💵 Price per share: `{price}`\n"
+            f"💰 Total Cost: `{cost}` horsenncy\n"
+        )
+
+        await asyncio.sleep(0.2)
+        await msg.edit(content=final_msg)
+    @app_commands.command(name="stocks_sell", description="Sell shares and make that nice money.")
+    async def stocks_sell(self, interaction: discord.Interaction, symbol: str, amount: int):
+
+        symbol = symbol.upper()
+        if symbol not in STOCKS:
+            return await interaction.response.send_message("❌ Unknown stock.")
+
+        user = get_user(interaction.user.id)
+        port = user.setdefault("stocks", {})
+
+        if port.get(symbol, 0) < amount:
+            return await interaction.response.send_message(
+                "❌ You don't own that many shares."
+            )
+
+        price = STOCKS[symbol]["price"]
+        earnings = amount * price
+
+        await interaction.response.defer()
+
+        anim = [
+            f"📉 Preparing sell order for {amount}× {symbol}…",
+            f"📉 Contacting buyers…",
+            f"📉 Matching orders…",
+            f"📉 Executing sale…",
+        ]
+
+        msg = await interaction.followup.send("⌛ Processing sale…", wait=True)
+        for a in anim:
+            await asyncio.sleep(0.4)
+            await msg.edit(content=a)
+
+        port[symbol] -= amount
+        if port[symbol] <= 0:
+            del port[symbol]
+
+        user["balance"] += earnings
+        save_state()
+
+        final = (
+            f"✔️ **SALE COMPLETE!**\n\n"
+            f"📉 Sold **{amount}× {symbol}**\n"
+            f"💵 Price per share: `{price}`\n"
+            f"💰 Earnings: `{earnings}` horsenncy\n"
+        )
+
+        await asyncio.sleep(0.3)
+        await msg.edit(content=final)
+
     @app_commands.command(name="blackjack", description="Bet horsenncy on a blackjack game!")
     async def blackjack(self, interaction: discord.Interaction, bet: int):
         uid = interaction.user.id
