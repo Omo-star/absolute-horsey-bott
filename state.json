@@ -1,11 +1,11 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 3142,
+      "balance": 2384,
       "last_daily": "2025-11-27T21:10:31.094705",
-      "last_work": "2025-11-28T13:21:32.277452",
-      "fish_cooldown": "2025-11-28T18:21:00.439099",
-      "hunt_cooldown": null,
+      "last_work": "2025-11-29T23:41:27.264950",
+      "fish_cooldown": "2025-11-30T04:41:21.942729",
+      "hunt_cooldown": "2025-11-30T04:41:18.458481",
       "inventory": {
         "intercontinental_ballistic_missile": 1,
         "odd_box": 0,
@@ -30,14 +30,19 @@
           "strength": 20
         },
         {
-          "name": "\ud83d\udc09 Baby Dragon",
-          "rarity": "Epic",
-          "strength": 320
-        },
-        {
           "name": "\ud83e\udd8e Lizard",
           "rarity": "Common",
           "strength": 14
+        },
+        {
+          "name": "\ud83e\udd86 Duck",
+          "rarity": "Common",
+          "strength": 23
+        },
+        {
+          "name": "\ud83d\udc04 Cow (baby)",
+          "rarity": "Common",
+          "strength": 30
         },
         {
           "name": "\ud83d\udc15 Stray Dog",
@@ -45,9 +50,14 @@
           "strength": 28
         },
         {
-          "name": "\ud83e\udd86 Duck",
+          "name": "\ud83d\udc15 Stray Dog",
           "rarity": "Common",
-          "strength": 23
+          "strength": 28
+        },
+        {
+          "name": "\ud83e\udd8e Lizard",
+          "rarity": "Common",
+          "strength": 14
         }
       ],
       "team": [
@@ -75,6 +85,16 @@
           "name": "\ud83e\udd86 Duck",
           "rarity": "Common",
           "strength": 23
+        },
+        {
+          "name": "\ud83d\udc09 Baby Dragon",
+          "rarity": "Epic",
+          "strength": 320
+        },
+        {
+          "name": "\ud83d\udc15 Stray Dog",
+          "rarity": "Common",
+          "strength": 28
         }
       ],
       "stocks": {
