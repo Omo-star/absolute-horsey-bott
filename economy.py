@@ -779,7 +779,7 @@ class Economy(commands.Cog):
 
             animal = owned[index]
             team.append(animal)
-            owned_animals.remove(animal)
+            owned.remove(animal)
             save_state()
 
             return await interaction.response.send_message(
