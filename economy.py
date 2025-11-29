@@ -34,6 +34,99 @@ STOCKS = {
     "WHIP":  {"name": "WhipSpeed AI Systems",     "price": 300, "volatility": 0.09},
 }
 
+def simulate_stock_prices():
+
+    global MARKET_SENTIMENT
+
+    if "MARKET_SENTIMENT" not in globals():
+        MARKET_SENTIMENT = 0.0
+    MARKET_SENTIMENT *= 0.9
+    MARKET_SENTIMENT += random.uniform(-0.03, 0.03)
+    MARKET_SENTIMENT = max(min(MARKET_SENTIMENT, 1.0), -1.0)
+    volatility_wave = random.uniform(0.85, 1.25)
+    event = None
+    event_multiplier = 1.0
+
+    roll = random.random()
+    if roll < 0.004:
+        event = "💥 Global Market Crash"
+        event_multiplier = random.uniform(0.60, 0.85)
+        MARKET_SENTIMENT -= random.uniform(0.3, 0.6)
+
+    elif roll < 0.008:
+        event = "🚀 Market Euphoria Bubble"
+        event_multiplier = random.uniform(1.10, 1.35)
+        MARKET_SENTIMENT += random.uniform(0.3, 0.5)
+
+    elif roll < 0.015:
+        event = "📉 Interest Rate Scare"
+        event_multiplier = random.uniform(0.90, 0.97)
+        MARKET_SENTIMENT -= 0.2
+
+    elif roll < 0.020:
+        event = "📈 Positive Employment Report"
+        event_multiplier = random.uniform(1.02, 1.08)
+        MARKET_SENTIMENT += 0.15
+
+    SECTORS = {
+        "tech":   ["NAY", "CLVR", "WHIP"],
+        "finance": ["UDDR", "STBL"],
+        "media": ["WHNY", "PRNC"],
+        "transport": ["HOOF", "TROT", "CART"],
+        "food": ["HAY", "HNGR", "MINT"],
+        "industry": ["BEEF", "SALT", "GLUE"],
+        "luxury": ["MANE", "MOO"]
+    }
+
+    sector_sentiment = {s: MARKET_SENTIMENT + random.uniform(-0.1, 0.1) for s in SECTORS}
+
+    individual_events = {} 
+
+    for symbol in STOCKS:
+        roll = random.random()
+
+        if roll < 0.01:
+            individual_events[symbol] = (1.20, "📈 Breakthrough Tech Release")
+        elif roll < 0.02:
+            individual_events[symbol] = (0.85, "📉 Supply Chain Issues")
+        elif roll < 0.025:
+            individual_events[symbol] = (1.40, "🚀 Insider Buy Surge")
+        elif roll < 0.03:
+            individual_events[symbol] = (0.75, "💀 Scandal")
+
+    for symbol, data in STOCKS.items():
+
+        price = data["price"]
+        vol = data["volatility"]
+        stock_sector = next(
+            (name for name, syms in SECTORS.items() if symbol in syms),
+            None
+        )
+
+        sec_sent = sector_sentiment.get(stock_sector, 0)
+        momentum = data.get("momentum", 0.0)
+        momentum *= 0.85
+        momentum += random.uniform(-0.02, 0.02)
+        reversion = (150 - price) / 1500  
+        random_move = random.gauss(0, vol)
+        move = (
+            random_move +
+            (MARKET_SENTIMENT * 0.15) +
+            (sec_sent * 0.10) +
+            (momentum * 0.25) +
+            reversion
+        )
+        move *= event_multiplier
+        if symbol in individual_events:
+            m, _ = individual_events[symbol]
+            move *= m
+        new_price = int(price * (1 + move))
+        new_price = max(new_price, 1)
+        if new_price < price * 0.80:
+            new_price = int(price * 0.80)
+        data["momentum"] = momentum
+        data["price"] = new_price
+    return event, individual_events
 
 STATE_FILE = "state.json"
 def get_pray_boost(user_id: int):
@@ -167,224 +260,195 @@ class Economy(commands.Cog):
         await interaction.response.send_message(
             f"💴 **{target.display_name}** has **{horsenncy} horsenncy**."
         )
+    def simulate_stock_prices(self):
+        if not hasattr(self, "MARKET_SENTIMENT"):
+            self.MARKET_SENTIMENT = 0.0
+        self.MARKET_SENTIMENT *= 0.9
+        self.MARKET_SENTIMENT += random.uniform(-0.03, 0.03)
+        self.MARKET_SENTIMENT = max(min(self.MARKET_SENTIMENT, 1.0), -1.0)
+        volatility_wave = random.uniform(0.85, 1.25)
+        event = None
+        event_multiplier = 1.0
+        roll = random.random()
+        if roll < 0.004:
+            event = "💥 Global Market Crash"
+            event_multiplier = random.uniform(0.60, 0.85)
+            self.MARKET_SENTIMENT -= random.uniform(0.3, 0.6)
+        elif roll < 0.008:
+            event = "🚀 Market Euphoria Bubble"
+            event_multiplier = random.uniform(1.10, 1.35)
+            self.MARKET_SENTIMENT += random.uniform(0.3, 0.5)
+        elif roll < 0.015:
+            event = "📉 Interest Rate Scare"
+            event_multiplier = random.uniform(0.90, 0.97)
+            self.MARKET_SENTIMENT -= 0.2
+        elif roll < 0.020:
+            event = "📈 Strong Economic Growth"
+            event_multiplier = random.uniform(1.02, 1.08)
+            self.MARKET_SENTIMENT += 0.15
+        SECTORS = {
+            "tech": ["NAY", "CLVR", "WHIP"],
+            "finance": ["UDDR", "STBL"],
+            "media": ["WHNY", "PRNC"],
+            "transport": ["HOOF", "TROT", "CART"],
+            "food": ["HAY", "HNGR", "MINT"],
+            "industry": ["BEEF", "SALT", "GLUE"],
+            "luxury": ["MANE", "MOO"]
+        }
+        sector_sentiment = {s: self.MARKET_SENTIMENT + random.uniform(-0.1, 0.1) for s in SECTORS}
+        individual = {}
+        for symbol in STOCKS:
+            r = random.random()
+            if r < 0.01:
+                individual[symbol] = (1.25, "📈 Breakthrough Discovery")
+            elif r < 0.02:
+                individual[symbol] = (0.85, "📉 Supply Issues")
+            elif r < 0.025:
+                individual[symbol] = (1.40, "🚀 Major Insider Buy")
+            elif r < 0.03:
+                individual[symbol] = (0.75, "💀 Corporate Scandal")
+        for symbol, data in STOCKS.items():
+            price = data["price"]
+            vol = data["volatility"]
+            sec = None
+            for name, syms in SECTORS.items():
+                if symbol in syms:
+                    sec = name
+                    break
+            sec_sent = sector_sentiment.get(sec, 0)
+            mom = data.get("momentum", 0.0)
+            mom *= 0.85
+            mom += random.uniform(-0.02, 0.02)
+            revert = (150 - price) / 1500
+            rand = random.gauss(0, vol)
+            move = rand + (self.MARKET_SENTIMENT * 0.15) + (sec_sent * 0.10) + (mom * 0.25) + revert
+            move *= event_multiplier
+            if symbol in individual:
+                move *= individual[symbol][0]
+            new = int(price * (1 + move))
+            new = max(new, 1)
+            if new < price * 0.80:
+                new = int(price * 0.80)
+            data["momentum"] = mom
+            data["price"] = new
+        return event, individual
+
     @app_commands.command(name="stocks", description="View the ultra-horseyist Horsey Stock Exchange.")
     async def stocks_main(self, interaction: discord.Interaction):
-
-        simulate_stock_prices()
-
-        MARKET_EMOJIS = {
-            "bull": "🐂📈",
-            "bear": "🐻📉",
-            "fire": "🔥🔥🔥",
-            "calm": "💤",
-            "chaos": "🌪️🤯",
-        }
-
-        mood_roll = random.random()
-        if mood_roll < 0.05:
-            market_mood = "fire"
-        elif mood_roll < 0.20:
-            market_mood = "bull"
-        elif mood_roll < 0.40:
-            market_mood = "bear"
-        elif mood_roll < 0.70:
-            market_mood = "calm"
-        else:
-            market_mood = "chaos"
-
-        def price_arrow(old, new):
-            if new > old:
-                return "📈"
-            elif new < old:
-                return "📉"
-            else:
-                return "➖"
-
-        def build_embed(user_id):
-            user = get_user(user_id)
-            embed = discord.Embed(
-                title=f"🏛️ HORSEY STOCK EXCHANGE — {MARKET_EMOJIS[market_mood]}",
-                color=discord.Color.gold()
-            )
+        event, news = self.simulate_stock_prices()
+        mood = random.choice(["🐂📈", "🐻📉", "🌪️🤯", "💤", "🔥🔥🔥"])
+        def arrow(a, b):
+            return "📈" if b > a else "📉" if b < a else "➖"
+        def build(uid):
+            user = get_user(uid)
+            e = discord.Embed(title=f"🏛️ HORSEY STOCK EXCHANGE — {mood}", color=discord.Color.gold())
             desc = ""
-            for symbol, s in STOCKS.items():
-                old = s.get("last", s["price"])
-                new = s["price"]
-                arrow = price_arrow(old, new)
-                s["last"] = new
-
-                desc += (
-                    f"**{symbol}** — *{s['name']}*\n"
-                    f"    💵 **Price:** `{new}` horsenncy {arrow}\n"
-                    f"    🎲 Volatility: `{int(s['volatility']*100)}%`\n"
-                    f"    🧮 Market Cap: `{new * random.randint(5000, 12000):,}`\n"
-                    f"\n"
-                )
-
-            embed.description = desc
-
+            for s, d in STOCKS.items():
+                old = d.get("last", d["price"])
+                new = d["price"]
+                d["last"] = new
+                desc += f"**{s}** — *{d['name']}*\n💵 `{new}` horsenncy {arrow(old,new)}\n🎲 Volatility `{int(d['volatility']*100)}%`\n🧮 Market Cap `{new * random.randint(5000,12000):,}`\n\n"
+            if event:
+                e.add_field(name="🌐 Market Event", value=event, inline=False)
+            for sym, (_, msg) in news.items():
+                e.add_field(name=f"{sym} News", value=msg, inline=False)
             port = user.setdefault("stocks", {})
             if port:
-                total_value = sum(
-                    amt * STOCKS[sym]["price"] for sym, amt in port.items()
-                )
-                ptext = f"**Portfolio Value:** `{total_value}` horsenncy\n\n"
-                for sym, amt in port.items():
-                    ptext += (
-                        f"• {sym} × {amt} "
-                        f"(Value: `{amt * STOCKS[sym]['price']}`)\n"
-                    )
+                total = sum(q * STOCKS[s]["price"] for s, q in port.items())
+                p = f"**Portfolio Value:** `{total}` horsenncy\n\n"
+                for s, q in port.items():
+                    p += f"• {s} × {q} (Value `{q * STOCKS[s]['price']}`)\n"
             else:
-                ptext = "*You own no stocks yet.*"
-
-            embed.add_field(name="📦 Your Portfolio", value=ptext, inline=False)
-            embed.set_footer(text="Press Refresh to update the market prices!")
-            return embed
-
-        class StocksView(discord.ui.View):
+                p = "*You own no stocks yet.*"
+            e.description = desc
+            e.add_field(name="📦 Your Portfolio", value=p, inline=False)
+            e.set_footer(text="Press Refresh to update the market prices!")
+            return e
+        class View(discord.ui.View):
             def __init__(self, uid):
                 super().__init__(timeout=80)
                 self.uid = uid
-
             @discord.ui.button(label="Refresh Market", style=discord.ButtonStyle.green)
             async def refresh(self, inter, btn):
                 if inter.user.id != self.uid:
                     return await inter.response.send_message("Not your market screen.", ephemeral=True)
-                
                 await inter.response.defer()
-
                 for _ in range(3):
-                    simulate_stock_prices()
+                    self.simulate_stock_prices()
                     await asyncio.sleep(0.3)
-
-                embed = build_embed(self.uid)
-                await inter.followup.edit_message(
-                    message_id=inter.message.id,
-                    embed=embed,
-                    view=self
-                )
-
+                await inter.followup.edit_message(message_id=inter.message.id, embed=build(self.uid), view=self)
             @discord.ui.button(label="Buy Stock", style=discord.ButtonStyle.primary)
             async def buy(self, inter, btn):
                 if inter.user.id != self.uid:
-                    return await inter.response.send_message("This is not your terminal.", ephemeral=True)
-                
-                await inter.response.send_message(
-                    "📈 Use `/stocks_buy SYMBOL AMOUNT` to purchase shares.",
-                    ephemeral=True
-                )
-
+                    return await inter.response.send_message("Not your terminal.", ephemeral=True)
+                await inter.response.send_message("📈 Use `/stocks_buy SYMBOL AMOUNT` to purchase shares.", ephemeral=True)
             @discord.ui.button(label="Sell Stock", style=discord.ButtonStyle.danger)
             async def sell(self, inter, btn):
                 if inter.user.id != self.uid:
-                    return await inter.response.send_message("This isn't your account!", ephemeral=True)
-                
-                await inter.response.send_message(
-                    "📉 Use `/stocks_sell SYMBOL AMOUNT` to sell shares.",
-                    ephemeral=True
-                )
+                    return await inter.response.send_message("Not your terminal.", ephemeral=True)
+                await inter.response.send_message("📉 Use `/stocks_sell SYMBOL AMOUNT` to sell shares.", ephemeral=True)
+        await interaction.response.send_message(embed=build(interaction.user.id), view=View(interaction.user.id))
 
-        embed = build_embed(interaction.user.id)
-        view = StocksView(interaction.user.id)
-        await interaction.response.send_message(embed=embed, view=view)
     @app_commands.command(name="stocks_buy", description="Buy shares, and win or go broke!")
     async def stocks_buy(self, interaction: discord.Interaction, symbol: str, amount: int):
-
         symbol = symbol.upper()
         if symbol not in STOCKS:
             return await interaction.response.send_message("❌ Unknown stock symbol.")
-
         if amount <= 0:
             return await interaction.response.send_message("❌ Amount must be positive.")
-
-        stock = STOCKS[symbol]
-        price = stock["price"]
+        price = STOCKS[symbol]["price"]
         cost = price * amount
-
         user = get_user(interaction.user.id)
-
         if user["balance"] < cost:
-            return await interaction.response.send_message(
-                f"💸 You need `{cost}` horsenncy, but you only have `{user['balance']}`."
-            )
-
+            return await interaction.response.send_message(f"💸 You need `{cost}` horsenncy, but you only have `{user['balance']}`.")
         await interaction.response.defer()
-
-        frames = [
-            f"💼 Connecting to broker…",
-            f"💼 Calculating order…",
-            f"💼 Checking market liquidity…",
-            f"💼 Executing purchase of {amount}× {symbol}…",
-            f"📈 Finalizing...",
-        ]
-
         msg = await interaction.followup.send("⌛ Processing order…", wait=True)
+        frames = [
+            "💼 Connecting to quantum broker…",
+            "💼 Syncing multi-dimensional order books…",
+            "💼 Bending spacetime for best execution…",
+            f"💼 Buying {amount}× {symbol}…",
+            "📈 Finalizing universe-safe confirmation…"
+        ]
         for f in frames:
             await asyncio.sleep(0.4)
             await msg.edit(content=f)
-
         user["balance"] -= cost
         port = user.setdefault("stocks", {})
         port[symbol] = port.get(symbol, 0) + amount
         save_state()
-
-        final_msg = (
-            f"✔️ **ORDER EXECUTED!**\n\n"
-            f"📈 Bought **{amount}**× **{symbol}**\n"
-            f"💵 Price per share: `{price}`\n"
-            f"💰 Total Cost: `{cost}` horsenncy\n"
-        )
-
         await asyncio.sleep(0.2)
-        await msg.edit(content=final_msg)
+        await msg.edit(content=f"✔️ **ORDER EXECUTED**\n📈 Bought **{amount}× {symbol}**\n💵 Price `{price}`\n💰 Total `{cost}` horsenncy")
+
     @app_commands.command(name="stocks_sell", description="Sell shares and make that nice money.")
     async def stocks_sell(self, interaction: discord.Interaction, symbol: str, amount: int):
-
         symbol = symbol.upper()
         if symbol not in STOCKS:
             return await interaction.response.send_message("❌ Unknown stock.")
-
         user = get_user(interaction.user.id)
         port = user.setdefault("stocks", {})
-
         if port.get(symbol, 0) < amount:
-            return await interaction.response.send_message(
-                "❌ You don't own that many shares."
-            )
-
+            return await interaction.response.send_message("❌ You don't own that many shares.")
         price = STOCKS[symbol]["price"]
         earnings = amount * price
-
         await interaction.response.defer()
-
+        msg = await interaction.followup.send("⌛ Processing sale…", wait=True)
         anim = [
             f"📉 Preparing sell order for {amount}× {symbol}…",
-            f"📉 Contacting buyers…",
-            f"📉 Matching orders…",
-            f"📉 Executing sale…",
+            "📉 Locating buyers across timelines…",
+            "📉 Matching inter-universal liquidity…",
+            "📉 Executing cosmic trade…"
         ]
-
-        msg = await interaction.followup.send("⌛ Processing sale…", wait=True)
         for a in anim:
             await asyncio.sleep(0.4)
             await msg.edit(content=a)
-
         port[symbol] -= amount
         if port[symbol] <= 0:
             del port[symbol]
-
         user["balance"] += earnings
         save_state()
+        await msg.edit(content=f"✔️ **SALE COMPLETE**\n📉 Sold **{amount}× {symbol}**\n💵 Price `{price}`\n💰 Earnings `{earnings}` horsenncy")
 
-        final = (
-            f"✔️ **SALE COMPLETE!**\n\n"
-            f"📉 Sold **{amount}× {symbol}**\n"
-            f"💵 Price per share: `{price}`\n"
-            f"💰 Earnings: `{earnings}` horsenncy\n"
-        )
-
-        await asyncio.sleep(0.3)
-        await msg.edit(content=final)
 
     @app_commands.command(name="blackjack", description="Bet horsenncy on a blackjack game!")
     async def blackjack(self, interaction: discord.Interaction, bet: int):
