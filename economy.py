@@ -896,7 +896,7 @@ class Economy(commands.Cog):
     @app_commands.command(name="battle", description="Fight monsters RPG-style!")
     async def battle(self, interaction: discord.Interaction):
         uid = interaction.user.id
-
+        user = get_user(uid)
         monsters = [
                 ("Slime", 30, 0.70),
                 ("Bandit", 50, 0.60),
