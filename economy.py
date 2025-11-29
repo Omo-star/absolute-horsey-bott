@@ -1,5 +1,5 @@
 # beta owo-bot esque feature!
-
+from collections import Counter
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -747,10 +747,16 @@ class Economy(commands.Cog):
         if action == "list":
             if not owned:
                 return await interaction.response.send_message("📭 You own no animals yet. Hunt some first!")
+            grouped = {}
+            for a in owned:
+                key = (a["name"], a["rarity"], a["strength"])
+                grouped.setdefault(key, 0)
+                grouped[key] += 1
 
             msg = "😼 **Your Owned Animals**\n"
-            for i, a in enumerate(owned):
-                msg += f"`{i}` — {a['name']} ({a['rarity']}, {a['strength']} strength)\n"
+            for i, ((name, rarity, strength), count) in enumerate(grouped.items()):
+                msg += f"{i} — {name} ({rarity}, {strength} strength) ×{count}\n"
+
 
             msg += "\n🛡 **Your Team (max 8)**\n"
             if team:
@@ -773,6 +779,7 @@ class Economy(commands.Cog):
 
             animal = owned[index]
             team.append(animal)
+            owned_animals.remove(animal)
             save_state()
 
             return await interaction.response.send_message(
