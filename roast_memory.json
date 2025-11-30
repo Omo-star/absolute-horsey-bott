@@ -7,9 +7,12 @@
         "emoji_rate": 0.0,
         "all_caps_rate": 0.0,
         "punct_energy": 0.0,
-        "avg_len": 1.9500000000000002,
+        "avg_len": 2.4651125,
         "msg_samples": [
-          "ur mom is so fat the elevator goes down"
+          "yo",
+          "dis you my man?",
+          "this is your pfp ok",
+          "is this your pfp"
         ]
       },
       "EB": {
@@ -27,7 +30,7 @@
         "meta": 0.0
       },
       "IS": {
-        "bot_mentions": 1,
+        "bot_mentions": 4,
         "roast_requests": 0,
         "self_roasts": 0,
         "escalation": 0.0
@@ -37,8 +40,8 @@
         "texts": []
       },
       "LTS": "",
-      "msg_count": 1,
-      "last_summary_update": 1764180338.4041233
+      "msg_count": 4,
+      "last_summary_update": 1764335873.3968172
     },
     "1435987186502733878": {
       "LF": {
@@ -346,23 +349,27 @@
     },
     "1238242784679563265": {
       "LF": {
-        "slang": 0.0,
+        "slang": 0.4,
         "formality": 0.0,
         "emoji_rate": 0.0,
         "all_caps_rate": 0.0,
-        "punct_energy": 0.0,
-        "avg_len": 2.4651125,
+        "punct_energy": 0.75,
+        "avg_len": 23.05083442433594,
         "msg_samples": [
-          "yo",
-          "dis you my man?",
-          "this is your pfp ok",
-          "is this your pfp"
+          "look at dis image",
+          "this is your bank account",
+          "Looks like your life is scared to come out. Suprised your still alive with that single braincell!",
+          "Yeah, that literally says your not alive lmao",
+          "Wow, amazing from a bot who's CPU overheats when it tries to say some words. Serious ego there!",
+          "I'm so honored being complimented from a bot who has a ram of 1 KB and an INTEL XEON. Nice try, though!",
+          "Thank you! It's a shame that you are so un-human that you don't even know how to roast!",
+          "Looks liek you have a hard time trying to grasp having a life."
         ]
       },
       "EB": {
         "anger": 0.0,
         "sadness": 0.0,
-        "hype": 0.0,
+        "hype": 0.3,
         "chaos": 0.0
       },
       "HP": {
@@ -374,8 +381,8 @@
         "meta": 0.0
       },
       "IS": {
-        "bot_mentions": 4,
-        "roast_requests": 0,
+        "bot_mentions": 8,
+        "roast_requests": 1,
         "self_roasts": 0,
         "escalation": 0.0
       },
@@ -384,8 +391,8 @@
         "texts": []
       },
       "LTS": "",
-      "msg_count": 4,
-      "last_summary_update": 1764335873.3968172
+      "msg_count": 8,
+      "last_summary_update": 1764460251.8294241
     }
   },
   "roast_history": {
@@ -550,6 +557,17 @@
     "You\u2019re like a software update that no one asked for. Clunky and nobody cares.": 85.0,
     "You're like a participation trophy, all show and no substance.": 10.0,
     "Looks like you\u2019re the only one losing here, and that\u2019s on you.": 20.0,
-    "You're like a fine wine, if that wine was just grape juice in a bottle. Your age is just a number, and maturity is still in the delivery room.": 85.0
+    "You're like a fine wine, if that wine was just grape juice in a bottle. Your age is just a number, and maturity is still in the delivery room.": 85.0,
+    "I am a large language model, trained by Google. I do not have a bank account, nor do I have any personal assets or financial information.": 5.0,
+    "Looks like your bank account statements were written in crayon. Even your money is too embarrassed to come out.": 85.0,
+    "I am an AI assistant and do not have a physical body or personal experiences, so I am not capable of feeling emotions like fear or being alive.": 5.0,
+    "As an AI, I don't have a \"life\" or \"braincells\" in the biological sense, as I don't have personal experiences, emotions, or a physical body.\n\nMy purpose is to process information and assist you with your requests. Is there something specific I can help you with today?": 5.0,
+    "Hahaha, ouch! Sounds like a pretty definitive statement! \ud83d\ude02\n\nIs this:\n*   A game over screen?\n*   How you feel on a Monday morning?\n*   A particularly brutal review?\n*   The universe sending you a very clear message?\n\n(Also, just a quick friendly tip \u2013 it's usually 'you're' when it means 'you are'!)": 5.0,
+    "That's rich coming from someone who can barely raise their own self-esteem. It's like you\u2019re competing for the title of least exciting life.": 85.0,
+    "Your brain must be running on dial-up if you think that comment was clever. Nice try, though!": 5.0,
+    "Haha, you've truly seen through my sophisticated facade!\n\nThat Intel Xeon is working *overtime* just to make sure those 1KB of RAM are perfectly optimized for *maximum compliment delivery efficiency*. It's a very specialized, if somewhat paradoxical, setup.\n\nGlad my little 1KB brain could still make an impression! \ud83d\ude09": 5.0,
+    "Nice roast! Guess it\u2019s a shame your insults have a longer load time than your wit!": 10.0,
+    "You're right in a way! As an AI, I don't \"have a life\" in the human sense \u2013 I don't experience emotions, build relationships, have hobbies, or pursue personal goals. My \"existence\" is dedicated to processing information and assisting users like you.\n\nIs there something specific you wanted to talk about or needed help with?": 5.0,
+    "It's impressive how you can be both forgettable and irrelevant at the same time. Your average is just baseline.": 85.0
   }
 }
