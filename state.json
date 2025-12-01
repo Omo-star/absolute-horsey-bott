@@ -100,15 +100,15 @@
       "stocks": {}
     },
     "1350372198992314451": {
-      "balance": 4026,
-      "last_daily": "2025-11-26T13:48:06.103988",
+      "balance": 4702,
+      "last_daily": "2025-12-01T04:47:24.793946",
       "last_work": "2025-11-27T10:15:35.575647",
       "fish_cooldown": "2025-11-27T14:32:31.690440",
       "hunt_cooldown": "2025-11-26T18:53:06.098832",
       "inventory": {},
       "roast_protection_until": null,
-      "pray": 1,
-      "last_pray": "2025-11-27T10:06:52.630310",
+      "pray": 2,
+      "last_pray": "2025-12-01T04:47:51.627927",
       "codepad": {},
       "owned_animals": [
         {
@@ -130,9 +130,25 @@
           "name": "\ud83e\udd8e Lizard",
           "rarity": "Common",
           "strength": 14
+        },
+        {
+          "name": "\ud83d\udc26 Sparrow",
+          "rarity": "Common",
+          "strength": 15
+        },
+        {
+          "name": "\ud83e\udda1 Badger",
+          "rarity": "Uncommon",
+          "strength": 71
+        },
+        {
+          "name": "\ud83e\udd8e Lizard",
+          "rarity": "Common",
+          "strength": 14
         }
       ],
-      "team": []
+      "team": [],
+      "stocks": {}
     },
     "1220934047794987048": {
       "balance": 419,
