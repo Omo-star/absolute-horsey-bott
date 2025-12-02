@@ -340,8 +340,8 @@ class Economy(commands.Cog):
             data["momentum"] = mom
             data["price"] = new
         return event, individual
-    @app_commands.command(name="dungeon_omega", description="Enter the omega dungeon: raids, invasions, skills, relics, and world events.")
-    async def dungeon_omega(self, interaction: discord.Interaction):
+    @app_commands.command(name="dungeon", description="Enter the evolving dungeon: rifts, sanity, raids, invasions, and world bosses.")
+    async def dungeon(self, interaction: discord.Interaction):
         uid = interaction.user.id
         user = get_user(uid)
         global state
@@ -353,6 +353,8 @@ class Economy(commands.Cog):
         world.setdefault("raid_max_hp", 0)
         world.setdefault("raid_cycle", 0)
         world.setdefault("last_event", "Dormant")
+        world.setdefault("rift_level", 0)
+        world.setdefault("rift_instability", 0.0)
         dungeon = user.setdefault("dungeon", {})
         dungeon.setdefault("active", False)
         dungeon.setdefault("floor", 1)
@@ -362,6 +364,8 @@ class Economy(commands.Cog):
         dungeon.setdefault("skills", {"might": 0, "ward": 0, "greed": 0, "warp": 0, "instinct": 0})
         dungeon.setdefault("relics", [])
         dungeon.setdefault("curses", [])
+        dungeon.setdefault("mutations", [])
+        dungeon.setdefault("afflictions", [])
         dungeon.setdefault("skill_points", 0)
         dungeon.setdefault("last_floor_cleared", 0)
         dungeon.setdefault("raid_tokens", 1)
@@ -369,26 +373,56 @@ class Economy(commands.Cog):
         dungeon.setdefault("last_log", "You feel the dungeon watching you.")
         dungeon.setdefault("runs", 0)
         dungeon.setdefault("boss_kills", 0)
+        dungeon.setdefault("sanity", 100)
+        dungeon.setdefault("max_sanity", 100)
+        dungeon.setdefault("rift_depth", 0)
         dungeon["active"] = True
 
         def get_power(d):
             s = d["skills"]
-            base = d["floor"] * 10 + len(d["relics"]) * 8
-            base += s["might"] * 12
-            base += s["ward"] * 6
-            base += s["instinct"] * 7
-            penalty = len(d["curses"]) * 10
+            base = d["floor"] * 12 + len(d["relics"]) * 9
+            base += s["might"] * 14
+            base += s["ward"] * 5
+            base += s["instinct"] * 8
+            base += d["rift_depth"] * 3
+            base += len(d["mutations"]) * 6
+            penalty = len(d["curses"]) * 11 + len(d["afflictions"]) * 8
             return max(10, base - penalty)
 
         def get_luck(d):
             s = d["skills"]
-            base = 1.0 + s["greed"] * 0.08 + len(d["relics"]) * 0.02
+            base = 1.0 + s["greed"] * 0.09 + len(d["relics"]) * 0.02
+            base += len(d["mutations"]) * 0.01
             base -= len(d["curses"]) * 0.04
-            return max(0.2, base)
+            base -= d["rift_depth"] * 0.005
+            return max(0.15, base)
 
         def get_warp(d):
             s = d["skills"]
-            return s["warp"] * 0.03 + len(d["relics"]) * 0.005
+            value = s["warp"] * 0.035 + len(d["relics"]) * 0.006
+            value += d["rift_depth"] * 0.004
+            return value
+
+        def get_sanity_modifier(d):
+            san = max(0, min(d["sanity"], d["max_sanity"]))
+            ratio = san / max(1, d["max_sanity"])
+            if ratio >= 0.9:
+                return 1.05, 0.0
+            if ratio >= 0.7:
+                return 1.0, 0.0
+            if ratio >= 0.5:
+                return 0.95, 0.02
+            if ratio >= 0.3:
+                return 0.9, 0.05
+            return 0.82, 0.1
+
+        def get_rift_pressure(d):
+            return 0.05 + d["rift_depth"] * 0.01 + world["rift_instability"] * 0.15
+
+        def adjust_sanity(d, delta):
+            d["sanity"] = max(0, min(d["max_sanity"], d["sanity"] + delta))
+            if d["sanity"] == 0 and "Broken Mind" not in d["curses"]:
+                d["curses"].append("Broken Mind")
 
         def ensure_raid_boss():
             if world["raid_boss"] is None or world["raid_hp"] <= 0:
@@ -401,7 +435,8 @@ class Economy(commands.Cog):
                     "Reality-Flaying Dragon"
                 ]
                 boss = random.choice(names)
-                base_hp = 1000 + int(world["corruption"] * 300) + world["raid_cycle"] * 250
+                base_hp = 1200 + int(world["corruption"] * 350) + world["raid_cycle"] * 320
+                base_hp += world["rift_level"] * 120
                 world["raid_boss"] = boss
                 world["raid_hp"] = base_hp
                 world["raid_max_hp"] = base_hp
@@ -412,20 +447,22 @@ class Economy(commands.Cog):
             s = d["skills"]
             hp_bar = f"{d['hp']}/{d['max_hp']}"
             energy_bar = f"{d['energy']} ⚡"
+            sanity_bar = f"{d['sanity']}/{d['max_sanity']}"
             relics = len(d["relics"])
             curses = len(d["curses"])
+            muts = len(d["mutations"])
             power = get_power(d)
             luck = get_luck(d)
             warp = get_warp(d)
             return (
                 f"Floor: {d['floor']}\n"
-                f"HP: {hp_bar}\n"
+                f"HP: {hp_bar} | Sanity: {sanity_bar}\n"
                 f"Energy: {energy_bar}\n"
-                f"Relics: {relics} | Curses: {curses}\n"
+                f"Relics: {relics} | Curses: {curses} | Mutations: {muts}\n"
                 f"Power: {power} | Luck: {luck:.2f} | Warp: {warp:.2f}\n"
                 f"Skills → Might {s['might']}, Ward {s['ward']}, Greed {s['greed']}, Warp {s['warp']}, Instinct {s['instinct']}\n"
                 f"Skill Points: {d['skill_points']} | Raid Tokens: {d['raid_tokens']}\n"
-                f"World Corruption: {world['corruption']:.2f} | Raid Cycle: {world['raid_cycle']}\n"
+                f"Rift Depth: {d['rift_depth']} | World Corruption: {world['corruption']:.2f} | Rift Level: {world['rift_level']}\n"
                 f"World Event: {world['last_event']}"
             )
 
@@ -450,11 +487,11 @@ class Economy(commands.Cog):
                 return None
             return random.choice(candidates)
 
-        class DungeonOmegaView(discord.ui.View):
+        class DungeonView(discord.ui.View):
             def __init__(self, dungeon_state):
                 super().__init__(timeout=240)
                 self.d = dungeon_state
-                self.title = f"🌌 Omega Dungeon — {interaction.user.display_name}"
+                self.title = f"🌌 Dungeon Rift — {interaction.user.display_name}"
 
             def build_embed(self):
                 desc = dungeon_summary(self.d) + "\n\n" + self.d.get("last_log", "")
@@ -467,7 +504,7 @@ class Economy(commands.Cog):
                     hp = world["raid_hp"]
                     max_hp = max(1, world["raid_max_hp"])
                     ratio = max(0.0, min(1.0, hp / max_hp))
-                    blocks = 12
+                    blocks = 14
                     filled = int(blocks * ratio)
                     bar = "█" * filled + "░" * (blocks - filled)
                     e.add_field(
@@ -494,49 +531,52 @@ class Economy(commands.Cog):
                     )
                     return
                 if self.d["energy"] <= 0:
-                    self.d["last_log"] = "You are exhausted. Rest or leave."
+                    self.d["last_log"] = "You are exhausted. Rest, or dive into a rift at your own risk."
                     save_state()
                     await self.refresh_message(inter)
                     return
                 self.d["energy"] -= 1
                 world["corruption"] += 0.02 + self.d["floor"] * 0.001
+                san_mult, extra_curse = get_sanity_modifier(self.d)
+                pressure = get_rift_pressure(self.d)
                 event_roll = random.random()
-                warp_factor = get_warp(self.d)
-                invasion_chance = 0.08 + warp_factor * 0.5
                 boss_floor = self.d["floor"] % 7 == 0
-                if boss_floor and random.random() < 0.6:
+                if boss_floor and random.random() < 0.6 * san_mult:
                     await self.handle_boss(inter)
                     return
-                if event_roll < 0.35:
-                    await self.handle_battle(inter)
-                elif event_roll < 0.55:
-                    await self.handle_loot(inter)
+                if event_roll < 0.32:
+                    await self.handle_battle(inter, san_mult, extra_curse)
+                elif event_roll < 0.54:
+                    await self.handle_loot(inter, san_mult)
                 elif event_roll < 0.70:
-                    await self.handle_trap(inter)
+                    await self.handle_trap(inter, san_mult, extra_curse)
                 elif event_roll < 0.82:
                     await self.handle_altar(inter)
                 elif event_roll < 0.92:
-                    await self.handle_world_rift(inter)
+                    await self.handle_world_rift(inter, pressure)
                 else:
+                    invasion_chance = 0.08 + get_warp(self.d) * 0.5 + pressure * 0.4
                     if random.random() < invasion_chance and self.d["invasion_shield"] <= 0:
                         await self.handle_invasion(inter)
                     else:
-                        await self.handle_world_rift(inter)
+                        await self.handle_world_rift(inter, pressure)
 
-            async def handle_battle(self, inter):
-                power = get_power(self.d)
+            async def handle_battle(self, inter, san_mult, extra_curse):
+                power = get_power(self.d) * san_mult
                 luck = get_luck(self.d)
                 ward = self.d["skills"]["ward"]
-                tier = min(5, 1 + self.d["floor"] // 5)
+                tier = min(6, 1 + self.d["floor"] // 5)
                 monsters = {
                     1: [("Gloom Slime", 40, 0.70), ("Duskwolf", 65, 0.62)],
                     2: [("Abyss Stalker", 120, 0.55), ("Shatter Imp", 150, 0.50)],
                     3: [("Grave Titan", 240, 0.44), ("Spectral Butcher", 260, 0.42)],
                     4: [("Entropy Hydra", 360, 0.36), ("Obsidian Warden", 380, 0.34)],
-                    5: [("World Scar", 520, 0.30), ("Chrono Horror", 560, 0.28)]
+                    5: [("World Scar", 520, 0.30), ("Chrono Horror", 560, 0.28)],
+                    6: [("Rift-Torn Colossus", 700, 0.26), ("Mind-Latched Leviathan", 740, 0.24)]
                 }
                 name, reward, base_win = random.choice(monsters[tier])
                 win_chance = base_win + power * 0.0008 + luck * 0.02 - world["corruption"] * 0.01
+                win_chance -= world["rift_instability"] * 0.02
                 win_chance = max(0.05, min(0.96, win_chance))
                 if random.random() < win_chance:
                     crit = random.random() < (0.08 + self.d["skills"]["might"] * 0.02)
@@ -546,14 +586,20 @@ class Economy(commands.Cog):
                     self.d["last_floor_cleared"] = max(self.d["last_floor_cleared"], self.d["floor"])
                     if self.d["floor"] % 4 == 0:
                         self.d["skill_points"] += 1
+                    adjust_sanity(self.d, random.randint(0, 3))
                     text = f"You defeated {name} and gained {final_reward} horsenncy."
                     if crit:
-                        text += " Critical strike shattered reality."
+                        text += " Critical strike shreds the echo of reality."
                     self.d["last_log"] = text
                 else:
                     dmg = random.randint(18, 60) + int(world["corruption"] * 5)
                     dmg = max(1, int(dmg * (1 - ward * 0.06)))
+                    dmg = int(dmg * (1.0 + world["rift_instability"] * 0.4))
                     self.d["hp"] -= dmg
+                    adjust_sanity(self.d, -random.randint(3, 8))
+                    if extra_curse > 0 and random.random() < extra_curse:
+                        curse = random.choice(["Shivering Mind", "Fading Color", "Static Whispers"])
+                        self.d["curses"].append(curse)
                     if self.d["hp"] <= 0:
                         self.d["hp"] = 0
                         self.d["active"] = False
@@ -567,18 +613,19 @@ class Economy(commands.Cog):
                             view=None
                         )
                         return
-                    self.d["last_log"] = f"{name} wounded you for {dmg} HP."
+                    self.d["last_log"] = f"{name} wounded you for {dmg} HP. Your head rings."
                 save_state()
                 await self.refresh_message(inter)
 
-            async def handle_loot(self, inter):
+            async def handle_loot(self, inter, san_mult):
                 luck = get_luck(self.d)
                 base = random.randint(50, 200) + self.d["floor"] * 15
-                coin = int(base * luck)
-                relic_roll = random.random() < 0.18 + luck * 0.05
+                coin = int(base * luck * san_mult)
+                relic_roll = random.random() < 0.20 + luck * 0.05
                 curse_roll = random.random() < 0.04 + world["corruption"] * 0.02
+                mut_roll = random.random() < 0.06 + self.d["rift_depth"] * 0.01
                 await update_balance(uid, coin)
-                log = f"You find a cache worth {coin} horsenncy."
+                log = f"You find a warped cache worth {coin} horsenncy."
                 if relic_roll:
                     relic_pool = [
                         "Temporal Shard",
@@ -586,11 +633,18 @@ class Economy(commands.Cog):
                         "Void Mane Fragment",
                         "Prismatic Hoofprint",
                         "Stellar Bridle",
-                        "Gilded Neighstone"
+                        "Gilded Neighstone",
+                        "Riftglass Eye"
                     ]
                     relic = random.choice(relic_pool)
                     self.d["relics"].append(relic)
                     log += f" You obtained relic: {relic}."
+                if mut_roll:
+                    mut_pool = ["Extra Spine", "Glass Nerves", "Echoing Hoof", "Fractal Tail"]
+                    mut = random.choice(mut_pool)
+                    self.d["mutations"].append(mut)
+                    adjust_sanity(self.d, -random.randint(2, 5))
+                    log += f" A rift brands you with mutation: {mut}."
                 if curse_roll:
                     curses = ["Mark of Hunger", "Fractured Time", "Weak Hoof", "Gaze of the Abyss"]
                     curse = random.choice(curses)
@@ -603,15 +657,20 @@ class Economy(commands.Cog):
                 save_state()
                 await self.refresh_message(inter)
 
-            async def handle_trap(self, inter):
+            async def handle_trap(self, inter, san_mult, extra_curse):
                 ward = self.d["skills"]["ward"]
                 dmg = random.randint(25, 130) + int(world["corruption"] * 10)
                 dmg = max(5, int(dmg * (1 - ward * 0.05)))
+                dmg = int(dmg * (1.0 + world["rift_instability"] * 0.4))
                 evade = 0.10 + self.d["skills"]["instinct"] * 0.03
-                if random.random() < evade:
-                    self.d["last_log"] = "You sensed a trap and narrowly dodged it."
+                if random.random() < evade * san_mult:
+                    self.d["last_log"] = "You sense a layered trap and narrowly dodge it."
                 else:
                     self.d["hp"] -= dmg
+                    adjust_sanity(self.d, -random.randint(5, 12))
+                    if extra_curse > 0 and random.random() < extra_curse + 0.05:
+                        curse = random.choice(["Hollow Pulse", "Bleeding Colors", "Rusting Soul"])
+                        self.d["curses"].append(curse)
                     if self.d["hp"] <= 0:
                         self.d["hp"] = 0
                         self.d["active"] = False
@@ -625,52 +684,64 @@ class Economy(commands.Cog):
                             view=None
                         )
                         return
-                    self.d["last_log"] = f"A trap tears through you for {dmg} HP."
+                    self.d["last_log"] = f"A trap tears through you for {dmg} HP. Reality snaps in your ears."
                 self.d["floor"] += 1
                 save_state()
                 await self.refresh_message(inter)
 
             async def handle_altar(self, inter):
                 roll = random.random()
-                if roll < 0.45:
-                    heal = random.randint(20, 70) + self.d["skills"]["ward"] * 10
+                if roll < 0.40:
+                    heal = random.randint(20, 80) + self.d["skills"]["ward"] * 10
                     self.d["hp"] = min(self.d["max_hp"], self.d["hp"] + heal)
-                    self.d["last_log"] = f"A radiant altar mends your wounds for {heal} HP."
-                elif roll < 0.75:
+                    adjust_sanity(self.d, random.randint(4, 9))
+                    self.d["last_log"] = f"A radiant altar mends your wounds for {heal} HP and soothes your thoughts."
+                elif roll < 0.70:
                     self.d["skill_points"] += 1
+                    adjust_sanity(self.d, random.randint(1, 4))
                     self.d["last_log"] = "You receive an echo of knowledge. Gain 1 skill point."
                 else:
                     curses = ["Silent Brand", "Bone Tax", "Entropy Mark"]
                     curse = random.choice(curses)
                     self.d["curses"].append(curse)
+                    adjust_sanity(self.d, -random.randint(4, 10))
                     self.d["last_log"] = f"A false altar curses you with {curse}."
                 self.d["floor"] += 1
                 save_state()
                 await self.refresh_message(inter)
 
-            async def handle_world_rift(self, inter):
+            async def handle_world_rift(self, inter, pressure):
                 ensure_raid_boss()
                 warp = get_warp(self.d)
                 roll = random.random()
-                if roll < 0.25 + warp:
+                if roll < 0.23 + warp:
                     world["corruption"] = max(0.0, world["corruption"] - 0.30)
+                    world["rift_instability"] = max(0.0, world["rift_instability"] - 0.08)
                     world["last_event"] = "A cleansing wave sweeps the dungeon."
-                    self.d["last_log"] = "You witness a cleansing rift that lowers world corruption."
-                elif roll < 0.55 + warp:
+                    adjust_sanity(self.d, random.randint(5, 12))
+                    self.d["last_log"] = "You witness a cleansing rift that lowers world corruption and calms your mind."
+                elif roll < 0.50 + pressure:
                     world["corruption"] += 0.5
-                    world["last_event"] = "A catastrophic surge mutates the raid boss."
+                    world["rift_instability"] += 0.10
+                    world["rift_level"] += 1
+                    world["last_event"] = "A catastrophic surge mutates the raid boss and deepens all rifts."
                     if world["raid_boss"]:
-                        world["raid_hp"] = int(world["raid_hp"] * 1.15) + 100
-                        world["raid_max_hp"] = int(world["raid_max_hp"] * 1.15) + 100
-                    self.d["last_log"] = "A violent rift swells the global boss."
+                        world["raid_hp"] = int(world["raid_hp"] * 1.20) + 120
+                        world["raid_max_hp"] = int(world["raid_max_hp"] * 1.20) + 120
+                    adjust_sanity(self.d, -random.randint(5, 14))
+                    self.d["last_log"] = "A violent rift swells the global boss and drags at your thoughts."
                 else:
                     shift = random.choice(["up", "down"])
                     if shift == "up":
                         self.d["floor"] += 2
-                        self.d["last_log"] = "A twisted rift hurls you two floors upward."
+                        self.d["rift_depth"] += 1
+                        adjust_sanity(self.d, -random.randint(2, 6))
+                        self.d["last_log"] = "A twisted rift hurls you two floors upward and deeper into its echo."
                     else:
                         self.d["floor"] = max(1, self.d["floor"] - 2)
-                        self.d["last_log"] = "A collapsing rift drags you two floors downward."
+                        self.d["rift_depth"] = max(0, self.d["rift_depth"] - 1)
+                        adjust_sanity(self.d, random.randint(1, 5))
+                        self.d["last_log"] = "A collapsing rift drags you two floors downward, releasing some pressure."
                 self.d["floor"] += 1
                 save_state()
                 await self.refresh_message(inter)
@@ -682,11 +753,12 @@ class Economy(commands.Cog):
                     "Crown-Eater Stallion",
                     "Oblivion Roc",
                     "Sunless Unicorn King",
-                    "Titanic Leviathan Colt"
+                    "Titanic Leviathan Colt",
+                    "Rift-Crowned Archbeast"
                 ]
-                hp_scale = 80 + self.d["floor"] * 25 + int(world["corruption"] * 40)
+                hp_scale = 80 + self.d["floor"] * 25 + int(world["corruption"] * 40) + int(world["rift_instability"] * 120)
                 boss_name = random.choice(boss_names)
-                win_chance = 0.40 + luck * 0.05 + power * 0.001 - world["corruption"] * 0.03
+                win_chance = 0.40 + luck * 0.05 + power * 0.001 - world["corruption"] * 0.03 - world["rift_instability"] * 0.03
                 win_chance = max(0.05, min(0.95, win_chance))
                 if random.random() < win_chance:
                     loot = int(hp_scale * luck * 1.8)
@@ -695,12 +767,17 @@ class Economy(commands.Cog):
                     self.d["floor"] += 1
                     self.d["energy"] = min(10, self.d["energy"] + 2)
                     self.d["skill_points"] += 2
-                    reliq = random.choice(["Crown of Ends", "Star-Shear Bridle", "Omega Hoofprint"])
+                    adjust_sanity(self.d, random.randint(6, 15))
+                    reliq = random.choice(["Crown of Ends", "Star-Shear Bridle", "Omega Hoofprint", "Heart of the Rift"])
                     self.d["relics"].append(reliq)
                     self.d["last_log"] = f"You slay the boss {boss_name}, gaining {loot} horsenncy and relic {reliq}."
                 else:
-                    dmg = random.randint(70, 170) + int(world["corruption"] * 25)
+                    dmg = random.randint(70, 170) + int(world["corruption"] * 25) + int(world["rift_instability"] * 90)
                     self.d["hp"] -= dmg
+                    adjust_sanity(self.d, -random.randint(8, 18))
+                    curse_pool = ["Shattered Courage", "Fraying Reality", "Burning Hooves", "Riftburn Scars"]
+                    curse = random.choice(curse_pool)
+                    self.d["curses"].append(curse)
                     if self.d["hp"] <= 0:
                         self.d["hp"] = 0
                         self.d["active"] = False
@@ -714,9 +791,6 @@ class Economy(commands.Cog):
                             view=None
                         )
                         return
-                    curse_pool = ["Shattered Courage", "Fraying Reality", "Burning Hooves"]
-                    curse = random.choice(curse_pool)
-                    self.d["curses"].append(curse)
                     self.d["last_log"] = f"The boss {boss_name} maims you for {dmg} HP and inflicts {curse}."
                     self.d["floor"] += 1
                 save_state()
@@ -752,27 +826,30 @@ class Economy(commands.Cog):
                         relic_text = f" and stole relic {stolen_relic}"
                     else:
                         relic_text = ""
+                    adjust_sanity(self.d, -random.randint(1, 4))
                     self.d["last_log"] = f"You invade <@{tid}> and steal {stolen} horsenncy{relic_text}."
                     if self.d["invasion_shield"] < 2:
                         self.d["invasion_shield"] += 1
                 else:
                     penalty = int(user["balance"] * 0.05)
                     await update_balance(uid, -penalty)
+                    adjust_sanity(self.d, -random.randint(2, 6))
                     self.d["last_log"] = f"Your invasion against <@{tid}> fails. You lose {penalty} horsenncy."
                 self.d["floor"] += 1
                 save_state()
                 await self.refresh_message(inter)
 
             async def handle_rest(self, inter):
-                if self.d["energy"] >= 6 and self.d["hp"] >= self.d["max_hp"] * 0.8:
+                if self.d["energy"] >= 6 and self.d["hp"] >= self.d["max_hp"] * 0.8 and self.d["sanity"] >= self.d["max_sanity"] * 0.7:
                     self.d["last_log"] = "You are already in good shape. Resting feels pointless."
                     save_state()
                     await self.refresh_message(inter)
                     return
-                ambush_chance = 0.25 + world["corruption"] * 0.02
+                ambush_chance = 0.25 + world["corruption"] * 0.02 + world["rift_instability"] * 0.04
                 if random.random() < ambush_chance:
                     dmg = random.randint(20, 80)
                     self.d["hp"] -= dmg
+                    adjust_sanity(self.d, -random.randint(4, 9))
                     if self.d["hp"] <= 0:
                         self.d["hp"] = 0
                         self.d["active"] = False
@@ -791,7 +868,8 @@ class Economy(commands.Cog):
                     heal = random.randint(25, 80) + self.d["skills"]["ward"] * 8
                     self.d["hp"] = min(self.d["max_hp"], self.d["hp"] + heal)
                     self.d["energy"] = min(10, self.d["energy"] + 3)
-                    self.d["last_log"] = f"You rest uneasily, healing {heal} HP and regaining energy."
+                    adjust_sanity(self.d, random.randint(4, 10))
+                    self.d["last_log"] = f"You rest uneasily, healing {heal} HP, regaining energy, and steadying your mind."
                 save_state()
                 await self.refresh_message(inter)
 
@@ -805,6 +883,8 @@ class Economy(commands.Cog):
                 for key in ["might", "ward", "greed", "warp", "instinct"]:
                     val = self.d["skills"][key]
                     w = max(1, 4 - val)
+                    if key == "warp":
+                        w += self.d["rift_depth"] // 3
                     weights.append((key, w))
                 pool = []
                 for k, w in weights:
@@ -812,6 +892,7 @@ class Economy(commands.Cog):
                 chosen = random.choice(pool)
                 self.d["skills"][chosen] += 1
                 self.d["skill_points"] -= 1
+                adjust_sanity(self.d, random.randint(0, 2))
                 self.d["last_log"] = f"Your {chosen} grows to level {self.d['skills'][chosen]}."
                 save_state()
                 await self.refresh_message(inter)
@@ -838,6 +919,7 @@ class Economy(commands.Cog):
                 world["raid_hp"] = max(0, world["raid_hp"] - dmg)
                 base_reward = int(dmg * (0.6 + luck))
                 await update_balance(uid, base_reward)
+                adjust_sanity(self.d, random.randint(3, 8))
                 if world["raid_hp"] <= 0:
                     bonus = int(world["raid_max_hp"] * 0.2)
                     await update_balance(uid, bonus)
@@ -851,58 +933,113 @@ class Economy(commands.Cog):
                 save_state()
                 await self.refresh_message(inter)
 
+            async def handle_rift_dive(self, inter):
+                if self.d["hp"] <= 0:
+                    self.d["active"] = False
+                    save_state()
+                    await inter.response.edit_message(
+                        embed=discord.Embed(
+                            title=self.title,
+                            description="Your body is gone. The rift will not accept only a mind.",
+                            color=discord.Color.dark_red()
+                        ),
+                        view=None
+                    )
+                    return
+                if self.d["energy"] < 2:
+                    self.d["last_log"] = "You need at least 2 energy to dive into a rift."
+                    save_state()
+                    await self.refresh_message(inter)
+                    return
+                self.d["energy"] -= 2
+                self.d["rift_depth"] += 1
+                world["rift_instability"] += 0.04
+                world["rift_level"] += 1
+                roll = random.random()
+                if roll < 0.40:
+                    gain = int((80 + self.d["floor"] * 18) * get_luck(self.d))
+                    await update_balance(uid, gain)
+                    adjust_sanity(self.d, -random.randint(3, 7))
+                    self.d["last_log"] = f"You plunge into a personal rift and drag out {gain} horsenncy before it snaps shut."
+                elif roll < 0.70:
+                    relics = ["Rift-Linked Crown", "Glass Ribcage", "Endless Lantern", "Gravity Knot"]
+                    relic = random.choice(relics)
+                    self.d["relics"].append(relic)
+                    adjust_sanity(self.d, -random.randint(5, 10))
+                    self.d["last_log"] = f"The rift fuses you with relic {relic}. It does not leave you unchanged."
+                elif roll < 0.88:
+                    mut_pool = ["Second Shadow", "Hollow Voice", "Clockwork Gaze", "Liquid Bones"]
+                    mut = random.choice(mut_pool)
+                    self.d["mutations"].append(mut)
+                    adjust_sanity(self.d, -random.randint(6, 14))
+                    self.d["last_log"] = f"The rift rewrites you with mutation {mut}."
+                else:
+                    adjust_sanity(self.d, -random.randint(10, 18))
+                    curse = random.choice(["Unbound Echo", "Screaming Thread", "Molten Silence"])
+                    self.d["curses"].append(curse)
+                    self.d["last_log"] = f"The rift collapses on you, branding you with {curse} and leaving no clear reward."
+                save_state()
+                await self.refresh_message(inter)
+
             async def handle_leave(self, inter):
                 self.d["active"] = False
                 self.d["runs"] += 1
-                exit_reward = int(self.d["floor"] * 40 + len(self.d["relics"]) * 60 - len(self.d["curses"]) * 45)
+                exit_reward = int(self.d["floor"] * 40 + len(self.d["relics"]) * 60 - len(self.d["curses"]) * 45 + self.d["rift_depth"] * 30)
                 exit_reward = max(0, exit_reward)
                 await update_balance(uid, exit_reward)
                 save_state()
                 await inter.response.edit_message(
                     embed=discord.Embed(
                         title=self.title,
-                        description=f"You leave the omega dungeon at floor {self.d['floor']}.\nYou receive {exit_reward} horsenncy for your efforts.",
+                        description=f"You leave the dungeon at floor {self.d['floor']} with rift depth {self.d['rift_depth']}.\nYou receive {exit_reward} horsenncy for your efforts.",
                         color=discord.Color.gold()
                     ),
                     view=None
                 )
 
-            @discord.ui.button(label="Explore", style=discord.ButtonStyle.green)
+            @discord.ui.button(label="Explore", style=discord.ButtonStyle.green, row=0)
             async def explore_btn(self, inter: discord.Interaction, button: discord.ui.Button):
                 if inter.user.id != uid:
                     await inter.response.send_message("Not your dungeon.", ephemeral=True)
                     return
                 await self.do_explore(inter)
 
-            @discord.ui.button(label="Rest", style=discord.ButtonStyle.secondary)
+            @discord.ui.button(label="Rest", style=discord.ButtonStyle.secondary, row=0)
             async def rest_btn(self, inter: discord.Interaction, button: discord.ui.Button):
                 if inter.user.id != uid:
                     await inter.response.send_message("Not your dungeon.", ephemeral=True)
                     return
                 await self.handle_rest(inter)
 
-            @discord.ui.button(label="Skills", style=discord.ButtonStyle.primary)
+            @discord.ui.button(label="Skills", style=discord.ButtonStyle.primary, row=0)
             async def skills_btn(self, inter: discord.Interaction, button: discord.ui.Button):
                 if inter.user.id != uid:
                     await inter.response.send_message("Not your dungeon.", ephemeral=True)
                     return
                 await self.handle_skills(inter)
 
-            @discord.ui.button(label="Raid Boss", style=discord.ButtonStyle.blurple)
+            @discord.ui.button(label="Raid Boss", style=discord.ButtonStyle.blurple, row=0)
             async def raid_btn(self, inter: discord.Interaction, button: discord.ui.Button):
                 if inter.user.id != uid:
                     await inter.response.send_message("Not your dungeon.", ephemeral=True)
                     return
                 await self.handle_raid(inter)
 
-            @discord.ui.button(label="Leave", style=discord.ButtonStyle.red)
+            @discord.ui.button(label="Rift Dive", style=discord.ButtonStyle.secondary, row=1)
+            async def rift_btn(self, inter: discord.Interaction, button: discord.ui.Button):
+                if inter.user.id != uid:
+                    await inter.response.send_message("Not your dungeon.", ephemeral=True)
+                    return
+                await self.handle_rift_dive(inter)
+
+            @discord.ui.button(label="Leave", style=discord.ButtonStyle.red, row=1)
             async def leave_btn(self, inter: discord.Interaction, button: discord.ui.Button):
                 if inter.user.id != uid:
                     await inter.response.send_message("Not your dungeon.", ephemeral=True)
                     return
                 await self.handle_leave(inter)
 
-        view = DungeonOmegaView(dungeon)
+        view = DungeonView(dungeon)
         await interaction.response.send_message(embed=view.build_embed(), view=view)
 
     @app_commands.command(name="stocks", description="View the ultra-horseyist Horsey Stock Exchange.")
