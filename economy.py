@@ -107,7 +107,6 @@ def get_cooldown(user_id: int, key: str):
     return datetime.datetime.fromisoformat(ts)
 
 def get_user(uid: int):
-    global state
     uid = str(uid)
 
     if uid not in state["users"]:
@@ -123,18 +122,82 @@ def get_user(uid: int):
             "last_pray": None,
             "codepad": {},
             "owned_animals": [],
-            "team": []
+            "team": [],
+            "stocks": {},
+            "dungeon": {
+                "active": False,
+                "floor": 1,
+                "hp": 100,
+                "max_hp": 100,
+                "energy": 3,
+                "relics": [],
+                "curses": [],
+                "skills": {
+                    "power": 0,
+                    "fortune": 0,
+                    "endurance": 0,
+                    "instability": 0
+                },
+                "cooldowns": {},
+                "last_event": None
+            },
+            "raid": {
+                "joined": False,
+                "damage": 0,
+                "relic_bonus": 0
+            },
+            "pvp": {
+                "invasion_cooldown": None,
+                "defense_bonus": 0,
+                "offense_bonus": 0
+            }
         }
         save_state()
 
-    user = state["users"][uid]
-    user.setdefault("pray", 0)
-    user.setdefault("last_pray", None)
-    user.setdefault("codepad", {})
-    user.setdefault("owned_animals", [])
-    user.setdefault("team", [])
-    user.setdefault("stocks", {})
-    return user
+    u = state["users"][uid]
+
+    u.setdefault("balance", 0)
+    u.setdefault("inventory", {})
+    u.setdefault("pray", 0)
+    u.setdefault("last_pray", None)
+    u.setdefault("owned_animals", [])
+    u.setdefault("team", [])
+    u.setdefault("stocks", {})
+
+    if "dungeon" not in u:
+        u["dungeon"] = {
+            "active": False,
+            "floor": 1,
+            "hp": 100,
+            "max_hp": 100,
+            "energy": 3,
+            "relics": [],
+            "curses": [],
+            "skills": {
+                "power": 0,
+                "fortune": 0,
+                "endurance": 0,
+                "instability": 0
+            },
+            "cooldowns": {},
+            "last_event": None
+        }
+
+    if "raid" not in u:
+        u["raid"] = {
+            "joined": False,
+            "damage": 0,
+            "relic_bonus": 0
+        }
+
+    if "pvp" not in u:
+        u["pvp"] = {
+            "invasion_cooldown": None,
+            "defense_bonus": 0,
+            "offense_bonus": 0
+        }
+
+    return u
 
 
 async def get_balance(user_id: int) -> int:
@@ -240,6 +303,570 @@ class Economy(commands.Cog):
             data["momentum"] = mom
             data["price"] = new
         return event, individual
+    @app_commands.command(name="dungeon_omega", description="Enter the omega dungeon: raids, invasions, skills, relics, and world events.")
+    async def dungeon_omega(self, interaction: discord.Interaction):
+        uid = interaction.user.id
+        user = get_user(uid)
+        global state
+        world = state.setdefault("world", {})
+        world.setdefault("corruption", 0.0)
+        world.setdefault("raid_seed", random.randint(1, 999999))
+        world.setdefault("raid_boss", None)
+        world.setdefault("raid_hp", 0)
+        world.setdefault("raid_max_hp", 0)
+        world.setdefault("raid_cycle", 0)
+        world.setdefault("last_event", "Dormant")
+        dungeon = user.setdefault("dungeon", {})
+        dungeon.setdefault("active", False)
+        dungeon.setdefault("floor", 1)
+        dungeon.setdefault("hp", 100)
+        dungeon.setdefault("max_hp", 100)
+        dungeon.setdefault("energy", 5)
+        dungeon.setdefault("skills", {"might": 0, "ward": 0, "greed": 0, "warp": 0, "instinct": 0})
+        dungeon.setdefault("relics", [])
+        dungeon.setdefault("curses", [])
+        dungeon.setdefault("skill_points", 0)
+        dungeon.setdefault("last_floor_cleared", 0)
+        dungeon.setdefault("raid_tokens", 1)
+        dungeon.setdefault("invasion_shield", 0)
+        dungeon.setdefault("last_log", "You feel the dungeon watching you.")
+        dungeon.setdefault("runs", 0)
+        dungeon.setdefault("boss_kills", 0)
+        dungeon["active"] = True
+
+        def get_power(d):
+            s = d["skills"]
+            base = d["floor"] * 10 + len(d["relics"]) * 8
+            base += s["might"] * 12
+            base += s["ward"] * 6
+            base += s["instinct"] * 7
+            penalty = len(d["curses"]) * 10
+            return max(10, base - penalty)
+
+        def get_luck(d):
+            s = d["skills"]
+            base = 1.0 + s["greed"] * 0.08 + len(d["relics"]) * 0.02
+            base -= len(d["curses"]) * 0.04
+            return max(0.2, base)
+
+        def get_warp(d):
+            s = d["skills"]
+            return s["warp"] * 0.03 + len(d["relics"]) * 0.005
+
+        def ensure_raid_boss():
+            if world["raid_boss"] is None or world["raid_hp"] <= 0:
+                world["raid_cycle"] += 1
+                names = [
+                    "Abyssal World-Serpent",
+                    "Chronophage Colossus",
+                    "Starlit Void Leviathan",
+                    "Omega Horsey of Endings",
+                    "Reality-Flaying Dragon"
+                ]
+                boss = random.choice(names)
+                base_hp = 1000 + int(world["corruption"] * 300) + world["raid_cycle"] * 250
+                world["raid_boss"] = boss
+                world["raid_hp"] = base_hp
+                world["raid_max_hp"] = base_hp
+                world["last_event"] = f"New raid boss: {boss}"
+                save_state()
+
+        def dungeon_summary(d):
+            s = d["skills"]
+            hp_bar = f"{d['hp']}/{d['max_hp']}"
+            energy_bar = f"{d['energy']} ⚡"
+            relics = len(d["relics"])
+            curses = len(d["curses"])
+            power = get_power(d)
+            luck = get_luck(d)
+            warp = get_warp(d)
+            return (
+                f"Floor: {d['floor']}\n"
+                f"HP: {hp_bar}\n"
+                f"Energy: {energy_bar}\n"
+                f"Relics: {relics} | Curses: {curses}\n"
+                f"Power: {power} | Luck: {luck:.2f} | Warp: {warp:.2f}\n"
+                f"Skills → Might {s['might']}, Ward {s['ward']}, Greed {s['greed']}, Warp {s['warp']}, Instinct {s['instinct']}\n"
+                f"Skill Points: {d['skill_points']} | Raid Tokens: {d['raid_tokens']}\n"
+                f"World Corruption: {world['corruption']:.2f} | Raid Cycle: {world['raid_cycle']}\n"
+                f"World Event: {world['last_event']}"
+            )
+
+        def pick_invasion_target(exclude_id):
+            candidates = []
+            for raw_id, udata in state["users"].items():
+                try:
+                    tid = int(raw_id)
+                except:
+                    continue
+                if tid == exclude_id:
+                    continue
+                d2 = udata.get("dungeon")
+                if not d2:
+                    continue
+                if not d2.get("active"):
+                    continue
+                if d2.get("hp", 0) <= 0:
+                    continue
+                candidates.append((tid, d2))
+            if not candidates:
+                return None
+            return random.choice(candidates)
+
+        class DungeonOmegaView(discord.ui.View):
+            def __init__(self, dungeon_state):
+                super().__init__(timeout=240)
+                self.d = dungeon_state
+                self.title = f"🌌 Omega Dungeon — {interaction.user.display_name}"
+
+            def build_embed(self):
+                desc = dungeon_summary(self.d) + "\n\n" + self.d.get("last_log", "")
+                e = discord.Embed(
+                    title=self.title,
+                    description=desc,
+                    color=discord.Color.dark_purple()
+                )
+                if world["raid_boss"]:
+                    hp = world["raid_hp"]
+                    max_hp = max(1, world["raid_max_hp"])
+                    ratio = max(0.0, min(1.0, hp / max_hp))
+                    blocks = 12
+                    filled = int(blocks * ratio)
+                    bar = "█" * filled + "░" * (blocks - filled)
+                    e.add_field(
+                        name=f"Global Raid Boss: {world['raid_boss']}",
+                        value=f"{bar}\nHP: {hp}/{max_hp}",
+                        inline=False
+                    )
+                return e
+
+            async def refresh_message(self, inter):
+                await inter.response.edit_message(embed=self.build_embed(), view=self)
+
+            async def do_explore(self, inter):
+                if self.d["hp"] <= 0:
+                    self.d["active"] = False
+                    save_state()
+                    await inter.response.edit_message(
+                        embed=discord.Embed(
+                            title=self.title,
+                            description="You cannot move. The dungeon has consumed you.",
+                            color=discord.Color.dark_red()
+                        ),
+                        view=None
+                    )
+                    return
+                if self.d["energy"] <= 0:
+                    self.d["last_log"] = "You are exhausted. Rest or leave."
+                    save_state()
+                    await self.refresh_message(inter)
+                    return
+                self.d["energy"] -= 1
+                world["corruption"] += 0.02 + self.d["floor"] * 0.001
+                event_roll = random.random()
+                warp_factor = get_warp(self.d)
+                invasion_chance = 0.08 + warp_factor * 0.5
+                boss_floor = self.d["floor"] % 7 == 0
+                if boss_floor and random.random() < 0.6:
+                    await self.handle_boss(inter)
+                    return
+                if event_roll < 0.35:
+                    await self.handle_battle(inter)
+                elif event_roll < 0.55:
+                    await self.handle_loot(inter)
+                elif event_roll < 0.70:
+                    await self.handle_trap(inter)
+                elif event_roll < 0.82:
+                    await self.handle_altar(inter)
+                elif event_roll < 0.92:
+                    await self.handle_world_rift(inter)
+                else:
+                    if random.random() < invasion_chance and self.d["invasion_shield"] <= 0:
+                        await self.handle_invasion(inter)
+                    else:
+                        await self.handle_world_rift(inter)
+
+            async def handle_battle(self, inter):
+                power = get_power(self.d)
+                luck = get_luck(self.d)
+                ward = self.d["skills"]["ward"]
+                tier = min(5, 1 + self.d["floor"] // 5)
+                monsters = {
+                    1: [("Gloom Slime", 40, 0.70), ("Duskwolf", 65, 0.62)],
+                    2: [("Abyss Stalker", 120, 0.55), ("Shatter Imp", 150, 0.50)],
+                    3: [("Grave Titan", 240, 0.44), ("Spectral Butcher", 260, 0.42)],
+                    4: [("Entropy Hydra", 360, 0.36), ("Obsidian Warden", 380, 0.34)],
+                    5: [("World Scar", 520, 0.30), ("Chrono Horror", 560, 0.28)]
+                }
+                name, reward, base_win = random.choice(monsters[tier])
+                win_chance = base_win + power * 0.0008 + luck * 0.02 - world["corruption"] * 0.01
+                win_chance = max(0.05, min(0.96, win_chance))
+                if random.random() < win_chance:
+                    crit = random.random() < (0.08 + self.d["skills"]["might"] * 0.02)
+                    final_reward = int(reward * luck * (2 if crit else 1))
+                    await update_balance(uid, final_reward)
+                    self.d["floor"] += 1
+                    self.d["last_floor_cleared"] = max(self.d["last_floor_cleared"], self.d["floor"])
+                    if self.d["floor"] % 4 == 0:
+                        self.d["skill_points"] += 1
+                    text = f"You defeated {name} and gained {final_reward} horsenncy."
+                    if crit:
+                        text += " Critical strike shattered reality."
+                    self.d["last_log"] = text
+                else:
+                    dmg = random.randint(18, 60) + int(world["corruption"] * 5)
+                    dmg = max(1, int(dmg * (1 - ward * 0.06)))
+                    self.d["hp"] -= dmg
+                    if self.d["hp"] <= 0:
+                        self.d["hp"] = 0
+                        self.d["active"] = False
+                        save_state()
+                        await inter.response.edit_message(
+                            embed=discord.Embed(
+                                title=self.title,
+                                description=f"{name} crushed you.\nYou lost consciousness at floor {self.d['floor']}.",
+                                color=discord.Color.dark_red()
+                            ),
+                            view=None
+                        )
+                        return
+                    self.d["last_log"] = f"{name} wounded you for {dmg} HP."
+                save_state()
+                await self.refresh_message(inter)
+
+            async def handle_loot(self, inter):
+                luck = get_luck(self.d)
+                base = random.randint(50, 200) + self.d["floor"] * 15
+                coin = int(base * luck)
+                relic_roll = random.random() < 0.18 + luck * 0.05
+                curse_roll = random.random() < 0.04 + world["corruption"] * 0.02
+                await update_balance(uid, coin)
+                log = f"You find a cache worth {coin} horsenncy."
+                if relic_roll:
+                    relic_pool = [
+                        "Temporal Shard",
+                        "Crown of Echoes",
+                        "Void Mane Fragment",
+                        "Prismatic Hoofprint",
+                        "Stellar Bridle",
+                        "Gilded Neighstone"
+                    ]
+                    relic = random.choice(relic_pool)
+                    self.d["relics"].append(relic)
+                    log += f" You obtained relic: {relic}."
+                if curse_roll:
+                    curses = ["Mark of Hunger", "Fractured Time", "Weak Hoof", "Gaze of the Abyss"]
+                    curse = random.choice(curses)
+                    self.d["curses"].append(curse)
+                    log += f" A lurking curse clings to you: {curse}."
+                self.d["floor"] += 1
+                if self.d["floor"] % 4 == 0:
+                    self.d["skill_points"] += 1
+                self.d["last_log"] = log
+                save_state()
+                await self.refresh_message(inter)
+
+            async def handle_trap(self, inter):
+                ward = self.d["skills"]["ward"]
+                dmg = random.randint(25, 130) + int(world["corruption"] * 10)
+                dmg = max(5, int(dmg * (1 - ward * 0.05)))
+                evade = 0.10 + self.d["skills"]["instinct"] * 0.03
+                if random.random() < evade:
+                    self.d["last_log"] = "You sensed a trap and narrowly dodged it."
+                else:
+                    self.d["hp"] -= dmg
+                    if self.d["hp"] <= 0:
+                        self.d["hp"] = 0
+                        self.d["active"] = False
+                        save_state()
+                        await inter.response.edit_message(
+                            embed=discord.Embed(
+                                title=self.title,
+                                description=f"A catastrophic trap obliterates you on floor {self.d['floor']}.",
+                                color=discord.Color.dark_red()
+                            ),
+                            view=None
+                        )
+                        return
+                    self.d["last_log"] = f"A trap tears through you for {dmg} HP."
+                self.d["floor"] += 1
+                save_state()
+                await self.refresh_message(inter)
+
+            async def handle_altar(self, inter):
+                roll = random.random()
+                if roll < 0.45:
+                    heal = random.randint(20, 70) + self.d["skills"]["ward"] * 10
+                    self.d["hp"] = min(self.d["max_hp"], self.d["hp"] + heal)
+                    self.d["last_log"] = f"A radiant altar mends your wounds for {heal} HP."
+                elif roll < 0.75:
+                    self.d["skill_points"] += 1
+                    self.d["last_log"] = "You receive an echo of knowledge. Gain 1 skill point."
+                else:
+                    curses = ["Silent Brand", "Bone Tax", "Entropy Mark"]
+                    curse = random.choice(curses)
+                    self.d["curses"].append(curse)
+                    self.d["last_log"] = f"A false altar curses you with {curse}."
+                self.d["floor"] += 1
+                save_state()
+                await self.refresh_message(inter)
+
+            async def handle_world_rift(self, inter):
+                ensure_raid_boss()
+                warp = get_warp(self.d)
+                roll = random.random()
+                if roll < 0.25 + warp:
+                    world["corruption"] = max(0.0, world["corruption"] - 0.30)
+                    world["last_event"] = "A cleansing wave sweeps the dungeon."
+                    self.d["last_log"] = "You witness a cleansing rift that lowers world corruption."
+                elif roll < 0.55 + warp:
+                    world["corruption"] += 0.5
+                    world["last_event"] = "A catastrophic surge mutates the raid boss."
+                    if world["raid_boss"]:
+                        world["raid_hp"] = int(world["raid_hp"] * 1.15) + 100
+                        world["raid_max_hp"] = int(world["raid_max_hp"] * 1.15) + 100
+                    self.d["last_log"] = "A violent rift swells the global boss."
+                else:
+                    shift = random.choice(["up", "down"])
+                    if shift == "up":
+                        self.d["floor"] += 2
+                        self.d["last_log"] = "A twisted rift hurls you two floors upward."
+                    else:
+                        self.d["floor"] = max(1, self.d["floor"] - 2)
+                        self.d["last_log"] = "A collapsing rift drags you two floors downward."
+                self.d["floor"] += 1
+                save_state()
+                await self.refresh_message(inter)
+
+            async def handle_boss(self, inter):
+                power = get_power(self.d)
+                luck = get_luck(self.d)
+                boss_names = [
+                    "Crown-Eater Stallion",
+                    "Oblivion Roc",
+                    "Sunless Unicorn King",
+                    "Titanic Leviathan Colt"
+                ]
+                hp_scale = 80 + self.d["floor"] * 25 + int(world["corruption"] * 40)
+                boss_name = random.choice(boss_names)
+                win_chance = 0.40 + luck * 0.05 + power * 0.001 - world["corruption"] * 0.03
+                win_chance = max(0.05, min(0.95, win_chance))
+                if random.random() < win_chance:
+                    loot = int(hp_scale * luck * 1.8)
+                    await update_balance(uid, loot)
+                    self.d["boss_kills"] += 1
+                    self.d["floor"] += 1
+                    self.d["energy"] = min(10, self.d["energy"] + 2)
+                    self.d["skill_points"] += 2
+                    reliq = random.choice(["Crown of Ends", "Star-Shear Bridle", "Omega Hoofprint"])
+                    self.d["relics"].append(reliq)
+                    self.d["last_log"] = f"You slay the boss {boss_name}, gaining {loot} horsenncy and relic {reliq}."
+                else:
+                    dmg = random.randint(70, 170) + int(world["corruption"] * 25)
+                    self.d["hp"] -= dmg
+                    if self.d["hp"] <= 0:
+                        self.d["hp"] = 0
+                        self.d["active"] = False
+                        save_state()
+                        await inter.response.edit_message(
+                            embed=discord.Embed(
+                                title=self.title,
+                                description=f"The boss {boss_name} erases you from the floor.\nYou fall at floor {self.d['floor']}.",
+                                color=discord.Color.dark_red()
+                            ),
+                            view=None
+                        )
+                        return
+                    curse_pool = ["Shattered Courage", "Fraying Reality", "Burning Hooves"]
+                    curse = random.choice(curse_pool)
+                    self.d["curses"].append(curse)
+                    self.d["last_log"] = f"The boss {boss_name} maims you for {dmg} HP and inflicts {curse}."
+                    self.d["floor"] += 1
+                save_state()
+                await self.refresh_message(inter)
+
+            async def handle_invasion(self, inter):
+                target = pick_invasion_target(uid)
+                if not target:
+                    self.d["last_log"] = "An invasion rift sputters out. No target found."
+                    self.d["floor"] += 1
+                    save_state()
+                    await self.refresh_message(inter)
+                    return
+                tid, td = target
+                atk_power = get_power(self.d) * (1 + self.d["skills"]["might"] * 0.05)
+                def_power = get_power(td) * (1 + td["skills"]["ward"] * 0.05)
+                base = 0.55 + self.d["skills"]["instinct"] * 0.03 - len(self.d["curses"]) * 0.02
+                base -= len(td["relics"]) * 0.01
+                ratio = atk_power / max(10, atk_power + def_power)
+                win_chance = base + ratio * 0.25
+                win_chance = max(0.05, min(0.95, win_chance))
+                steal_ratio = random.uniform(0.06, 0.20)
+                target_user = get_user(tid)
+                if random.random() < win_chance:
+                    stolen = int(target_user["balance"] * steal_ratio)
+                    target_user["balance"] = max(0, target_user["balance"] - stolen)
+                    user_local = get_user(uid)
+                    user_local["balance"] += stolen
+                    if td["relics"]:
+                        stolen_relic = random.choice(td["relics"])
+                        td["relics"].remove(stolen_relic)
+                        self.d["relics"].append(stolen_relic)
+                        relic_text = f" and stole relic {stolen_relic}"
+                    else:
+                        relic_text = ""
+                    self.d["last_log"] = f"You invade <@{tid}> and steal {stolen} horsenncy{relic_text}."
+                    if self.d["invasion_shield"] < 2:
+                        self.d["invasion_shield"] += 1
+                else:
+                    penalty = int(user["balance"] * 0.05)
+                    await update_balance(uid, -penalty)
+                    self.d["last_log"] = f"Your invasion against <@{tid}> fails. You lose {penalty} horsenncy."
+                self.d["floor"] += 1
+                save_state()
+                await self.refresh_message(inter)
+
+            async def handle_rest(self, inter):
+                if self.d["energy"] >= 6 and self.d["hp"] >= self.d["max_hp"] * 0.8:
+                    self.d["last_log"] = "You are already in good shape. Resting feels pointless."
+                    save_state()
+                    await self.refresh_message(inter)
+                    return
+                ambush_chance = 0.25 + world["corruption"] * 0.02
+                if random.random() < ambush_chance:
+                    dmg = random.randint(20, 80)
+                    self.d["hp"] -= dmg
+                    if self.d["hp"] <= 0:
+                        self.d["hp"] = 0
+                        self.d["active"] = False
+                        save_state()
+                        await inter.response.edit_message(
+                            embed=discord.Embed(
+                                title=self.title,
+                                description=f"You were ambushed in your sleep and perish on floor {self.d['floor']}.",
+                                color=discord.Color.dark_red()
+                            ),
+                            view=None
+                        )
+                        return
+                    self.d["last_log"] = f"An unseen horror ambushes you while resting for {dmg} HP."
+                else:
+                    heal = random.randint(25, 80) + self.d["skills"]["ward"] * 8
+                    self.d["hp"] = min(self.d["max_hp"], self.d["hp"] + heal)
+                    self.d["energy"] = min(10, self.d["energy"] + 3)
+                    self.d["last_log"] = f"You rest uneasily, healing {heal} HP and regaining energy."
+                save_state()
+                await self.refresh_message(inter)
+
+            async def handle_skills(self, inter):
+                if self.d["skill_points"] <= 0:
+                    self.d["last_log"] = "You lack skill points to channel any growth."
+                    save_state()
+                    await self.refresh_message(inter)
+                    return
+                weights = []
+                for key in ["might", "ward", "greed", "warp", "instinct"]:
+                    val = self.d["skills"][key]
+                    w = max(1, 4 - val)
+                    weights.append((key, w))
+                pool = []
+                for k, w in weights:
+                    pool.extend([k] * w)
+                chosen = random.choice(pool)
+                self.d["skills"][chosen] += 1
+                self.d["skill_points"] -= 1
+                self.d["last_log"] = f"Your {chosen} grows to level {self.d['skills'][chosen]}."
+                save_state()
+                await self.refresh_message(inter)
+
+            async def handle_raid(self, inter):
+                ensure_raid_boss()
+                if self.d["raid_tokens"] <= 0:
+                    self.d["last_log"] = "You have no raid tokens to join the assault."
+                    save_state()
+                    await self.refresh_message(inter)
+                    return
+                if world["raid_hp"] <= 0:
+                    self.d["last_log"] = "The current raid boss is already defeated. Wait for the next one."
+                    save_state()
+                    await self.refresh_message(inter)
+                    return
+                self.d["raid_tokens"] -= 1
+                power = get_power(self.d)
+                luck = get_luck(self.d)
+                dmg = int(power * random.uniform(0.7, 1.4) * luck)
+                crit = random.random() < (0.10 + self.d["skills"]["might"] * 0.03)
+                if crit:
+                    dmg = int(dmg * 1.8)
+                world["raid_hp"] = max(0, world["raid_hp"] - dmg)
+                base_reward = int(dmg * (0.6 + luck))
+                await update_balance(uid, base_reward)
+                if world["raid_hp"] <= 0:
+                    bonus = int(world["raid_max_hp"] * 0.2)
+                    await update_balance(uid, bonus)
+                    world["last_event"] = f"{world['raid_boss']} was slain. Raid cycle completed."
+                    self.d["last_log"] = f"You deal {dmg} damage and land the final blow, gaining {base_reward + bonus} horsenncy."
+                    world["raid_boss"] = None
+                    world["raid_hp"] = 0
+                    world["raid_max_hp"] = 0
+                else:
+                    self.d["last_log"] = f"You strike {world['raid_boss']} for {dmg} damage and gain {base_reward} horsenncy."
+                save_state()
+                await self.refresh_message(inter)
+
+            async def handle_leave(self, inter):
+                self.d["active"] = False
+                self.d["runs"] += 1
+                exit_reward = int(self.d["floor"] * 40 + len(self.d["relics"]) * 60 - len(self.d["curses"]) * 45)
+                exit_reward = max(0, exit_reward)
+                await update_balance(uid, exit_reward)
+                save_state()
+                await inter.response.edit_message(
+                    embed=discord.Embed(
+                        title=self.title,
+                        description=f"You leave the omega dungeon at floor {self.d['floor']}.\nYou receive {exit_reward} horsenncy for your efforts.",
+                        color=discord.Color.gold()
+                    ),
+                    view=None
+                )
+
+            @discord.ui.button(label="Explore", style=discord.ButtonStyle.green)
+            async def explore_btn(self, inter: discord.Interaction, button: discord.ui.Button):
+                if inter.user.id != uid:
+                    await inter.response.send_message("Not your dungeon.", ephemeral=True)
+                    return
+                await self.do_explore(inter)
+
+            @discord.ui.button(label="Rest", style=discord.ButtonStyle.secondary)
+            async def rest_btn(self, inter: discord.Interaction, button: discord.ui.Button):
+                if inter.user.id != uid:
+                    await inter.response.send_message("Not your dungeon.", ephemeral=True)
+                    return
+                await self.handle_rest(inter)
+
+            @discord.ui.button(label="Skills", style=discord.ButtonStyle.primary)
+            async def skills_btn(self, inter: discord.Interaction, button: discord.ui.Button):
+                if inter.user.id != uid:
+                    await inter.response.send_message("Not your dungeon.", ephemeral=True)
+                    return
+                await self.handle_skills(inter)
+
+            @discord.ui.button(label="Raid Boss", style=discord.ButtonStyle.blurple)
+            async def raid_btn(self, inter: discord.Interaction, button: discord.ui.Button):
+                if inter.user.id != uid:
+                    await inter.response.send_message("Not your dungeon.", ephemeral=True)
+                    return
+                await self.handle_raid(inter)
+
+            @discord.ui.button(label="Leave", style=discord.ButtonStyle.red)
+            async def leave_btn(self, inter: discord.Interaction, button: discord.ui.Button):
+                if inter.user.id != uid:
+                    await inter.response.send_message("Not your dungeon.", ephemeral=True)
+                    return
+                await self.handle_leave(inter)
+
+        view = DungeonOmegaView(dungeon)
+        await interaction.response.send_message(embed=view.build_embed(), view=view)
 
     @app_commands.command(name="stocks", description="View the ultra-horseyist Horsey Stock Exchange.")
     async def stocks_main(self, interaction: discord.Interaction):
