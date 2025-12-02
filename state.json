@@ -1,7 +1,7 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 5285,
+      "balance": 6513,
       "last_daily": "2025-11-27T21:10:31.094705",
       "last_work": "2025-11-29T23:41:27.264950",
       "fish_cooldown": "2025-11-30T04:41:21.942729",
@@ -122,7 +122,52 @@
           "strength": 22
         }
       ],
-      "stocks": {}
+      "stocks": {},
+      "dungeon": {
+        "active": false,
+        "floor": 13,
+        "hp": 0,
+        "max_hp": 100,
+        "energy": 6,
+        "relics": [
+          "Gilded Neighstone",
+          "Omega Hoofprint"
+        ],
+        "curses": [],
+        "skills": {
+          "power": 0,
+          "fortune": 0,
+          "endurance": 0,
+          "instability": 0,
+          "might": 1,
+          "ward": 0,
+          "greed": 0,
+          "warp": 0,
+          "instinct": 2,
+          "focus": 0,
+          "agility": 0,
+          "spirit": 0
+        },
+        "cooldowns": {},
+        "last_event": null,
+        "last_log": "Spectral Butcher wounded you for 46 HP.",
+        "skill_points": 0,
+        "last_floor_cleared": 7,
+        "raid_tokens": 0,
+        "invasion_shield": 0,
+        "runs": 0,
+        "boss_kills": 1
+      },
+      "raid": {
+        "joined": false,
+        "damage": 0,
+        "relic_bonus": 0
+      },
+      "pvp": {
+        "invasion_cooldown": null,
+        "defense_bonus": 0,
+        "offense_bonus": 0
+      }
     },
     "1350372198992314451": {
       "balance": 4845,
@@ -302,5 +347,14 @@
     "1238242784679563265": {
       "code.py": "print(\"Yes, that is my PFP!\")"
     }
+  },
+  "world": {
+    "corruption": 1.2659999999999998,
+    "raid_seed": 988258,
+    "raid_boss": "Starlit Void Leviathan",
+    "raid_hp": 1841,
+    "raid_max_hp": 1875,
+    "raid_cycle": 1,
+    "last_event": "A catastrophic surge mutates the raid boss."
   }
 }
