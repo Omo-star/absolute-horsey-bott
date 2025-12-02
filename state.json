@@ -1,11 +1,11 @@
 {
   "users": {
     "1238242784679563265": {
-      "balance": 5084,
+      "balance": 5285,
       "last_daily": "2025-11-27T21:10:31.094705",
       "last_work": "2025-11-29T23:41:27.264950",
       "fish_cooldown": "2025-11-30T04:41:21.942729",
-      "hunt_cooldown": "2025-11-30T04:41:18.458481",
+      "hunt_cooldown": "2025-12-02T19:12:22.484121",
       "inventory": {
         "intercontinental_ballistic_missile": 1,
         "odd_box": 0,
@@ -58,6 +58,31 @@
           "name": "\ud83e\udd8e Lizard",
           "rarity": "Common",
           "strength": 14
+        },
+        {
+          "name": "\ud83e\udd8e Lizard",
+          "rarity": "Common",
+          "strength": 14
+        },
+        {
+          "name": "\ud83e\udd9d Raccoon",
+          "rarity": "Common",
+          "strength": 18
+        },
+        {
+          "name": "\ud83e\udda9 Flamingo",
+          "rarity": "Uncommon",
+          "strength": 63
+        },
+        {
+          "name": "\ud83d\udc10 Mountain Goat",
+          "rarity": "Uncommon",
+          "strength": 60
+        },
+        {
+          "name": "\ud83d\udc00 Rat",
+          "rarity": "Common",
+          "strength": 10
         }
       ],
       "team": [
@@ -82,11 +107,6 @@
           "strength": 28
         },
         {
-          "name": "\ud83e\udd86 Duck",
-          "rarity": "Common",
-          "strength": 23
-        },
-        {
           "name": "\ud83d\udc09 Baby Dragon",
           "rarity": "Epic",
           "strength": 320
@@ -95,13 +115,18 @@
           "name": "\ud83d\udc15 Stray Dog",
           "rarity": "Common",
           "strength": 28
+        },
+        {
+          "name": "\ud83e\udda4 Dodo (how??)",
+          "rarity": "Common",
+          "strength": 22
         }
       ],
       "stocks": {}
     },
     "1350372198992314451": {
-      "balance": 4702,
-      "last_daily": "2025-12-01T04:47:24.793946",
+      "balance": 4845,
+      "last_daily": "2025-12-02T13:56:17.664484",
       "last_work": "2025-11-27T10:15:35.575647",
       "fish_cooldown": "2025-11-27T14:32:31.690440",
       "hunt_cooldown": "2025-11-26T18:53:06.098832",
