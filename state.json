@@ -239,6 +239,57 @@
       "hunt_cooldown": null,
       "inventory": {},
       "roast_protection_until": null
+    },
+    "1374303202312327240": {
+      "balance": 0,
+      "last_daily": null,
+      "last_work": null,
+      "fish_cooldown": null,
+      "hunt_cooldown": null,
+      "inventory": {},
+      "roast_protection_until": null,
+      "pray": 0,
+      "last_pray": null,
+      "codepad": {},
+      "owned_animals": [],
+      "team": [],
+      "stocks": {},
+      "dungeon": {
+        "active": false,
+        "floor": 1,
+        "hp": 100,
+        "max_hp": 100,
+        "energy": 3,
+        "relics": [],
+        "curses": [],
+        "skills": {
+          "power": 0,
+          "fortune": 0,
+          "endurance": 0,
+          "instability": 0,
+          "might": 0,
+          "ward": 0,
+          "greed": 0,
+          "warp": 0,
+          "instinct": 0,
+          "focus": 0,
+          "agility": 0,
+          "spirit": 0
+        },
+        "cooldowns": {},
+        "last_event": null,
+        "last_log": ""
+      },
+      "raid": {
+        "joined": false,
+        "damage": 0,
+        "relic_bonus": 0
+      },
+      "pvp": {
+        "invasion_cooldown": null,
+        "defense_bonus": 0,
+        "offense_bonus": 0
+      }
     }
   },
   "items": {
