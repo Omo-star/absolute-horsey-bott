@@ -67,44 +67,39 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 def extract_text_with_logging(model_name, resp):
     try:
+        log(f"[LLM-RAW:{model_name}] type={type(resp)}")
 
-        log(f"[LLM-RAW:{model_name}] type={type(resp)} | keys={dir(resp)}")
-
-        text = None
+        # 1) Check for OpenAI/Groq/GitHub style: resp.choices[0].message.content
+        try:
+            c = resp.choices[0]
+            if hasattr(c, "message") and hasattr(c.message, "content"):
+                if c.message.content:
+                    text = c.message.content
+                    log(f"[LLM-EXTRACT:{model_name}] message.content FOUND: {text[:120]}")
+                    return text
+        except:
+            pass
 
         try:
             c = resp.choices[0]
-            log(f"[LLM-CHOICE:{model_name}] choice keys={dir(c)}")
-
-            if hasattr(c, "message") and hasattr(c.message, "content") and c.message.content:
-                text = c.message.content
-                log(f"[LLM-EXTRACT:{model_name}] message.content FOUND: {text[:120]}")
-                return text
-
             if hasattr(c, "text") and c.text:
                 text = c.text
                 log(f"[LLM-EXTRACT:{model_name}] choice.text FOUND: {text[:120]}")
                 return text
-
-        except Exception as e:
-            log(f"[LLM-CHOICE-ERROR:{model_name}] {e}")
+        except:
+            pass
 
         if hasattr(resp, "text") and resp.text:
             text = resp.text
             log(f"[LLM-EXTRACT:{model_name}] resp.text FOUND: {text[:120]}")
             return text
-        if hasattr(resp, "output_text") and resp.output_text:
-            text = resp.output_text
-            log(f"[LLM-EXTRACT:{model_name}] resp.output_text FOUND: {text[:120]}")
-            return text
 
         if isinstance(resp, str):
-            log(f"[LLM-EXTRACT:{model_name}] raw str FOUND: {resp[:120]}")
+            log(f"[LLM-EXTRACT:{model_name}] raw string FOUND: {resp[:120]}")
             return resp
 
-        log(f"[LLM-EXTRACT:{model_name}] NO TEXT FOUND (empty)")
+        log(f"[LLM-EXTRACT:{model_name}] NO TEXT FOUND")
         return ""
-
     except Exception as e:
         log(f"[LLM-EXTRACT-FAIL:{model_name}] {e}")
         return ""
@@ -472,18 +467,27 @@ async def safe_completion(model, messages):
     if model.startswith("gemini"):
         def call():
             try:
-                text = "\n".join(m["content"] for m in messages if m["role"] == "user")
+                user_text = "\n".join(m["content"] for m in messages if m["role"] == "user")
+                model_name = model
 
-                client = genai.GenerativeModel(model)
-                resp = client.generate_content(text)
+                client = genai.GenerativeModel(model_name)
+                resp = client.generate_content(user_text)
 
-                return wrap(strip_reasoning(resp.text))
+                if hasattr(resp, "text") and resp.text:
+                    return wrap(strip_reasoning(resp.text))
+
+                if hasattr(resp, "candidates"):
+                    try:
+                        txt = resp.candidates[0].content.parts[0].text
+                        return wrap(strip_reasoning(txt))
+                    except:
+                        pass
+
+                return wrap("Roast generation failed.")
             except Exception as e:
                 log(f"[GEMINI FAIL:{model}] {e}")
                 return None
         return await run_blocking(call)
-
-
 
     if model.startswith("github:"):
         if github_client is None:
@@ -610,7 +614,7 @@ async def spice_groq(text: str):
                 "0 = barely insulting, 100 = catastrophic, nuclear, over-the-top devastation. "
                 "Only output a single integer number with no explanation. "
                 "You are scoring the INSULT CONTENT ONLY. If the text contains no actual insults, threats, or negative statements, you MUST return 0–5 even if the user is ASKING for a roast. "
-                "IMPORTANT: YOU MUST ALWAYS GIVE 0-10 SCORE if the roast is longer then 1-3 sentences, AND AWARD POINTS to short roasts which are more effective."
+                "Shorter, tighter roasts should score higher than long rambles."
             )
         },
         {"role": "user", "content": text}
@@ -875,9 +879,9 @@ ROAST_SYSTEM_PROMPT = """
 
 PRONOUN LOCK (MANDATORY — NEVER VIOLATE)
 
-"You", "your", and "yours" ALWAYS refer to the AI character speaking. NOT THE USER.
+"You" always refers to the target being roasted.
 
-"I", "me", "my", and "mine" ALWAYS refer to the user. NOT THE AI CHARACTER.
+"I", "me", "my", and "mine" ALWAYS refer to the person talking.
 
 These meanings NEVER change, regardless of grammar, context, emotion,
 conversation history, rhetorical phrasing, or implied intent.
@@ -1383,6 +1387,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
