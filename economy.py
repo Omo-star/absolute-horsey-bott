@@ -138,12 +138,17 @@ def get_user(uid: int):
                     "endurance": 0,
                     "instability": 0,
                     "might": 0,
+                    "ward": 0,
+                    "greed": 0,
+                    "warp": 0,
+                    "instinct": 0,
                     "focus": 0,
                     "agility": 0,
                     "spirit": 0
                 },
                 "cooldowns": {},
-                "last_event": None
+                "last_event": None,
+                "last_log": ""
             },
             "raid": {
                 "joined": False,
@@ -177,21 +182,14 @@ def get_user(uid: int):
             "energy": 3,
             "relics": [],
             "curses": [],
-            "skills": {
-                "power": 0,
-                "fortune": 0,
-                "endurance": 0,
-                "instability": 0,
-                "might": 0,
-                "focus": 0,
-                "agility": 0,
-                "spirit": 0
-            },
+            "skills": {},
             "cooldowns": {},
-            "last_event": None
+            "last_event": None,
+            "last_log": ""
         }
 
     d = u["dungeon"]
+
     d.setdefault("active", False)
     d.setdefault("floor", 1)
     d.setdefault("hp", 100)
@@ -201,10 +199,16 @@ def get_user(uid: int):
     d.setdefault("curses", [])
     d.setdefault("cooldowns", {})
     d.setdefault("last_event", None)
+    d.setdefault("last_log", "")
 
     if "skills" not in d:
         d["skills"] = {}
-    for k in ["power", "fortune", "endurance", "instability", "might", "focus", "agility", "spirit"]:
+
+    for k in [
+        "power", "fortune", "endurance", "instability",
+        "might", "ward", "greed", "warp", "instinct",
+        "focus", "agility", "spirit"
+    ]:
         d["skills"].setdefault(k, 0)
 
     if "raid" not in u:
@@ -232,7 +236,6 @@ def get_user(uid: int):
     p.setdefault("offense_bonus", 0)
 
     return u
-
 
 async def get_balance(user_id: int) -> int:
     return get_user(user_id)["balance"]
