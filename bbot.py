@@ -435,17 +435,22 @@ async def safe_completion(model, messages):
             return None
 
     def wrap(text):
-        if not text:
-            text = "I'm malfunctioning so hard even my roast code gave up."
+        if not text or text.strip() == "":
+            text = ""
+
         class Msg: pass
         class Ch: pass
         class Resp: pass
-        m = Msg(); c = Ch(); r = Resp()
+
+        m = Msg()
+        c = Ch()
+        r = Resp()
+
         m.content = text
         c.message = m
         r.choices = [c]
-        return r
 
+        return r
 
     if model.startswith("groq:"):
         actual = model.split("groq:", 1)[1]
@@ -1045,8 +1050,16 @@ async def gather_all_llm_roasts(prompt, user_id):
         except Exception as e:
             log(f"[LLM] parse fail from {src}: {e}")
             continue
-        if txt and len(txt.strip()) > 2:
-            candidates.append({"source": src, "text": txt.strip()})
+        txt = txt.strip()
+
+        if not txt or len(txt) < 5:
+            continue
+
+        if "I'm malfunctioning so hard even my roast code gave up" in txt:
+            continue
+
+        candidates.append({"source": src, "text": txt})
+
     log(f"[LLM] FINISHED — {len(candidates)} valid candidates")
 
     return candidates
@@ -1164,12 +1177,16 @@ async def bot_roast(msg, uid, mode):
 
         elif mode == "deep":
             llm_cands = await gather_all_llm_roasts(msg, uid)
+            llm_cands = [
+                c for c in llm_cands
+                if "I'm malfunctioning so hard even my roast code gave up" not in c["text"]
+            ]
+
             if not llm_cands:
                 return "All LLMs failed. My circuits are fried."
 
             def length_penalty(text):
-                s = re.split(r'(?<=[.!?]) +', text)
-                return len(s)
+                return len(re.findall(r'[.!?]', text))
 
             penalized = []
             for c in llm_cands:
@@ -1387,6 +1404,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
