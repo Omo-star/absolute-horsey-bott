@@ -136,7 +136,11 @@ def get_user(uid: int):
                     "power": 0,
                     "fortune": 0,
                     "endurance": 0,
-                    "instability": 0
+                    "instability": 0,
+                    "might": 0,
+                    "focus": 0,
+                    "agility": 0,
+                    "spirit": 0
                 },
                 "cooldowns": {},
                 "last_event": None
@@ -177,11 +181,31 @@ def get_user(uid: int):
                 "power": 0,
                 "fortune": 0,
                 "endurance": 0,
-                "instability": 0
+                "instability": 0,
+                "might": 0,
+                "focus": 0,
+                "agility": 0,
+                "spirit": 0
             },
             "cooldowns": {},
             "last_event": None
         }
+
+    d = u["dungeon"]
+    d.setdefault("active", False)
+    d.setdefault("floor", 1)
+    d.setdefault("hp", 100)
+    d.setdefault("max_hp", 100)
+    d.setdefault("energy", 3)
+    d.setdefault("relics", [])
+    d.setdefault("curses", [])
+    d.setdefault("cooldowns", {})
+    d.setdefault("last_event", None)
+
+    if "skills" not in d:
+        d["skills"] = {}
+    for k in ["power", "fortune", "endurance", "instability", "might", "focus", "agility", "spirit"]:
+        d["skills"].setdefault(k, 0)
 
     if "raid" not in u:
         u["raid"] = {
@@ -190,12 +214,22 @@ def get_user(uid: int):
             "relic_bonus": 0
         }
 
+    r = u["raid"]
+    r.setdefault("joined", False)
+    r.setdefault("damage", 0)
+    r.setdefault("relic_bonus", 0)
+
     if "pvp" not in u:
         u["pvp"] = {
             "invasion_cooldown": None,
             "defense_bonus": 0,
             "offense_bonus": 0
         }
+
+    p = u["pvp"]
+    p.setdefault("invasion_cooldown", None)
+    p.setdefault("defense_bonus", 0)
+    p.setdefault("offense_bonus", 0)
 
     return u
 
