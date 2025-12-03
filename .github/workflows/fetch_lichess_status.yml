@@ -1,8 +1,5 @@
 name: Fetch Lichess Status
 
-permissions:
-  contents: write
-
 on:
   workflow_dispatch:
   repository_dispatch:
