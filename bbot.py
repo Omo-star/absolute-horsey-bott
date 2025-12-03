@@ -1267,6 +1267,12 @@ async def on_ready():
         print("Codepad / IDE cog loaded successfully.")
     except Exception as e:
         print(f"FAILED to load Codepad cog: {e}")
+    try:
+        await bot.load_extension("lichess_status")
+        print("Lichess cog loaded successfully.")
+    except Exception as e:
+        print(f"FAILED to load lichess cog: {e}")
+    
 
     synced = await bot.tree.sync()
     print(f"Synced {len(synced)} global commands.")
@@ -1404,6 +1410,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
