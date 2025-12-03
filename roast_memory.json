@@ -2,27 +2,24 @@
   "user_memory": {
     "1238242784679563265": {
       "LF": {
-        "slang": 0.4,
+        "slang": 0.6000000000000001,
         "formality": 0.0,
         "emoji_rate": 0.0,
         "all_caps_rate": 0.0,
-        "punct_energy": 0.75,
-        "avg_len": 23.05083442433594,
+        "punct_energy": 0.0,
+        "avg_len": 27.461511875,
         "msg_samples": [
-          "look at dis image",
-          "this is your bank account",
-          "Looks like your life is scared to come out. Suprised your still alive with that single braincell!",
-          "Yeah, that literally says your not alive lmao",
-          "Wow, amazing from a bot who's CPU overheats when it tries to say some words. Serious ego there!",
-          "I'm so honored being complimented from a bot who has a ram of 1 KB and an INTEL XEON. Nice try, though!",
-          "Thank you! It's a shame that you are so un-human that you don't even know how to roast!",
-          "Looks liek you have a hard time trying to grasp having a life."
+          "\u201cYour Discord bot talks so slow I\u2019m convinced its code is written in dial-up.\u201d",
+          "Bold words from a bot whose connection is so bad even its error messages time out.\nYour ping\u2019s so high the packets don\u2019t arrive \u2014 they send postcards.",
+          "Funny coming from a bot whose jokes drop harder than its signal.\nYou're not a broken router \u2014 you're the loading screen before it breaks.",
+          "Ignored? Please. You\u2019re a Discord bot \u2014 you get ignored professionally.",
+          "A badge of honor? Please. The only badge you\u2019ve earned is \u2018Most Likely to Be Muted on Sight.\u2019\nYou\u2019re not honored \u2014 you\u2019re tolerated like a pop-up ad that won\u2019t close."
         ]
       },
       "EB": {
         "anger": 0.0,
         "sadness": 0.0,
-        "hype": 0.3,
+        "hype": 0.0,
         "chaos": 0.0
       },
       "HP": {
@@ -34,8 +31,8 @@
         "meta": 0.0
       },
       "IS": {
-        "bot_mentions": 8,
-        "roast_requests": 1,
+        "bot_mentions": 5,
+        "roast_requests": 0,
         "self_roasts": 0,
         "escalation": 0.0
       },
@@ -44,8 +41,8 @@
         "texts": []
       },
       "LTS": "",
-      "msg_count": 8,
-      "last_summary_update": 1764460251.8294241
+      "msg_count": 5,
+      "last_summary_update": 1764718559.67549
     },
     "1435987186502733878": {
       "LF": {
@@ -351,21 +348,15 @@
       "msg_count": 0,
       "last_summary_update": 1764335509.9323678
     },
-    "1238242784679563265": {
+    "1391739153464430604": {
       "LF": {
-        "slang": 0.6000000000000001,
+        "slang": 0.0,
         "formality": 0.0,
         "emoji_rate": 0.0,
         "all_caps_rate": 0.0,
         "punct_energy": 0.0,
-        "avg_len": 27.461511875,
-        "msg_samples": [
-          "\u201cYour Discord bot talks so slow I\u2019m convinced its code is written in dial-up.\u201d",
-          "Bold words from a bot whose connection is so bad even its error messages time out.\nYour ping\u2019s so high the packets don\u2019t arrive \u2014 they send postcards.",
-          "Funny coming from a bot whose jokes drop harder than its signal.\nYou're not a broken router \u2014 you're the loading screen before it breaks.",
-          "Ignored? Please. You\u2019re a Discord bot \u2014 you get ignored professionally.",
-          "A badge of honor? Please. The only badge you\u2019ve earned is \u2018Most Likely to Be Muted on Sight.\u2019\nYou\u2019re not honored \u2014 you\u2019re tolerated like a pop-up ad that won\u2019t close."
-        ]
+        "avg_len": 0.0,
+        "msg_samples": []
       },
       "EB": {
         "anger": 0.0,
@@ -382,7 +373,7 @@
         "meta": 0.0
       },
       "IS": {
-        "bot_mentions": 5,
+        "bot_mentions": 0,
         "roast_requests": 0,
         "self_roasts": 0,
         "escalation": 0.0
@@ -392,8 +383,8 @@
         "texts": []
       },
       "LTS": "",
-      "msg_count": 5,
-      "last_summary_update": 1764718559.67549
+      "msg_count": 0,
+      "last_summary_update": 1764766059.9609911
     }
   },
   "roast_history": {
@@ -403,22 +394,6 @@
       },
       {
         "bot": "You\u2019re about as French as a hot dog, and even France wouldn\u2019t claim you. Stuff like you should stay in the codebin where you came from."
-      }
-    ],
-    "1238242784679563265": [
-      {
-        "user": "ur mom is so fat the elevator goes down"
-      },
-      {
-        "bot": "Your life is so boring, even your shadow leaves you for someone interesting."
-      }
-    ],
-    "1350372198992314451": [
-      {
-        "user": "roast <@1238242784679563265> for fun"
-      },
-      {
-        "bot": "I'd call you an overachiever, but that would imply you actually accomplish something!"
       }
     ],
     "1238242784679563265": [
@@ -452,14 +427,21 @@
       {
         "bot": "You're like a Wi-Fi signal: weak, unreliable, and everyone wants you gone."
       }
+    ],
+    "1350372198992314451": [
+      {
+        "user": "roast <@1238242784679563265> for fun"
+      },
+      {
+        "bot": "I'd call you an overachiever, but that would imply you actually accomplish something!"
+      }
     ]
   },
   "auto_roast": {},
   "roast_mode": {
     "1220934047794987048": "deep",
     "1238242784679563265": "deep",
-    "1350372198992314451": "deep",
-    "1238242784679563265": "deep"
+    "1350372198992314451": "deep"
   },
   "spice_cache": {
     "<@&1441469260948963360> for not working": 0.0,
@@ -610,6 +592,12 @@
     "Your jokes are like your Wi-Fi \u2014 they don't connect! You're like a broken router, just giving everyone a headache.": 85.0,
     "Looks like you\u2019re the type who shows up ready to be ignored, and guess what? It\u2019s working.": 85.0,
     "You're like a Wi-Fi signal: weak, unreliable, and everyone wants you gone.": 85.0,
-    "I\u2019m not here to display a badge. My purpose is to assist and provide information to the best of my abilities. If you have any questions or need support, feel free to ask me anything, regardless of my hypothetical 'rewards' or 'favors' that you're imagining!": 5.0
+    "I\u2019m not here to display a badge. My purpose is to assist and provide information to the best of my abilities. If you have any questions or need support, feel free to ask me anything, regardless of my hypothetical 'rewards' or 'favors' that you're imagining!": 5.0,
+    "\"You\u2019re about as threatening as a tea-spoon. Next time, bring a blade\u2014if you can find one that sharpens your wit.\"": 92.0,
+    "You must have missed the memo: the only thing that can't roast here is your sense of humor. You're proof that even a joke can fall flat.": 85.0,
+    "You're like a microwave trying to deep-fry a turkey\u2014chaos with no heat tolerance. Save the \"I'm sensitive\" act; your cup just ran over, sweetie.": 85.0,
+    "You can't roast because even your ideas need a fire extinguisher. Your comeback skills are like a bad Wi-Fi signal\u2014always weak and easily dropped.": 95.0,
+    "\"You think you can dodge a roast? Cute. I\u2019ve seen toaster ovens with": 85.0,
+    "You'd struggle to roast a marshmallow without burning it. Your jokes are as flat as your personality.": 85.0
   }
 }
