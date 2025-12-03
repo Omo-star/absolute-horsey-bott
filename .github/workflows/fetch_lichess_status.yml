@@ -18,7 +18,7 @@ jobs:
         with:
           github_token: ${{ secrets.PAT }}
           repo: Omo-star/icbmsaregoated2
-          workflow: Upload Lichess Status Snapshot
+          workflow: upload-status.yml
           name: lichess-status
           path: lichess_data
 
