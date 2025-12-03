@@ -1,0 +1,33 @@
+name: Fetch Lichess Status
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [download-lichess-status]
+
+jobs:
+  fetch-status:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Discord repo
+        uses: actions/checkout@v4
+
+      - name: Download artifact from Lichess bot repo
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          github_token: ${{ secrets.PAT }}
+          repo: Omo-star/absolute-horsey-bott
+          workflow: Run Bot
+          name: lichess-status
+          path: lichess_data
+
+      - name: Move status into workspace
+        run: |
+          cp lichess_data/lichess_status.json lichess_status.json
+
+      - name: Upload new status for Discord code
+        uses: actions/upload-artifact@v4
+        with:
+          name: discord-side-status
+          path: lichess_status.json
