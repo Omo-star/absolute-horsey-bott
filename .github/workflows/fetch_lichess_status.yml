@@ -17,7 +17,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v3
         with:
           github_token: ${{ secrets.PAT }}
-          repo: Omo-star/absolute-horsey-bott
+          repo: Omo-star/icbmsaregoated2
           workflow: Upload Lichess Status Snapshot
           name: lichess-status
           path: lichess_data
