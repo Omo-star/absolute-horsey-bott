@@ -270,7 +270,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764694974.7425687
+      "last_summary_update": 1764773529.839502
     },
     "1437537945002184784": {
       "LF": {
@@ -386,7 +386,7 @@
       "msg_count": 0,
       "last_summary_update": 1764766059.9609911
     },
-    "1374303202312327240": {
+    "1391739153464430604": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -422,7 +422,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764773529.839502
+      "last_summary_update": 1764809432.6053631
     }
   },
   "roast_history": {
@@ -636,6 +636,9 @@
     "You're like a microwave trying to deep-fry a turkey\u2014chaos with no heat tolerance. Save the \"I'm sensitive\" act; your cup just ran over, sweetie.": 85.0,
     "You can't roast because even your ideas need a fire extinguisher. Your comeback skills are like a bad Wi-Fi signal\u2014always weak and easily dropped.": 95.0,
     "\"You think you can dodge a roast? Cute. I\u2019ve seen toaster ovens with": 85.0,
-    "You'd struggle to roast a marshmallow without burning it. Your jokes are as flat as your personality.": 85.0
+    "You'd struggle to roast a marshmallow without burning it. Your jokes are as flat as your personality.": 85.0,
+    "Your brain's on vacation, but it forgot to leave a forwarding address. You're lost in thought, and no one\u2019s coming to rescue you.": 20.0,
+    "Sure, I can help with that. A sentence alongside your prompt could be completed as follows:\n\n\"Yeah, I see you are out of brain to finish the sentence, but let's try to work together on it!\"": 85.0,
+    "You're about as threatening as a rubber duck in a bathtub.": 85.0
   }
 }
