@@ -1,12 +1,12 @@
 {
   "online": true,
   "playing": true,
-  "rating": 3029,
+  "rating": 3016,
   "opponent": "Viet-Test",
   "variant": "Variant: Standard",
-  "time_control": "TC: 1+0",
+  "time_control": "TC: \u00bd+0",
   "time_left": 0,
-  "timestamp": "2025-12-04T10:18:40.196305",
+  "timestamp": "2025-12-04T10:45:49.406329",
   "last_game": {
     "result": "loss",
     "opponent": "AnotherPlayer",
@@ -18,5 +18,5 @@
     "bot_color": "white",
     "termination": "mate"
   },
-  "updated": 1764843520.1964478
+  "updated": 1764845149.4064803
 }
