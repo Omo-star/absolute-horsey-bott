@@ -70,3 +70,4 @@ jobs:
             git push origin main
           else
             echo "No state changes to commit."
+          fi
