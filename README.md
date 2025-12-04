@@ -282,4 +282,4 @@ Over **30+ items**, each with entirely custom logic.
 
 # End
 
-If you want a **visually stylized GitHub README**, a **PDF version**, or a **command table layout**, say the word.
+**Thank you for reading :) Hope you enjoy the bot!**
