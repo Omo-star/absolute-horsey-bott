@@ -35,7 +35,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.14"
 
@@ -61,7 +61,6 @@ jobs:
 
           if ! git diff --cached --quiet; then
             git commit -m "Update bot state"
-            git push origin main
+            git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} main
           else
             echo "No state changes to commit."
-          fi
