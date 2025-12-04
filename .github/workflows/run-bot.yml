@@ -31,21 +31,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }} 
-          fetch-depth: 0                
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.14"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Download updated Lichess status
+        uses: actions/download-artifact@v4
+        with:
+          name: discord-side-status
+          path: lichess_data
+
       - name: Run Discord Bot
         run: |
           echo "Starting bot..."
-          timeout 21000 python -u bbot.py
+          python -u bbot.py
           echo "Bot run complete."
 
       - name: Commit & Push bot state
@@ -64,4 +70,3 @@ jobs:
             git push origin main
           else
             echo "No state changes to commit."
-          fi
