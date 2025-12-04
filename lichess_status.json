@@ -1,12 +1,22 @@
 {
-  "game_id": "zWJZJg3s",
-  "finished": true,
-  "winner": "white",
-  "streak": 0,
-  "ratings": {
-    "blitz": 2538,
-    "rapid": 2960,
-    "bullet": 3038
+  "online": true,
+  "playing": true,
+  "rating": 2538,
+  "opponent": "SomeOpponent",
+  "variant": "standard",
+  "time_control": "3+2",
+  "time_left": 42,
+  "timestamp": "2025-01-03T15:21:10",
+  "last_game": {
+    "result": "loss",
+    "opponent": "AnotherPlayer",
+    "rating_before": 2542,
+    "rating_after": 2538,
+    "rating_delta": -4,
+    "moves": "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7",
+    "duration": 145,
+    "bot_color": "white",
+    "termination": "mate"
   },
-  "updated": 1764804355.4152792
+  "updated": 1764812345.12345
 }
