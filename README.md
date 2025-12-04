@@ -1,13 +1,15 @@
-# Absolute Horsey Bot
+# FuSBot
 
 A powerful, feature-packed Discord bot with advanced roast AI, a fully simulated economy, gambling games, dungeon crawler, stock market, hunting/fishing systems, and a personal codepad environment — all using **slash commands only**.
+
+The name represent the goal of this bot, to be a fun, full-server bot that will help you out! The name stands for Full (Fu) Server (S) Robot (Bot).
 
 ---
 
 ## Activation
 
 1. Invite the bot:  
-   **https://discord.com/oauth2/authorize?client_id=1440004841559560214&scope=bot+applications.commands&permissions=2147483648**
+   [FuSBot](https://discord.com/oauth2/authorize?client_id=1440004841559560214&scope=bot+applications.commands&permissions=2147483648)
 2. Add it to all apps.
 3. Use slash commands (`/`) to access all features.
 
@@ -269,6 +271,26 @@ Item categories:
 - Buffs to hunt/fish/battle/work/daily  
 
 Over **30+ items**, each with entirely custom logic.
+
+---
+
+# 🤖 12. Lichess Bot
+
+**User: [@icbmsaregoated2](https://lichess.org/@/icbmsaregoated2)
+### '/lichess'
+
+View current status of lichess bot
+
+### '/lichess_game'
+
+View current moves of the game it is playing
+
+**Example statistics**
+
+- Current rating
+- Time control
+- Variant
+- Opponent rating
 
 ---
 
