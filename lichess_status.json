@@ -1,12 +1,12 @@
 {
   "online": true,
   "playing": true,
-  "rating": 3033,
-  "opponent": "MEGA-NOOB-BOT",
+  "rating": 3029,
+  "opponent": "Viet-Test",
   "variant": "Variant: Standard",
-  "time_control": "TC: \u00bd+0",
+  "time_control": "TC: 1+0",
   "time_left": 0,
-  "timestamp": "2025-12-04T09:43:29.351925",
+  "timestamp": "2025-12-04T10:18:40.196305",
   "last_game": {
     "result": "loss",
     "opponent": "AnotherPlayer",
@@ -18,5 +18,5 @@
     "bot_color": "white",
     "termination": "mate"
   },
-  "updated": 1764841409.3520758
+  "updated": 1764843520.1964478
 }
