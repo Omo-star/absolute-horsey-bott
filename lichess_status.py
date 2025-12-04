@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import datetime
+import json
 import aiohttp
 
 STATUS_URL = "https://raw.githubusercontent.com/Omo-star/absolute-horsey-bott/main/lichess_status.json?cachebuster="
@@ -12,7 +13,8 @@ async def fetch_status():
         async with session.get(url) as resp:
             if resp.status != 200:
                 raise ValueError(f"HTTP {resp.status}")
-            return await resp.json()
+            text = await resp.text()
+            return json.loads(text)
 
 
 def fmt_time(seconds):
