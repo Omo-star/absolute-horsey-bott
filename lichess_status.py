@@ -5,7 +5,7 @@ import datetime
 import json
 import aiohttp
 
-STATUS_URL = "https://raw.githubusercontent.com/Omo-star/absolute-horsey-bott/main/lichess_status.json?cachebuster="
+STATUS_URL = "https://raw.githubusercontent.com/Omo-star/icbmsaregoated2/main/lichess_status.json?cachebuster="
 
 async def fetch_status():
     url = STATUS_URL + str(int(datetime.datetime.now().timestamp()))
@@ -13,56 +13,38 @@ async def fetch_status():
         async with session.get(url) as resp:
             if resp.status != 200:
                 raise ValueError(f"HTTP {resp.status}")
-            text = await resp.text()
-            return json.loads(text)
-
+            return json.loads(await resp.text())
 
 def fmt_time(seconds):
     try:
         seconds = int(seconds)
-        m = seconds // 60
-        s = seconds % 60
-        return f"{m}:{s:02d}"
+        return f"{seconds//60}:{seconds%60:02d}"
     except:
         return "N/A"
-
 
 def fmt_moves(moves_str):
     if not moves_str:
         return "No moves found."
-
     moves = moves_str.split()
-    result = []
-    move_num = 1
-
+    out = []
+    n = 1
     for i in range(0, len(moves), 2):
-        white = moves[i]
-        black = moves[i+1] if i+1 < len(moves) else "…"
-        result.append(f"**{move_num}.** {white}   {black}")
-        move_num += 1
-
-    return "\n".join(result)
-
+        w = moves[i]
+        b = moves[i+1] if i+1 < len(moves) else "…"
+        out.append(f"**{n}.** {w}   {b}")
+        n += 1
+    return "\n".join(out)
 
 class LichessCog(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(
-        name="lichess",
-        description="Show the current Lichess bot status dashboard."
-    )
+    @app_commands.command(name="lichess", description="Show the current Lichess bot status dashboard.")
     async def lichess(self, interaction: discord.Interaction):
-
         try:
             data = await fetch_status()
         except Exception as e:
-            return await interaction.response.send_message(
-                f"❌ Failed to fetch Lichess status:\n```{e}```",
-                ephemeral=True
-            )
-
+            return await interaction.response.send_message(f"❌ Failed to fetch Lichess status:\n```{e}```", ephemeral=True)
 
         online = data.get("online", False)
         playing = data.get("playing", False)
@@ -75,26 +57,12 @@ class LichessCog(commands.Cog):
         last_game = data.get("last_game", {})
 
         try:
-            if timestamp:
-                dt = datetime.datetime.fromisoformat(timestamp)
-                ts = dt.strftime("%Y-%m-%d %H:%M:%S")
-            else:
-                ts = "Unknown"
+            ts = datetime.datetime.fromisoformat(timestamp).strftime("%Y-%m-%d %H:%M:%S") if timestamp else "Unknown"
         except:
             ts = "Unknown"
 
-        e = discord.Embed(
-            title="🤖 Lichess Bot Status",
-            description="Live overview for my Lichess bot",
-            color=discord.Color.dark_purple()
-        )
-
-        e.add_field(
-            name="Status",
-            value=f"🟢 Online: `{online}`\n🎮 Playing: `{playing}`",
-            inline=False
-        )
-
+        e = discord.Embed(title="🤖 Lichess Bot Status", description="Live overview for my Lichess bot", color=discord.Color.dark_purple())
+        e.add_field(name="Status", value=f"🟢 Online: `{online}`\n🎮 Playing: `{playing}`", inline=False)
         e.add_field(name="Rating", value=f"📈 `{rating}`", inline=True)
         e.add_field(name="Opponent", value=f"⚔️ `{opponent}`", inline=True)
         e.add_field(name="Variant", value=f"♜ `{variant}`", inline=True)
@@ -105,40 +73,21 @@ class LichessCog(commands.Cog):
             result = last_game.get("result", "Unknown")
             opp = last_game.get("opponent", "Unknown")
             rdelta = last_game.get("rating_delta", 0)
-
-            e.add_field(
-                name="Last Game",
-                value=(
-                    f"**Result:** `{result}`\n"
-                    f"**Opponent:** `{opp}`\n"
-                    f"**Rating Δ:** `{rdelta:+}`\n"
-                    f"Use `/lichess_game` to view full game."
-                ),
-                inline=False
-            )
+            e.add_field(name="Last Game", value=f"**Result:** `{result}`\n**Opponent:** `{opp}`\n**Rating Δ:** `{rdelta:+}`\nUse `/lichess_game` to view full game.", inline=False)
 
         e.set_footer(text=f"Updated: {ts}")
         await interaction.response.send_message(embed=e)
-    @app_commands.command(
-        name="lichess_game",
-        description="View the full move list and details of the bot’s latest Lichess game."
-    )
-    async def lichess_game(self, interaction: discord.Interaction):
 
+    @app_commands.command(name="lichess_game", description="View the full move list of the bot’s latest Lichess game.")
+    async def lichess_game(self, interaction: discord.Interaction):
         try:
             data = await fetch_status()
         except Exception as e:
-            return await interaction.response.send_message(
-                f"❌ Failed to fetch Lichess data:\n```{e}```",
-                ephemeral=True
-            )
-    
+            return await interaction.response.send_message(f"❌ Failed to fetch Lichess data:\n```{e}```", ephemeral=True)
+
         game = data.get("last_game", None)
         if not game:
-            return await interaction.response.send_message(
-                "⚠️ No last game found in data.",
-                ephemeral=True
-            )
+            return await interaction.response.send_message("⚠️ No last game found in data.", ephemeral=True)
 
         opponent = game.get("opponent", "Unknown")
         result = game.get("result", "Unknown")
@@ -148,11 +97,10 @@ class LichessCog(commands.Cog):
         termination = game.get("termination", "Unknown")
         rating_before = game.get("rating_before", "N/A")
         rating_after = game.get("rating_after", "N/A")
-
         pretty_moves = fmt_moves(moves)
 
         e = discord.Embed(
-            title=f"📜 Full Game Viewer",
+            title="📜 Full Game Viewer",
             description=f"Opponent: **{opponent}**\nResult: **{result}**",
             color=discord.Color.dark_purple()
         )
@@ -160,21 +108,10 @@ class LichessCog(commands.Cog):
         e.add_field(name="Bot Color", value=f"🎨 `{bot_color}`", inline=True)
         e.add_field(name="Duration", value=f"⏱️ `{fmt_time(duration)}`", inline=True)
         e.add_field(name="Termination", value=f"💀 `{termination}`", inline=True)
-
-        e.add_field(
-            name="Rating Change",
-            value=f"Before: `{rating_before}` → After: `{rating_after}`",
-            inline=False
-        )
-
-        e.add_field(
-            name="Moves",
-            value=f"```\n{pretty_moves}\n```",
-            inline=False
-        )
+        e.add_field(name="Rating Change", value=f"Before: `{rating_before}` → After: `{rating_after}`", inline=False)
+        e.add_field(name="Moves", value=f"```\n{pretty_moves}\n```", inline=False)
 
         await interaction.response.send_message(embed=e)
-
 
 async def setup(bot):
     await bot.add_cog(LichessCog(bot))
