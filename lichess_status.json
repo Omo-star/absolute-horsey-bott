@@ -1,12 +1,12 @@
 {
   "online": true,
   "playing": true,
-  "rating": 2538,
-  "opponent": "SomeOpponent",
-  "variant": "standard",
-  "time_control": "3+2",
-  "time_left": 42,
-  "timestamp": "2025-01-03T15:21:10",
+  "rating": 3033,
+  "opponent": "MEGA-NOOB-BOT",
+  "variant": "Variant: Standard",
+  "time_control": "TC: \u00bd+0",
+  "time_left": 0,
+  "timestamp": "2025-12-04T09:43:29.351925",
   "last_game": {
     "result": "loss",
     "opponent": "AnotherPlayer",
@@ -18,5 +18,5 @@
     "bot_color": "white",
     "termination": "mate"
   },
-  "updated": 1764812345.12345
+  "updated": 1764841409.3520758
 }
