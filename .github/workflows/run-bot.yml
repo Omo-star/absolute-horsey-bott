@@ -43,10 +43,15 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Download updated Lichess status
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v3
         with:
+          github_token: ${{ secrets.PAT }}
+          repo: Omo-star/absolute-horsey-bott
+          workflow: fetch_lichess_status.yml
           name: discord-side-status
           path: lichess_data
+          workflow_conclusion: success
+          allow_forks: true
 
       - name: Run Discord Bot
         run: |
