@@ -16,7 +16,7 @@ jobs:
       - name: Download artifact from Lichess bot repo
         uses: dawidd6/action-download-artifact@v3
         with:
-          github_token: ${{ secrets.PAT }}
+          github_token: ${{ secrets.PAT_TOKEN }}
           repo: Omo-star/icbmsaregoated2
           workflow: upload-status.yml
           name: lichess-status
