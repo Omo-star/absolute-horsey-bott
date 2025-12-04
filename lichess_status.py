@@ -1,11 +1,18 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json
-import os
 import datetime
+import aiohttp
 
-STATUS_FILE = "lichess_data/lichess_status.json"
+STATUS_URL = "https://raw.githubusercontent.com/Omo-star/absolute-horsey-bott/main/lichess_status.json?cachebuster="
+
+async def fetch_status():
+    url = STATUS_URL + str(int(datetime.datetime.now().timestamp()))
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status != 200:
+                raise ValueError(f"HTTP {resp.status}")
+            return await resp.json()
 
 
 def fmt_time(seconds):
@@ -46,20 +53,14 @@ class LichessCog(commands.Cog):
     )
     async def lichess(self, interaction: discord.Interaction):
 
-        if not os.path.exists(STATUS_FILE):
+        try:
+            data = await fetch_status()
+        except Exception as e:
             return await interaction.response.send_message(
-                "⚠️ No Lichess status file found.",
+                f"❌ Failed to fetch Lichess status:\n```{e}```",
                 ephemeral=True
             )
 
-        try:
-            with open(STATUS_FILE, "r") as f:
-                data = json.load(f)
-        except Exception as e:
-            return await interaction.response.send_message(
-                f"❌ Error loading status file:\n```{e}```",
-                ephemeral=True
-            )
 
         online = data.get("online", False)
         playing = data.get("playing", False)
@@ -122,21 +123,14 @@ class LichessCog(commands.Cog):
     )
     async def lichess_game(self, interaction: discord.Interaction):
 
-        if not os.path.exists(STATUS_FILE):
-            return await interaction.response.send_message(
-                "⚠️ No Lichess data found.",
-                ephemeral=True
-            )
-
         try:
-            with open(STATUS_FILE, "r") as f:
-                data = json.load(f)
+            data = await fetch_status()
         except Exception as e:
             return await interaction.response.send_message(
-                f"❌ Could not load file:\n```{e}```",
+                f"❌ Failed to fetch Lichess data:\n```{e}```",
                 ephemeral=True
             )
-
+    
         game = data.get("last_game", None)
         if not game:
             return await interaction.response.send_message(
