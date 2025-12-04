@@ -17,7 +17,7 @@ A powerful, feature-packed Discord bot with advanced roast AI, a fully simulated
 
 ---
 
-# 🥵 1. Roast System
+# 🔥 1. Roast System
 
 ### `/roast text:"..."`  
 Generates an AI-driven roast targeting any mentioned users.  
