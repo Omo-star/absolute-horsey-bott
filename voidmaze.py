@@ -553,4 +553,6 @@ class VoidmazeView(discord.ui.View):
         self.apply_passive_world_effects()
         save_state()
         await self.update(inter)
+async def setup(bot):
+    await bot.add_cog(VoidMaze(bot))
 
