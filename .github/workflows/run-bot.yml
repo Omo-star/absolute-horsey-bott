@@ -64,3 +64,5 @@ jobs:
             git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} main
           else
             echo "No state changes to commit."
+          fi
+
