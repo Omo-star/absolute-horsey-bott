@@ -493,3 +493,5 @@ class ArenaView(discord.ui.View):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Arena.", ephemeral=True)
         await self.crown_shop(inter)
+async def setup(bot):
+    await bot.add_cog(HorseyArena(bot))
