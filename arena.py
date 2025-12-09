@@ -63,7 +63,10 @@ class ArenaView(discord.ui.View):
         self.owned = owned_animals
         self.team = team_ref
         self.phase = 0
-
+    def pet_name(self, pet):
+        if isinstance(pet, dict):
+            return pet.get("name", "Unknown")
+        return str(pet)
     def render_lobby(self):
         rating = self.arena["rating"]
         tokens = self.arena["tokens"]
@@ -83,10 +86,8 @@ class ArenaView(discord.ui.View):
         )
 
         team_text = "None" if not loadout else ", ".join(
-            pet["name"] if isinstance(pet, dict) else str(pet)
-            for pet in loadout
+            self.pet_name(pet) for pet in loadout
         )
-
 
         embed = discord.Embed(
             title="🏟️ HORSEY ARENA — LOBBY",
@@ -185,6 +186,7 @@ class ArenaView(discord.ui.View):
         chaos_factor = 1.0 + self.world["chaos"] * 0.2
 
         for unit in team:
+            name = unit["name"] if isinstance(unit, dict) else str(unit)
             base_power = random.randint(40, 90)
             base_speed = random.randint(20, 60)
             base_def = random.randint(10, 40)
@@ -200,7 +202,7 @@ class ArenaView(discord.ui.View):
                 crit = 0.01
 
             stats.append({
-                "name": unit,
+                "name": name,
                 "hp": base_power * 2,
                 "power": base_power,
                 "speed": base_speed,
@@ -241,7 +243,7 @@ class ArenaView(discord.ui.View):
                 crit_txt = ""
 
             defender["hp"] -= dmg
-            log.append(f"{attacker['name']} hits {defender['name']} for {dmg}{crit_txt}")
+            log.append(f"{self.pet_name(attacker)} hits {self.pet_name(defender)} for {dmg}{crit_txt}")
 
             p_alive = sum(1 for u in pstats if u["hp"] > 0)
             o_alive = sum(1 for u in ostats if u["hp"] > 0)
@@ -312,7 +314,7 @@ class ArenaView(discord.ui.View):
         save_state()
 
         battle_text = "\n".join(battle_log[-20:])
-        opp_text = ", ".join(opp)
+        opp_text = ", ".join(self.pet_name(o) for o in opp)
 
         embed = discord.Embed(
             title="🏟️ ARENA MATCH RESULT",
@@ -497,5 +499,8 @@ class ArenaView(discord.ui.View):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Arena.", ephemeral=True)
         await self.crown_shop(inter)
+
+
+
 async def setup(bot):
     await bot.add_cog(HorseyArena(bot))
