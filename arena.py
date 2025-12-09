@@ -82,7 +82,11 @@ class ArenaView(discord.ui.View):
             f"{self.world['last_event']}"
         )
 
-        team_text = "None" if not loadout else ", ".join(loadout)
+        team_text = "None" if not loadout else ", ".join(
+            pet["name"] if isinstance(pet, dict) else str(pet)
+            for pet in loadout
+        )
+
 
         embed = discord.Embed(
             title="🏟️ HORSEY ARENA — LOBBY",
