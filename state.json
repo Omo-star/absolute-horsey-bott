@@ -1,4 +1,21 @@
 {
+    "1255130792372342816": {
+      "balance": 19085,
+      "last_daily": null,
+      "last_work": null,
+      "fish_cooldown": null,
+      "hunt_cooldown": null,
+      "inventory": {},
+      "roast_protection_until": null,
+      "pray": 0,
+      "last_pray": null,
+      "codepad": {},
+      "owned_animals": [],
+      "team": [],
+      "stocks": {}
+    }
+  },
+
   "users": {
     "1238242784679563265": {
       "balance": 6513,
