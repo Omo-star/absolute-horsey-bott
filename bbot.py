@@ -1246,6 +1246,23 @@ async def bot_roast(msg, uid, mode):
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
+    try:
+        await bot.load_extension("voidmaze")
+        print("VoidMaze loaded")
+    except Exception as e:
+        print("VoidMaze FAILED:", e)
+
+    try:
+        await bot.load_extension("arena")
+        print("Arena loaded")
+    except Exception as e:
+        print("Arena FAILED:", e)
+
+    try:
+        await bot.load_extension("lab")
+        print("Lab loaded")
+    except Exception as e:
+        print("Lab FAILED:", e)
 
     try:
         await bot.unload_extension("economy")
@@ -1410,6 +1427,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
