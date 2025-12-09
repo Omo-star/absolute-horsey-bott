@@ -182,6 +182,51 @@
         "invasion_cooldown": null,
         "defense_bonus": 0,
         "offense_bonus": 0
+      },
+      "arena": {
+        "rating": 1015,
+        "tokens": 2,
+        "crowns": 0,
+        "wins": 1,
+        "losses": 0,
+        "streak": 1,
+        "level": 1,
+        "xp": 26,
+        "last_log": "Victory!\nRating +15\nXP +26\nCrowns +0",
+        "in_battle": true,
+        "loadout": [
+          {
+            "name": "\ud83d\udc07 Bunny",
+            "rarity": "Common",
+            "strength": 20
+          },
+          {
+            "name": "\ud83d\udc09 Baby Dragon",
+            "rarity": "Epic",
+            "strength": 320
+          },
+          {
+            "name": "\ud83e\udd8e Lizard",
+            "rarity": "Common",
+            "strength": 14
+          },
+          {
+            "name": "\ud83d\udc15 Stray Dog",
+            "rarity": "Common",
+            "strength": 28
+          },
+          {
+            "name": "\ud83d\udc09 Baby Dragon",
+            "rarity": "Epic",
+            "strength": 320
+          }
+        ],
+        "last_opponent": [
+          "Ox",
+          "Sheep",
+          "Chicken"
+        ],
+        "passives": {}
       }
     },
     "1350372198992314451": {
@@ -473,5 +518,13 @@
     "raid_max_hp": 1875,
     "raid_cycle": 1,
     "last_event": "A catastrophic surge mutates the raid boss."
+  },
+  "arena_world": {
+    "season": 1,
+    "chaos": 0.02,
+    "total_matches": 1,
+    "last_champion": null,
+    "last_event": "The sands are quiet.",
+    "ladder": {}
   }
 }
