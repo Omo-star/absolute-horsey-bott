@@ -333,3 +333,5 @@ class LabView(discord.ui.View):
 
         await inter.response.edit_message(embed=embed, view=v)
 
+async def setup(bot):
+    await bot.add_cog(ResearchLab(bot))
