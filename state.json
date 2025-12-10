@@ -119,7 +119,7 @@
       }
     },
     "1238242784679563265": {
-      "balance": 728,
+      "balance": 833,
       "last_daily": "2025-12-10T14:40:22.102078",
       "last_work": "2025-12-10T15:06:51.392576",
       "fish_cooldown": "2025-12-10T20:11:11.461069",
@@ -292,15 +292,15 @@
         "offense_bonus": 0
       },
       "arena": {
-        "rating": 1038,
-        "tokens": 1,
-        "crowns": 1,
-        "wins": 2,
+        "rating": 1059,
+        "tokens": 0,
+        "crowns": 2,
+        "wins": 3,
         "losses": 0,
-        "streak": 2,
-        "level": 1,
-        "xp": 76,
-        "last_log": "Victory!\nRating +23\nXP +50\nCrowns +1",
+        "streak": 3,
+        "level": 2,
+        "xp": 21,
+        "last_log": "Victory!\nRating +21\nXP +45\nCrowns +0",
         "in_battle": true,
         "loadout": [
           {
@@ -330,13 +330,33 @@
           }
         ],
         "last_opponent": [
-          "\ud83e\udd8c Deer",
-          "\ud83e\udd8e Lizard",
-          "\ud83e\udd8d Titan Gorilla",
-          "\ud83e\udda3 Mammoth Calf",
-          "\ud83e\udd84 Unicorn Fawn"
+          "\ud83d\udc3a Wolf",
+          "\ud83d\udc10 Mountain Goat",
+          "\ud83d\udd25 Phoenix",
+          "\ud83c\udf0c Cosmic Dragon",
+          "\ud83e\udd8d Titan Gorilla"
         ],
         "passives": {}
+      },
+      "voidmaze": {
+        "active": false,
+        "depth": 3,
+        "clarity": 73,
+        "max_clarity": 100,
+        "keys": 0,
+        "artifacts": [
+          "Glass Feather"
+        ],
+        "boons": [],
+        "anomalies": [
+          "Fractured Insight",
+          "Mind Static",
+          "Fractured Insight"
+        ],
+        "fragments": 3,
+        "runs": 1,
+        "streak": 1,
+        "last_log": "You escape the Maze with 105 horsenncy."
       }
     },
     "1350372198992314451": {
@@ -684,8 +704,8 @@
   },
   "arena_world": {
     "season": 1,
-    "chaos": 0.05,
-    "total_matches": 2,
+    "chaos": 0.13,
+    "total_matches": 3,
     "last_champion": null,
     "last_event": "The sands are quiet.",
     "ladder": {}
@@ -694,5 +714,11 @@
     "instability": 0.30000000000000004,
     "discoveries": 0,
     "last_event": "Experimental waves distort the lab complex."
+  },
+  "voidmaze_world": {
+    "storm": 0.0,
+    "pulse": 0.0,
+    "season": 1,
+    "last_event": "The labyrinth hums with cold awareness."
   }
 }
