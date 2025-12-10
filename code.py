@@ -1,4 +1,4 @@
-from economy import state, save_state
+from economy_shared import state, save_state
 import discord
 from discord.ext import commands
 from discord import app_commands
