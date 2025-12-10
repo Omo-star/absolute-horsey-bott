@@ -31,6 +31,9 @@ class VoidMaze(commands.Cog):
         vm.setdefault("streak", 0)
         vm.setdefault("last_log", "The Maze awakens and stares back.")
         vm.setdefault("best_depth", 0)
+        vm.setdefault("synergy_cd", {})
+        vm.setdefault("last_synergy_log", "")
+        vm.setdefault("combo", 0)
 
         if vm["active"] is False:
             vm["depth"] = 0
@@ -40,6 +43,9 @@ class VoidMaze(commands.Cog):
             vm["artifacts"] = []
             vm["keys"] = 0
             vm["fragments"] = 0
+            vm["synergy_cd"] = {}
+            vm["last_synergy_log"] = ""
+            vm["combo"] = 0
 
         vm["active"] = True
 
@@ -52,6 +58,7 @@ class VoidMaze(commands.Cog):
         def power(v):
             base = v["depth"] * 6 + len(v["artifacts"]) * 10 + v["keys"] * 4 + v["fragments"] * 2
             base += v["streak"] * 8
+            base += v.get("combo", 0) * 5
             penalty = len(v["anomalies"]) * 9
             return max(5, base - penalty)
 
@@ -98,7 +105,9 @@ class VoidmazeView(discord.ui.View):
         anomalies = len(self.vm["anomalies"])
         fragments = self.vm["fragments"]
         streak = self.vm["streak"]
+        combo = self.vm.get("combo", 0)
         log = self.vm.get("last_log", "")
+        synergy_log = self.vm.get("last_synergy_log", "")
 
         desc = ""
         for idx, room in enumerate(self.current_rooms, start=1):
@@ -110,6 +119,7 @@ class VoidmazeView(discord.ui.View):
                 desc
                 + f"\n**Power:** {pwr}"
                 + f"\n**Clarity:** {clarity}"
+                + f"\n**Combo:** {combo}"
                 + f"\n**Artifacts:** {artifacts}"
                 + f"\n**Keys:** {keys}"
                 + f"\n**Fragments:** {fragments}"
@@ -130,6 +140,13 @@ class VoidmazeView(discord.ui.View):
             ),
             inline=False
         )
+
+        if synergy_log:
+            embed.add_field(
+                name="Synergy Effects This Room",
+                value=synergy_log,
+                inline=False
+            )
 
         return embed
 
@@ -191,14 +208,16 @@ class VoidmazeView(discord.ui.View):
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
 
         final_depth = self.vm["depth"]
+        combo = self.vm.get("combo", 0)
 
         reward = int(
-            final_depth * 40
-            + len(self.vm["artifacts"]) * 120
-            + self.vm["keys"] * 20
-            + self.vm["fragments"] * 15
+            final_depth * 45
+            + len(self.vm["artifacts"]) * 140
+            + self.vm["keys"] * 25
+            + self.vm["fragments"] * 18
             - len(self.vm["anomalies"]) * 60
-            + self.world["storm"] * 25
+            + self.world["storm"] * 30
+            + combo * 20
         )
 
         reward = max(0, reward)
@@ -217,6 +236,9 @@ class VoidmazeView(discord.ui.View):
         self.vm["artifacts"] = []
         self.vm["keys"] = 0
         self.vm["fragments"] = 0
+        self.vm["synergy_cd"] = {}
+        self.vm["last_synergy_log"] = ""
+        self.vm["combo"] = 0
 
         self.vm["last_log"] = f"You escape the Maze with {reward} horsenncy."
         save_state()
@@ -226,6 +248,7 @@ class VoidmazeView(discord.ui.View):
                 title="🌀 VOIDMAZE — Run Complete",
                 description=(
                     f"You reached depth **{final_depth}**.\n"
+                    f"Combo streak: **{combo}**.\n"
                     f"Reward: **{reward} horsenncy**."
                 ),
                 color=discord.Color.green()
@@ -278,36 +301,35 @@ class VoidmazeView(discord.ui.View):
     async def handle_abyss_door(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
-
         if not self.vm["active"]:
             return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
         pwr = self.power(self.vm)
         m, cpen = self.clarity_mod(self.vm)
 
-        gain = int(8 + self.vm["depth"] * 1.7 + pwr * 0.12)
+        gain_frag = int(2 + self.vm["depth"] * 0.4 + pwr * 0.05)
         clarity_loss = random.randint(5, 14)
 
         self.vm["depth"] += 1
-        self.vm["fragments"] += random.randint(1, 3)
+        self.vm["fragments"] += gain_frag
+        self.vm["combo"] = self.vm.get("combo", 0) + 1
         self.adjust_clarity(self.vm, -clarity_loss)
 
         if random.random() < cpen:
             anomaly = random.choice(["Hollow Static", "Worming Echo", "Loose Geometry"])
             self.vm["anomalies"].append(anomaly)
-            log = f"The door floods you with power but twists you. Gain {gain} fragments and anomaly {anomaly}."
+            self.vm["combo"] = 0
+            log = f"The door floods you with power but twists you. Gain {gain_frag} fragments and anomaly {anomaly}."
         else:
-            log = f"The door pulses. Gain {gain} fragments but lose {clarity_loss} clarity."
+            log = f"The door pulses. Gain {gain_frag} fragments but lose {clarity_loss} clarity. Combo grows."
 
         self.vm["last_log"] = log
         self.current_rooms = self.generate_rooms()
-        save_state()
-        await self.update(inter)
+        await self.after_room(inter)
 
     async def handle_key_node(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
-
         if not self.vm["active"]:
             return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
@@ -315,28 +337,32 @@ class VoidmazeView(discord.ui.View):
         choice = random.choice(["left", "right", "center"])
 
         success = puzzle == choice
-        clarity_shift = random.randint(-4, 6)
+        clarity_shift = random.randint(-4, 8)
 
         if success:
             self.vm["keys"] += 1
             self.vm["depth"] += 1
+            self.vm["combo"] = self.vm.get("combo", 0) + 1
             self.adjust_clarity(self.vm, clarity_shift)
-            log = f"Your intuition aligns with the Maze. Gain 1 key and {clarity_shift} clarity."
+            if random.random() < 0.25:
+                boon = self.roll_boon_reward()
+                log = f"Your intuition aligns with the Maze. Gain 1 key, {clarity_shift} clarity, and boon {boon}."
+            else:
+                log = f"Your intuition aligns with the Maze. Gain 1 key and {clarity_shift} clarity."
         else:
             self.adjust_clarity(self.vm, -abs(clarity_shift))
             anomaly = random.choice(["Fractured Insight", "Recursive Loop"])
             self.vm["anomalies"].append(anomaly)
+            self.vm["combo"] = 0
             log = f"The Node rejects you. You gain anomaly {anomaly} and lose clarity."
 
         self.vm["last_log"] = log
         self.current_rooms = self.generate_rooms()
-        save_state()
-        await self.update(inter)
+        await self.after_room(inter)
 
     async def handle_artifact_vault(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
-
         if not self.vm["active"]:
             return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
@@ -362,24 +388,29 @@ class VoidmazeView(discord.ui.View):
         if bad_roll:
             anomaly = random.choice(["Artifact Backlash", "Mirror Shatter"])
             self.vm["anomalies"].append(anomaly)
+            self.vm["combo"] = 0
             self.adjust_clarity(self.vm, -clarity_hit)
             log = (
                 f"The vault yields {artifact}, but backlash inflicts "
                 f"{anomaly} and {clarity_hit} clarity loss."
             )
         else:
-            self.adjust_clarity(self.vm, random.randint(1, 5))
-            log = f"The vault gifts you {artifact}. The Maze hums approvingly."
+            heal = random.randint(1, 7)
+            self.adjust_clarity(self.vm, heal)
+            self.vm["combo"] = self.vm.get("combo", 0) + 1
+            if random.random() < 0.35:
+                boon = self.roll_boon_reward()
+                log = f"The vault gifts you {artifact} and boon {boon}. The Maze hums approvingly."
+            else:
+                log = f"The vault gifts you {artifact}. The Maze hums approvingly."
 
         self.vm["last_log"] = log
         self.current_rooms = self.generate_rooms()
-        save_state()
-        await self.update(inter)
+        await self.after_room(inter)
 
     async def handle_fracture(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
-
         if not self.vm["active"]:
             return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
@@ -387,22 +418,29 @@ class VoidmazeView(discord.ui.View):
         pwr = self.power(self.vm)
 
         if roll < 0.25:
-            drop = int(150 + pwr * 0.8 + self.vm["depth"] * 3)
+            drop = int(170 + pwr * 0.9 + self.vm["depth"] * 4)
             await update_balance(self.uid, drop)
             self.vm["depth"] += 2
             self.vm["fragments"] += 4
+            self.vm["combo"] = self.vm.get("combo", 0) + 2
             self.adjust_clarity(self.vm, -random.randint(5, 15))
-            log = f"The fracture erupts with wealth. Gain {drop} horsenncy."
+            log = f"The fracture erupts with wealth. Gain {drop} horsenncy and surge deeper."
         elif roll < 0.55:
             art = random.choice(["Echo Crown", "Warp Tablet", "Obsidian Bloom"])
             self.vm["artifacts"].append(art)
             self.vm["depth"] += 1
+            self.vm["combo"] = self.vm.get("combo", 0) + 1
             self.adjust_clarity(self.vm, -random.randint(4, 8))
-            log = f"The fracture gifts artifact {art}, but clarity bleeds."
+            if random.random() < 0.3:
+                boon = self.roll_boon_reward()
+                log = f"The fracture gifts artifact {art} and boon {boon}, but clarity bleeds."
+            else:
+                log = f"The fracture gifts artifact {art}, but clarity bleeds."
         elif roll < 0.85:
             anomaly = random.choice(["Time Shear", "Phase Drift", "Soul Split"])
             self.vm["anomalies"].append(anomaly)
             self.vm["depth"] += 1
+            self.vm["combo"] = 0
             self.adjust_clarity(self.vm, -random.randint(10, 20))
             log = f"The fracture lashes out. You gain anomaly {anomaly}."
         else:
@@ -422,13 +460,11 @@ class VoidmazeView(discord.ui.View):
 
         self.vm["last_log"] = log
         self.current_rooms = self.generate_rooms()
-        save_state()
-        await self.update(inter)
+        await self.after_room(inter)
 
     async def handle_rest(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
-
         if not self.vm["active"]:
             return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
@@ -439,22 +475,26 @@ class VoidmazeView(discord.ui.View):
             self.adjust_clarity(self.vm, -dmg)
             anomaly = random.choice(["Parasitic Dream", "Mind Static"])
             self.vm["anomalies"].append(anomaly)
-            log = f"Rest is shattered by a whisper. Lose {dmg} clarity."
+            self.vm["combo"] = 0
+            log = f"Rest is shattered by a whisper. Lose {dmg} clarity and gain anomaly {anomaly}."
         else:
             heal = random.randint(10, 25)
             self.adjust_clarity(self.vm, heal)
             self.vm["depth"] += 1
-            log = f"Stillness restores you. Regain {heal} clarity."
+            self.vm["combo"] = 0
+            if random.random() < 0.2:
+                boon = self.roll_boon_reward()
+                log = f"Stillness restores you. Regain {heal} clarity and receive boon {boon}."
+            else:
+                log = f"Stillness restores you. Regain {heal} clarity."
 
         self.vm["last_log"] = log
         self.current_rooms = self.generate_rooms()
-        save_state()
-        await self.update(inter)
+        await self.after_room(inter)
 
     async def handle_echo_storm(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
-
         if not self.vm["active"]:
             return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
@@ -464,83 +504,286 @@ class VoidmazeView(discord.ui.View):
             self.world["storm"] += 0.4
             self.world["pulse"] += 0.1
             self.vm["depth"] += 1
+            self.vm["combo"] = self.vm.get("combo", 0) + 1
             self.adjust_clarity(self.vm, -random.randint(6, 12))
-            log = "The Maze convulses. Storm intensifies."
+            log = "The Maze convulses. Storm intensifies and you are dragged deeper."
         elif r < 0.66:
             self.world["pulse"] += 0.3
-            reward = int(60 + self.vm["depth"] * 5)
+            reward = int(70 + self.vm["depth"] * 6)
             await update_balance(self.uid, reward)
             self.vm["fragments"] += 3
-            log = f"The pulse grants {reward} horsenncy."
+            if random.random() < 0.3:
+                boon = self.roll_boon_reward()
+                log = f"The pulse grants {reward} horsenncy, fragments, and boon {boon}."
+            else:
+                log = f"The pulse grants {reward} horsenncy and fragments."
         else:
             self.world["season"] += 1
             self.world["storm"] *= 0.5
             self.world["pulse"] *= 0.3
             self.vm["depth"] += 2
+            self.vm["combo"] = self.vm.get("combo", 0) + 2
             self.adjust_clarity(self.vm, random.randint(4, 12))
-            log = "A season turns. The Maze shifts."
+            log = "A season turns. The Maze shifts and you slip further in, strangely refreshed."
 
         self.world["last_event"] = log
         self.vm["last_log"] = log
         self.current_rooms = self.generate_rooms()
-        save_state()
-        await self.update(inter)
+        await self.after_room(inter)
+
+    def _roll_cooldown(self, key):
+        ranges = {
+            "glass_pebble": (2, 4),
+            "abyss_lantern": (2, 4),
+            "omega_prism": (1, 3),
+            "ghost_spiral": (3, 6),
+            "echo_recursive": (2, 4),
+            "warp_phase": (3, 5),
+            "temporal_shear": (2, 4),
+            "fractal_glyph": (3, 6),
+            "reversed_compass": (1, 3),
+            "cubic_worm": (2, 5),
+            "eternal_coil": (1, 4),
+            "star_bleed": (3, 7),
+            "obsidian_bloom": (2, 4),
+            "hollow_static": (1, 2),
+            "loose_geometry": (2, 4),
+            "parasitic_dream": (1, 2),
+            "mind_static": (2, 5),
+            "recursion_blessing": (2, 4),
+            "stillheart_boon": (1, 3),
+            "stormwalker_boon": (3, 6),
+            "glyphreader_insight": (2, 4),
+            "pulse_harmony": (2, 5)
+        }
+
+        lo, hi = ranges.get(key, (2, 4))
+        return random.randint(lo, hi)
 
     def apply_synergies(self):
         arts = self.vm["artifacts"]
         anoms = self.vm["anomalies"]
         boons = self.vm.get("boons", [])
+        sy_cd = self.vm.setdefault("synergy_cd", {})
+
+        lines = []
+
+        def can_trigger(key):
+            cd = sy_cd.get(key, 0)
+            if cd > 0:
+                sy_cd[key] = cd - 1
+                return False
+            return True
+
+        def trigger(key, text, effect_fn):
+            if not can_trigger(key):
+                return
+            effect_fn()
+            sy_cd[key] = self._roll_cooldown(key)
+            lines.append(text)
 
         if "Glass Feather" in arts and "Silent Pebble" in arts:
-            self.adjust_clarity(self.vm, 2)
-        if "Abyssal Crown" in arts and "Inverse Lantern" in arts:
-            self.world["storm"] += 0.02
-        if "Omega Prism" in arts:
-            self.vm["fragments"] += 1
-        if "Ghost Spiral" in arts and self.world["pulse"] > 0.3:
-            self.vm["depth"] += 1
-        if "Echo Crown" in arts and "Recursive Loop" in anoms:
-            self.adjust_clarity(self.vm, -3)
-            self.vm["fragments"] += 2
-        if "Warp Tablet" in arts and "Phase Drift" in anoms:
-            self.vm["keys"] += 1
-        if "Temporal Harness" in arts and "Time Shear" in anoms:
-            self.vm["depth"] += 1
-        if "Fractal Glyph" in arts:
-            self.vm["depth"] += 1
-        if "Reversed Compass" in arts:
-            if random.random() < 0.15:
-                self.vm["depth"] += 1
-        if "Cubic Heart" in arts and "Worming Echo" in anoms:
-            self.adjust_clarity(self.vm, -2)
-        if "Eternal Coil" in arts:
-            self.world["pulse"] += 0.01
-        if "Star-Bleed Idol" in arts and self.vm["clarity"] < 40:
-            self.vm["fragments"] += 4
-        if "Obsidian Bloom" in arts:
-            if random.random() < 0.20:
-                self.vm["fragments"] += 3
-        if "Hollow Static" in anoms:
-            self.adjust_clarity(self.vm, -1)
-        if "Loose Geometry" in anoms:
-            if random.random() < 0.1:
-                self.vm["depth"] += 1
-        if "Parasitic Dream" in anoms:
-            self.vm["clarity"] = max(1, self.vm["clarity"] - 1)
-        if "Mind Static" in anoms:
-            if random.random() < 0.10:
-                self.vm["keys"] = max(0, self.vm["keys"] - 1)
-        if "Recursion Blessing" in boons:
-            if random.random() < 0.15:
-                self.vm["fragments"] += 2
-        if "Stillheart Boon" in boons:
-            if self.vm["clarity"] < self.vm["max_clarity"]:
-                self.adjust_clarity(self.vm, 1)
-        if "Stormwalker Boon" in boons:
-            if self.world["storm"] > 0.5:
-                self.vm["depth"] += 1
+            trigger(
+                "glass_pebble",
+                "Glass Feather + Silent Pebble → Clarity +2",
+                lambda: self.adjust_clarity(self.vm, 2)
+            )
 
-    def roll_boon_reward(self):
+        if "Abyssal Crown" in arts and "Inverse Lantern" in arts:
+            def f_abyss_lantern():
+                self.world["storm"] += 0.02
+            trigger(
+                "abyss_lantern",
+                "Abyssal Crown + Inverse Lantern → Storm +0.02",
+                f_abyss_lantern
+            )
+
+        if "Omega Prism" in arts:
+            trigger(
+                "omega_prism",
+                "Omega Prism → Fragments +1",
+                lambda: self.vm.__setitem__("fragments", self.vm["fragments"] + 1)
+            )
+
+        if "Ghost Spiral" in arts and self.world["pulse"] > 0.3:
+            trigger(
+                "ghost_spiral",
+                "Ghost Spiral (Pulse > 0.3) → Depth +1",
+                lambda: self.vm.__setitem__("depth", self.vm["depth"] + 1)
+            )
+
+        if "Echo Crown" in arts and "Recursive Loop" in anoms:
+            def f_echo_recursive():
+                self.adjust_clarity(self.vm, -3)
+                self.vm["fragments"] += 2
+            trigger(
+                "echo_recursive",
+                "Echo Crown + Recursive Loop → Clarity -3, Fragments +2",
+                f_echo_recursive
+            )
+
+        if "Warp Tablet" in arts and "Phase Drift" in anoms:
+            trigger(
+                "warp_phase",
+                "Warp Tablet + Phase Drift → Keys +1",
+                lambda: self.vm.__setitem__("keys", self.vm["keys"] + 1)
+            )
+
+        if "Temporal Harness" in arts and "Time Shear" in anoms:
+            trigger(
+                "temporal_shear",
+                "Temporal Harness + Time Shear → Depth +1",
+                lambda: self.vm.__setitem__("depth", self.vm["depth"] + 1)
+            )
+
+        if "Fractal Glyph" in arts:
+            trigger(
+                "fractal_glyph",
+                "Fractal Glyph → Depth +1",
+                lambda: self.vm.__setitem__("depth", self.vm["depth"] + 1)
+            )
+
+        if "Reversed Compass" in arts:
+            def f_reversed_compass():
+                if random.random() < 0.15:
+                    self.vm["depth"] += 1
+            trigger(
+                "reversed_compass",
+                "Reversed Compass → 15% chance Depth +1",
+                f_reversed_compass
+            )
+
+        if "Cubic Heart" in arts and "Worming Echo" in anoms:
+            trigger(
+                "cubic_worm",
+                "Cubic Heart + Worming Echo → Clarity -2",
+                lambda: self.adjust_clarity(self.vm, -2)
+            )
+
+        if "Eternal Coil" in arts:
+            def f_eternal_coil():
+                self.world["pulse"] += 0.01
+            trigger(
+                "eternal_coil",
+                "Eternal Coil → Pulse +0.01",
+                f_eternal_coil
+            )
+
+        if "Star-Bleed Idol" in arts and self.vm["clarity"] < 40:
+            trigger(
+                "star_bleed",
+                "Star-Bleed Idol (Low Clarity) → Fragments +4",
+                lambda: self.vm.__setitem__("fragments", self.vm["fragments"] + 4)
+            )
+
+        if "Obsidian Bloom" in arts:
+            def f_obsidian_bloom():
+                if random.random() < 0.2:
+                    self.vm["fragments"] += 3
+            trigger(
+                "obsidian_bloom",
+                "Obsidian Bloom → 20% chance Fragments +3",
+                f_obsidian_bloom
+            )
+
+        if "Hollow Static" in anoms:
+            trigger(
+                "hollow_static",
+                "Hollow Static → Clarity -1",
+                lambda: self.adjust_clarity(self.vm, -1)
+            )
+
+        if "Loose Geometry" in anoms:
+            def f_loose_geometry():
+                if random.random() < 0.1:
+                    self.vm["depth"] += 1
+            trigger(
+                "loose_geometry",
+                "Loose Geometry → 10% chance Depth +1",
+                f_loose_geometry
+            )
+
+        if "Parasitic Dream" in anoms:
+            def f_parasitic_dream():
+                self.vm["clarity"] = max(1, self.vm["clarity"] - 1)
+            trigger(
+                "parasitic_dream",
+                "Parasitic Dream → Clarity -1",
+                f_parasitic_dream
+            )
+
+        if "Mind Static" in anoms:
+            def f_mind_static():
+                if random.random() < 0.1 and self.vm["keys"] > 0:
+                    self.vm["keys"] -= 1
+            trigger(
+                "mind_static",
+                "Mind Static → 10% chance lose 1 Key",
+                f_mind_static
+            )
+
+        if "Recursion Blessing" in boons:
+            def f_recursion():
+                if random.random() < 0.15:
+                    self.vm["fragments"] += 2
+            trigger(
+                "recursion_blessing",
+                "Recursion Blessing → 15% chance Fragments +2",
+                f_recursion
+            )
+
+        if "Stillheart Boon" in boons:
+            def f_stillheart():
+                if self.vm["clarity"] < self.vm["max_clarity"]:
+                    self.adjust_clarity(self.vm, 1)
+            trigger(
+                "stillheart_boon",
+                "Stillheart Boon → Clarity +1 (if not full)",
+                f_stillheart
+            )
+
+        if "Stormwalker Boon" in boons:
+            def f_stormwalker():
+                if self.world["storm"] > 0.5:
+                    self.vm["depth"] += 1
+            trigger(
+                "stormwalker_boon",
+                "Stormwalker Boon (High Storm) → Depth +1",
+                f_stormwalker
+            )
+
+        if "Glyphreader Insight" in boons:
+            def f_glyphreader():
+                if random.random() < 0.25:
+                    self.vm["fragments"] += 1
+                    self.adjust_clarity(self.vm, 1)
+            trigger(
+                "glyphreader_insight",
+                "Glyphreader Insight → 25% chance Fragments +1 and Clarity +1",
+                f_glyphreader
+            )
+
+        if "Pulse Harmony" in boons:
+            def f_pulse_harmony():
+                if self.world["pulse"] > 0.5:
+                    self.vm["depth"] += 1
+                    self.adjust_clarity(self.vm, 1)
+            trigger(
+                "pulse_harmony",
+                "Pulse Harmony (High Pulse) → Depth +1 and Clarity +1",
+                f_pulse_harmony
+            )
+
+        if lines:
+            self.vm["last_synergy_log"] = "\n".join(f"• {line}" for line in lines)
+        else:
+            self.vm["last_synergy_log"] = ""
+
+    def roll_boon_reward(self, forced=None):
+        if forced is not None:
+            self.vm.setdefault("boons", [])
+            self.vm["boons"].append(forced)
+            return forced
         boons = [
             "Recursion Blessing",
             "Stillheart Boon",
