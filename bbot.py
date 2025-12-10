@@ -1247,40 +1247,26 @@ async def bot_roast(msg, uid, mode):
 async def on_ready():
     print(f"Logged in as {bot.user}")
 
-    extensions = [
-        "voidmaze",
-        "arena",
-        "lab",
-        "economy",
-        "code",
-        "lichess_status"
-    ]
-
-    for ext in extensions:
-        try:
-            await bot.load_extension(ext)
-            print(f"{ext} loaded")
-        except Exception as e:
-            print(f"FAILED to load {ext}: {e}")
-
     try:
-        await bot.add_cog(SlashCommands(bot))
-        print("SlashCommands cog loaded successfully.")
-    except Exception as e:
-        print(f"FAILED to load SlashCommands cog: {e}")
+        # Fetch all currently registered global slash commands
+        cmds = await bot.tree.sync()
+        print(f"Found {len(cmds)} global commands. Removing...")
 
-    try:
-        synced = await bot.tree.sync()
-        print(f"Synced {len(synced)} global commands.")
-    except Exception as e:
-        print(f"Global sync failed: {e}")
+        # Remove each command
+        for cmd in cmds:
+            bot.tree.remove_command(cmd.name)
+            print(f"Removed: /{cmd.name}")
 
-    for guild in bot.guilds:
-        try:
-            await bot.tree.sync(guild=guild)
-            print(f"Synced commands for guild {guild.name}")
-        except Exception as e:
-            print(f"Guild sync failed for {guild.name}: {e}")
+        # Push the update (this wipes them on Discord side)
+        await bot.tree.sync()
+        print("✅ All global commands wiped!")
+    except Exception as e:
+        print("❌ Failed to wipe commands:", e)
+
+    # We do NOT load any cogs here.
+    # This startup ONLY exists to clean Discord's registry.
+    print("⚠️ Now STOP the bot and restore your normal on_ready().")
+
 
 
 @bot.event
@@ -1415,6 +1401,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
