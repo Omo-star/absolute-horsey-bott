@@ -1246,53 +1246,19 @@ async def bot_roast(msg, uid, mode):
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-    try:
-        await bot.load_extension("voidmaze")
-        print("VoidMaze loaded")
-    except Exception as e:
-        print("VoidMaze FAILED:", e)
 
-    try:
-        await bot.load_extension("arena")
-        print("Arena loaded")
-    except Exception as e:
-        print("Arena FAILED:", e)
+    for ext in ["arena", "lab", "voidmaze", "economy", "etc"]:
+        try:
+            await bot.load_extension(ext)
+        except Exception as e:
+            print("Error loading extension:", e)
 
-    try:
-        await bot.load_extension("lab")
-        print("Lab loaded")
-    except Exception as e:
-        print("Lab FAILED:", e)
-
-    try:
-        await bot.unload_extension("economy")
-    except:
-        pass
-    try:
-        await bot.load_extension("economy")
-        print("Economy cog loaded successfully.")
-    except Exception as e:
-        print(f"FAILED to load Economy cog: {e}")
-
-    try:
-        await bot.add_cog(SlashCommands(bot))
-        print("Roast cog loaded successfully.")
-    except Exception as e:
-        print(f"FAILED to load roast cog: {e}")
-    try:
-        await bot.load_extension("code")
-        print("Codepad / IDE cog loaded successfully.")
-    except Exception as e:
-        print(f"FAILED to load Codepad cog: {e}")
-    try:
-        await bot.load_extension("lichess_status")
-        print("Lichess cog loaded successfully.")
-    except Exception as e:
-        print(f"FAILED to load lichess cog: {e}")
-    
-
-    synced = await bot.tree.sync()
-    print(f"Synced {len(synced)} global commands.")
+    for guild in bot.guilds:
+        try:
+            await bot.tree.sync(guild=guild)
+            print(f"Synced commands for guild {guild.name}")
+        except Exception as e:
+            print("Guild sync failed:", e)
 
 
 @bot.event
@@ -1427,6 +1393,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
