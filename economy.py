@@ -7,6 +7,8 @@ import datetime
 import asyncio
 import random
 import json, os
+from economy_shared import state, load_state, save_state
+
 STOCKS = {
     "HRS":   {"name": "Horsey Corp",              "price": 120, "volatility": 0.05},
     "MOO":   {"name": "Moo Industries",           "price": 80,  "volatility": 0.04},
@@ -34,65 +36,12 @@ STOCKS = {
     "WHIP":  {"name": "WhipSpeed AI Systems",     "price": 300, "volatility": 0.09},
 }
 
-
-
-STATE_FILE = "state.json"
 def get_pray_boost(user_id: int):
     user = get_user(user_id)
     pray_points = user.get("pray", 0)
 
     boost = 1 + min(pray_points * 0.015, 0.20)
     return boost
-
-def load_state():
-    default = {
-        "users": {},
-        "items": {
-            "intercontinental_ballistic_missile": {"name": "Intercontinental Ballistic Missile", "price": 1000},
-            "red_button": {"name": "r̶̭̖͊̄̕é̶̖͝͝d̴̤̙̓̔̚ ̸̙̫̄̂͝ͅb̵̼͖͓͊̓͜ṵ̴̹̐͋t̴̳̘͖̎̊͘͝ț̴̨̰͒ò̵̗̠͊n̶͎̱̑͐̿ ̸̪̭̀̊̈́̓ơ̵̻̹̎̐f̶̠̗̭̻̓̎ ̵͔̣̖͓̐͋d̵̝̖͛̊͛e̸͉͚̹̺͐̍͘͘â̸̡̑̑͝t̴̛̝͍̊̀h̷̯͎̮̊", "price": 1500},
-            "mysterious_potion": {"name": "Mysterious Potion", "price": 2000},
-            "roast_protection": {"name": "Roast Protection Pill", "price": 5000},
-            "odd_box": {"name": "Interesting Box", "price": 5000},
-            "quantum_marshmallow": {"name": "Quantum Marshmallow", "price": 350},
-            "time_bending_hourglass": {"name": "Time-Bending Hourglass", "price": 1200},
-            "void_pebble": {"name": "Pebble From The Void", "price": 900},
-            "cursed_duck": {"name": "C͝u͘r͟s̕e͢d̷ D̀u̸c͢k̡ ͠of̧ W͝h͞i̡sp̀ęr̴s", "price": 1600},
-            "pocket_dimension_seed": {"name": "Pocket Dimension Seed", "price": 2400},
-            "ethereal_lantern": {"name": "Ethereal Lantern", "price": 800},
-            "glitched_coin": {"name": "G̵l̴i̶t̵c̷h̷e̷d̶ ̶C̵o̵i̶n̸", "price": 666},
-            "orb_of_unlikely_events": {"name": "Orb of Unlikely Events", "price": 1100},
-            "sentient_spoon": {"name": "Sentient Spoon", "price": 700},
-            "chaos_sandwich": {"name": "C͢h̨a͡ǫs̷ ̨S͘a͘n̡d̷w̶i͡ćh", "price": 1300},
-            "lurking_shadow_fragment": {"name": "Shadow Fragment", "price": 1850},
-            "rainbow_thunder_crystal": {"name": "Rainbow Crystal", "price": 1500},
-            "mechanical_gremlin": {"name": "Mechanical Gremlin", "price": 900},
-            "antigravity_rubber_ducky": {"name": "Anti-Gravity Rubber Ducky", "price": 500},
-            "forgotten_scroll": {"name": "Forgotten Scroll of Maybe-Magic", "price": 1400},
-            "ancient_snack": {"name": "Ancient Snack of Eternity", "price": 300},
-            "starlit_compass": {"name": "Compass of Starlit Paths", "price": 950},
-            "cryptic_cube": {"name": "Cryptic Cube", "price": 1250},
-            "cookie_unstable": {"name": "Cookie", "price": 550},
-            "paradox_clock": {"name": "P͝a͜r̛a̢d͘o̢x̷ ͠C͠l̴o͠c̨k̀", "price": 2000}
-        }
-    }
-
-    if not os.path.exists(STATE_FILE):
-        return default
-
-    with open(STATE_FILE, "r") as f:
-        data = json.load(f)
-
-    data["items"] = default["items"]
-
-    return data
-
-
-def save_state():
-    global state
-    with open(STATE_FILE, "w") as f:
-        json.dump(state, f, indent=2)
-
-state = load_state()
 
 def set_cooldown(user_id: int, key: str, hours: int):
     user = get_user(user_id)
