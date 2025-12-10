@@ -303,34 +303,14 @@
         "streak": 3,
         "level": 2,
         "xp": 21,
-        "last_log": "Victory!\nRating +21\nXP +45\nCrowns +0",
+        "last_log": "Team updated: \ud83e\udd9d Raccoon, \ud83e\udd83 Turkey, \ud83e\udd85 Eagle, \ud83d\udc00 Rat, \ud83d\udc10 Mountain Goat",
         "in_battle": true,
         "loadout": [
-          {
-            "name": "\ud83d\udc07 Bunny",
-            "rarity": "Common",
-            "strength": 20
-          },
-          {
-            "name": "\ud83d\udc09 Baby Dragon",
-            "rarity": "Epic",
-            "strength": 320
-          },
-          {
-            "name": "\ud83e\udd8e Lizard",
-            "rarity": "Common",
-            "strength": 14
-          },
-          {
-            "name": "\ud83d\udc15 Stray Dog",
-            "rarity": "Common",
-            "strength": 28
-          },
-          {
-            "name": "\ud83d\udc09 Baby Dragon",
-            "rarity": "Epic",
-            "strength": 320
-          }
+          "\ud83e\udd9d Raccoon",
+          "\ud83e\udd83 Turkey",
+          "\ud83e\udd85 Eagle",
+          "\ud83d\udc00 Rat",
+          "\ud83d\udc10 Mountain Goat"
         ],
         "last_opponent": [
           "\ud83d\udc3a Wolf",
@@ -749,7 +729,9 @@
     "total_matches": 3,
     "last_champion": null,
     "last_event": "The sands are quiet.",
-    "ladder": {}
+    "ladder": {
+      "1238242784679563265": 1059
+    }
   },
   "lab_world": {
     "instability": 0.30000000000000004,
