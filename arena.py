@@ -7,10 +7,6 @@ from discord import app_commands
 
 from economy import get_user, save_state, state, update_balance, get_balance, get_pray_boost
 
-# ---------------------------------------------------------------------------
-#  ASCII sprites (unchanged, you can still edit/expand this as you like)
-# ---------------------------------------------------------------------------
-
 ASCII_SPRITES = {
     "🐀 Rat": r"""
      (\_/)
@@ -591,10 +587,6 @@ ASCII_SPRITES = {
 }
 
 
-# ---------------------------------------------------------------------------
-#  COG: /arena entry point
-# ---------------------------------------------------------------------------
-
 class HorseyArena(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -604,7 +596,6 @@ class HorseyArena(commands.Cog):
         uid = interaction.user.id
         user = get_user(uid)
 
-        # Per-user arena state
         arena = user.setdefault("arena", {})
         arena.setdefault("rating", 1000)
         arena.setdefault("tokens", 3)
@@ -618,12 +609,11 @@ class HorseyArena(commands.Cog):
         arena.setdefault("in_battle", False)
         arena.setdefault("loadout", [])
         arena.setdefault("last_opponent", None)
-        arena.setdefault("passives", {})  # permanent upgrades from crown shop
+        arena.setdefault("passives", {})  
 
         owned = user.setdefault("owned_animals", [])
         team = user.setdefault("team", [])
 
-        # Shared world state
         world = state.setdefault("arena_world", {})
         world.setdefault("season", 1)
         world.setdefault("chaos", 0.0)
@@ -632,7 +622,6 @@ class HorseyArena(commands.Cog):
         world.setdefault("last_event", "The sands are quiet.")
         world.setdefault("ladder", {})
 
-        # Default loadout = first 5 animals from team
         if not arena["loadout"]:
             arena["loadout"] = list(team[:5])
 
@@ -647,12 +636,7 @@ class HorseyArena(commands.Cog):
         await interaction.response.send_message(embed=view.render_lobby(), view=view)
 
 
-# ---------------------------------------------------------------------------
-#  VIEW: All arena UI & battle system
-# ---------------------------------------------------------------------------
-
 class ArenaView(discord.ui.View):
-    # Type matchup multipliers
     TYPE_CHART = {
         ("fire", "beast"): 1.3,
         ("fire", "mystic"): 1.1,
@@ -672,8 +656,6 @@ class ArenaView(discord.ui.View):
         ("mystic", "dark"): 1.3,
         ("mystic", "beast"): 1.1,
     }
-
-    # Roles & rarities for extra depth
     ROLES = ["tank", "striker", "support", "healer", "trickster"]
     RARITIES = [
         ("Common", 1.0),
@@ -683,7 +665,6 @@ class ArenaView(discord.ui.View):
         ("Legendary", 1.75),
     ]
 
-    # Environment cycles with season
     ENVIRONMENTS = [
         ("Blazing Sun", "fire", "water"),
         ("Raging Storm", "air", "earth"),
@@ -691,7 +672,6 @@ class ArenaView(discord.ui.View):
         ("Eclipse", "dark", "mystic"),
     ]
 
-    # Expanded move sets — some with extra mechanics
     MOVE_SETS = {
         "beast": [
             {"name": "Savage Pounce", "element": "beast", "kind": "attack", "power": 1.0, "accuracy": 0.96, "status": None, "status_chance": 0.0},
@@ -740,10 +720,8 @@ class ArenaView(discord.ui.View):
         self.phase = 0
         self.current_env = self.pick_environment()
 
-    # -------------------- high-level helpers --------------------
 
     def pick_environment(self):
-        """Pick environment based on season (more flavor + small balance effect)."""
         idx = (self.world["season"] - 1) % len(self.ENVIRONMENTS)
         return self.ENVIRONMENTS[idx]
 
@@ -769,10 +747,6 @@ class ArenaView(discord.ui.View):
         return "beast"
 
     def assign_role_rarity(self, name):
-        """
-        Deterministic assignment of role & rarity based on name hash
-        so the same animal always feels the same 'kind' of unit.
-        """
         base = sum(ord(c) for c in name.lower())
         role = self.ROLES[base % len(self.ROLES)]
         rarity_idx = (base // 5) % len(self.RARITIES)
@@ -780,10 +754,6 @@ class ArenaView(discord.ui.View):
         return role, rarity, mult
 
     def assign_ability(self, name, element, role):
-        """
-        Pick a flavorful passive ability id & pretty name based on name/role/element.
-        The behavior is implemented in simulate_battle via ability ids.
-        """
         nl = name.lower()
         if "phoenix" in nl or "rebirth" in nl:
             return "rebirth", "Rebirth"
@@ -808,8 +778,6 @@ class ArenaView(discord.ui.View):
         if role == "striker":
             return "finisher", "Executioner"
         return "none", "None"
-
-    # -------------------- lobby rendering --------------------
 
     def render_lobby(self):
         rating = self.arena["rating"]
@@ -861,8 +829,6 @@ class ArenaView(discord.ui.View):
     async def refresh(self, inter):
         await inter.response.edit_message(embed=self.render_lobby(), view=self)
 
-    # -------------------- UI buttons --------------------
-
     @discord.ui.button(label="Fight Match", style=discord.ButtonStyle.green)
     async def btn_fight(self, inter, btn):
         if inter.user.id != self.uid:
@@ -901,9 +867,6 @@ class ArenaView(discord.ui.View):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Arena.", ephemeral=True)
         await self.crown_shop(inter)
-
-    # -------------------- visual helpers --------------------
-
     def render_sprite(self, name):
         s = ASCII_SPRITES.get(name)
         if not s:
@@ -918,37 +881,82 @@ class ArenaView(discord.ui.View):
             out.append(" " * pad + ln)
         return "\n".join(out)
 
-    def hp_bar(self, hp, max_hp):
+    def hp_bar(self, hp, max_hp, width=18):
+        """
+        Clean ASCII HP bar with percentage.
+        Example: ████████········ 52% (68/130)
+        """
         if max_hp <= 0:
             max_hp = 1
-        pct = max(0, hp) / max_hp
-        fill = int(pct * 12)
-        return "[" + "█" * fill + " " * (12 - fill) + f"] {max(0,int(hp))}/{int(max_hp)}"
+        hp = max(0, int(hp))
+        max_hp = int(max_hp)
 
-    def format_field(self, p, o):
+        ratio = hp / max_hp
+        filled = int(ratio * width)
+        empty = width - filled
+
+        # Use heavier blocks when higher HP, lighter when lower
+        if ratio > 0.66:
+            fill_char = "█"
+        elif ratio > 0.33:
+            fill_char = "▓"
+        else:
+            fill_char = "▒"
+
+        bar = fill_char * filled + "·" * empty
+        pct = int(ratio * 100)
+        return f"{bar} {hp}/{max_hp} ({pct}%)"
+
+    def format_field(self, p, o, p_offset=0, o_offset=0):
         lines = []
-        # Opponent on top
-        lines.append(f"    {o['name']}  ({o['rarity']} {o['role']} {o['element']})")
-        lines.append(f"    {self.hp_bar(o['hp'], o['max_hp'])}")
+
+        o_prefix = " " * o_offset
+        p_prefix = " " * p_offset
+
+        lines.append(f"{o_prefix}{o['name']}  ({o['rarity']} {o['role']} {o['element']})")
+        lines.append(f"{o_prefix}{self.hp_bar(o['hp'], o['max_hp'])}")
         o_s = self.render_sprite(o["name"]).split("\n")
         for ln in o_s:
-            if ln.strip():
-                lines.append("    " + ln)
-        lines.append("")
-        # Player on bottom
-        lines.append(f"{p['name']}  ({p['rarity']} {p['role']} {p['element']})")
-        lines.append(self.hp_bar(p["hp"], p["max_hp"]))
+            ln = ln.rstrip()
+            if ln:
+                lines.append(o_prefix + ln)
+        lines.append("") 
+
+        lines.append(f"{p_prefix}{p['name']}  ({p['rarity']} {p['role']} {p['element']})")
+        lines.append(f"{p_prefix}{self.hp_bar(p['hp'], p['max_hp'])}")
         p_s = self.render_sprite(p["name"]).split("\n")
         for ln in p_s:
-            if ln.strip():
-                lines.append(ln)
+            ln = ln.rstrip()
+            if ln:
+                lines.append(p_prefix + ln)
+
         return "\n".join(lines)
 
-    async def animate(self, inter, p, o, text):
-        field = self.format_field(p, o)
+    async def animate(self, inter, p, o, text, p_offset=0, o_offset=0):
+        field = self.format_field(p, o, p_offset=p_offset, o_offset=o_offset)
         await inter.edit_original_response(content=f"```{field}\n\n{text}```", embed=None)
 
-    # -------------------- battle setup --------------------
+    async def play_attack_animation(self, inter, p, o, side, text):
+        lines = text.split("\n")
+        headline = lines[0] if lines else text
+
+        frames = []
+
+        frames.append((0, 0, headline))
+
+        if side == "p":
+            frames.append((3, 0, headline))
+            frames.append((7, 0, text))
+            frames.append((2, 0, text))
+        else:
+            frames.append((0, 3, headline))
+            frames.append((0, 7, text))
+            frames.append((0, 2, text))
+
+        for i, (p_off, o_off, txt) in enumerate(frames):
+            await self.animate(inter, p, o, txt, p_offset=p_off, o_offset=o_off)
+            await asyncio.sleep(0.18 if i < len(frames) - 1 else 0.08)
+
 
     def get_moves_for(self, unit):
         el = unit.get("element", "beast")
@@ -958,7 +966,6 @@ class ArenaView(discord.ui.View):
         if move_elem is None or target_elem is None:
             return 1.0
         base = self.TYPE_CHART.get((move_elem, target_elem), 1.0)
-        # Environment tweak
         env_name, env_boost, env_nerf = self.current_env
         if move_elem == env_boost:
             base *= 1.15
@@ -967,13 +974,6 @@ class ArenaView(discord.ui.View):
         return base
 
     def build_team_stats(self, team, is_player):
-        """
-        Build richer combat stats for each unit:
-        - HP, power, speed, defense, crit, status resist
-        - Role & rarity scaling
-        - Arena passives (permanent buffs)
-        - World chaos for randomness
-        """
         stats = []
         passives = self.arena.setdefault("passives", {})
         power_mult = 1.0 + passives.get("power_boost", 0.0)
@@ -985,7 +985,6 @@ class ArenaView(discord.ui.View):
         for unit in team:
             name = unit["name"] if isinstance(unit, dict) else str(unit)
 
-            # Base stats before role/rarity
             base_power = random.randint(40, 90)
             base_speed = random.randint(20, 65)
             base_def = random.randint(15, 45)
@@ -995,7 +994,6 @@ class ArenaView(discord.ui.View):
             element = self.infer_element(name)
             ability_id, ability_name = self.assign_ability(name, element, role)
 
-            # Role shaping
             if role == "tank":
                 base_hp *= 1.25
                 base_def *= 1.25
@@ -1015,7 +1013,6 @@ class ArenaView(discord.ui.View):
                 base_speed *= 1.2
                 base_def *= 0.9
 
-            # Rarity scaling & chaos
             base_hp = int(base_hp * rarity_mult * chaos_factor)
             base_power = int(base_power * rarity_mult * chaos_factor * power_mult)
             base_speed = int(base_speed * rarity_mult * speed_mult)
@@ -1050,13 +1047,12 @@ class ArenaView(discord.ui.View):
                 "atk_mod": 1.0,
                 "def_mod": 1.0,
                 "spd_mod": 1.0,
-                "shield": 0,           # flat HP shield
-                "has_rebirthed": False # used by rebirth ability
+                "shield": 0,      
+                "has_rebirthed": False 
             })
         return stats
 
     async def start_match(self, inter):
-        """Entry: spend token, generate opponent, run battle, then show result."""
         self.arena["tokens"] -= 1
         self.arena["in_battle"] = True
 
@@ -1064,7 +1060,6 @@ class ArenaView(discord.ui.View):
         if not player_team:
             return await inter.response.send_message("You have no team selected.", ephemeral=True)
 
-        # Opponent team: random 5 sprites
         opponent_team = random.sample(list(ASCII_SPRITES.keys()), k=5)
         self.arena["last_opponent"] = opponent_team
 
@@ -1086,41 +1081,29 @@ class ArenaView(discord.ui.View):
         return None
 
     def pick_target(self, team):
-        """
-        Slightly smarter targeting:
-        - prefer lowest HP alive
-        - occasionally snipe highest power
-        """
         alive = [u for u in team if u["hp"] > 0]
         if not alive:
             return None
         mode = random.random()
         if mode < 0.65:
-            # focus lowest HP
             return min(alive, key=lambda u: u["hp"])
         else:
-            # snipe highest damage
             return max(alive, key=lambda u: u["power"])
 
-    # -------------------- abilities --------------------
 
     def apply_on_damage_taken_passive(self, defender, attacker, dmg, log):
-        """Handle passives when unit takes damage (like berserker, hex aura, etc.)."""
         aid = defender["ability_id"]
         if aid == "berserker":
-            # when low hp, gain atk
             if defender["hp"] / defender["max_hp"] < 0.4:
                 defender["atk_mod"] *= 1.10
                 log.append(f"{defender['name']}'s Berserker rage boosts its attack!")
         if aid == "hex":
-            # small chance to inflict random status back
             if random.random() < 0.20 and attacker["hp"] > 0:
                 st = random.choice(["bleed", "poison", "stun"])
                 attacker["status"] = st
                 attacker["status_timer"] = 2
                 log.append(f"{defender['name']}'s chaotic hex curses {attacker['name']}!")
         if aid == "bulwark":
-            # once per match, convert big hit into shield
             if not defender.get("bulwark_used") and dmg > defender["max_hp"] * 0.35:
                 defender["bulwark_used"] = True
                 shield = int(defender["max_hp"] * 0.25)
@@ -1130,29 +1113,23 @@ class ArenaView(discord.ui.View):
     def apply_on_attack_passive(self, attacker, defender, dmg, log):
         aid = attacker["ability_id"]
         if aid == "pack_hunter":
-            # more damage if allies alive
-            # we already applied damage; just log flavor
             if random.random() < 0.25:
                 log.append(f"{attacker['name']} tears in with pack fury!")
         if aid == "finisher":
-            # more dangerous vs low HP
             if defender["hp"] / defender["max_hp"] < 0.35 and random.random() < 0.3:
                 extra = max(1, int(defender["max_hp"] * 0.08))
                 defender["hp"] -= extra
                 log.append(f"{attacker['name']}'s Executioner strike tears extra {extra} HP!")
         if aid == "scales":
-            # small chance to harden scales (def buff)
             if random.random() < 0.20:
                 attacker["def_mod"] *= 1.12
                 log.append(f"{attacker['name']}'s scales harden! Defense rises.")
 
     def apply_round_end_passives(self, pteam, oteam, log):
-        """Healer/support auras at end of round."""
         for team in (pteam, oteam):
             alive = [u for u in team if u["hp"] > 0]
             if not alive:
                 continue
-            # Healer: heal lowest ally a bit
             healers = [u for u in alive if u["ability_id"] in ("healer", "aura_heal")]
             if healers:
                 healer = random.choice(healers)
@@ -1162,7 +1139,6 @@ class ArenaView(discord.ui.View):
                 amount = max(1, int(target["max_hp"] * (0.05 if healer["ability_id"] == "healer" else 0.08)))
                 target["hp"] = min(target["max_hp"], target["hp"] + amount)
                 log.append(f"{healer['name']}'s aura mends {target['name']} (+{amount} HP)!")
-            # Speed aura: small speed mod for allies
             for u in alive:
                 if u["ability_id"] == "speed_aura":
                     for ally in alive:
@@ -1178,13 +1154,11 @@ class ArenaView(discord.ui.View):
         log.append(f"{unit['name']} is engulfed in flames and rises again!")
         return True
 
-    # -------------------- main battle loop --------------------
 
     async def simulate_battle(self, inter, pteam, oteam):
         log = []
         round_no = 1
 
-        # Guardian/tank: initial shield
         for team in (pteam, oteam):
             for u in team:
                 if u["ability_id"] in ("guard", "bulwark"):
@@ -1193,23 +1167,19 @@ class ArenaView(discord.ui.View):
                     log.append(f"{u['name']}'s {u['ability_name']} grants a {shield} HP shield!")
 
         while True:
-            # Check victory conditions
             if all(u["hp"] <= 0 for u in pteam):
                 return "loss", log
             if all(u["hp"] <= 0 for u in oteam):
                 return "win", log
 
-            # Pick current fighter from each side
             p_alive = [u for u in pteam if u["hp"] > 0]
             o_alive = [u for u in oteam if u["hp"] > 0]
             if not p_alive or not o_alive:
-                # handled above
                 break
 
             p = max(p_alive, key=lambda u: u["speed"] * u["spd_mod"] + random.uniform(0, 5))
             o = max(o_alive, key=lambda u: u["speed"] * u["spd_mod"] + random.uniform(0, 5))
 
-            # Decide action order
             p_speed = p["speed"] * p["spd_mod"] + random.uniform(0, 5)
             o_speed = o["speed"] * o["spd_mod"] + random.uniform(0, 5)
             order = ("p", "o") if p_speed >= o_speed else ("o", "p")
@@ -1234,17 +1204,14 @@ class ArenaView(discord.ui.View):
                 move = random.choice(moves)
                 text_lines = [f"Round {round_no}", f"{attacker['name']} used {move['name']}!"]
 
-                # Stunning / status skip
                 if attacker["status"] == "stun":
                     text_lines.append(f"{attacker['name']} is stunned and cannot move!")
                     attacker["status"] = None
                     attacker["status_timer"] = 0
                     log.extend(text_lines)
-                    await self.animate(inter, p, o, "\n".join(text_lines))
-                    await asyncio.sleep(1.0)
+                    await self.play_attack_animation(inter, p, o, side, "\n".join(text_lines))
                     continue
 
-                # Buff move
                 if move["kind"] == "buff":
                     if move["status"] == "atk_up":
                         attacker["atk_mod"] *= 1.25
@@ -1261,23 +1228,17 @@ class ArenaView(discord.ui.View):
                         text_lines.append(f"{attacker['name']} is surrounded by healing energy!")
 
                     log.extend(text_lines)
-                    await self.animate(inter, p, o, "\n".join(text_lines))
-                    await asyncio.sleep(1.0)
+                    await self.play_attack_animation(inter, p, o, side, "\n".join(text_lines))
                     continue
 
-                # Attack move
-                # Accuracy check
                 if random.random() > move["accuracy"]:
                     text_lines.append("But it missed!")
                     log.extend(text_lines)
-                    await self.animate(inter, p, o, "\n".join(text_lines))
-                    await asyncio.sleep(1.0)
+                    await self.play_attack_animation(inter, p, o, side, "\n".join(text_lines))
                     continue
 
-                # Damage calculation (single or multi-hit)
                 hits = 1
                 if "Claw" in move["name"] or "Fang" in move["name"]:
-                    # example: small chance to double hit
                     hits = 2 if random.random() < 0.25 else 1
 
                 total_dmg = 0
@@ -1297,7 +1258,6 @@ class ArenaView(discord.ui.View):
                     if dmg < 1:
                         dmg = 1
 
-                    # shield first
                     if defender["shield"] > 0:
                         absorbed = min(defender["shield"], dmg)
                         defender["shield"] -= absorbed
@@ -1321,19 +1281,16 @@ class ArenaView(discord.ui.View):
                         text_lines.append(eff_text)
 
                     if defender["hp"] <= 0:
-                        # check rebirth passive
                         if not self.try_rebirth(defender, text_lines):
                             defender["hp"] = 0
                             text_lines.append(f"{defender['name']} has fallen!")
                         break
 
-                # lifesteal based on role for flavor (strikers/dragons etc.)
                 if attacker["role"] == "striker" and total_dmg > 0 and attacker["hp"] > 0:
                     ls = int(total_dmg * 0.10)
                     attacker["hp"] = min(attacker["max_hp"], attacker["hp"] + ls)
                     text_lines.append(f"{attacker['name']} siphons {ls} HP from the assault!")
 
-                # status application
                 if move["status"] in ("burn", "poison", "bleed", "stun") and defender["hp"] > 0:
                     if random.random() < move["status_chance"] * (1.0 - defender["status_resist"]):
                         defender["status"] = move["status"]
@@ -1350,21 +1307,17 @@ class ArenaView(discord.ui.View):
                             defender["status_timer"] = 1
                             text_lines.append(f"{defender['name']} was stunned!")
 
-                # apply abilities around damage
                 self.apply_on_attack_passive(attacker, defender, total_dmg, text_lines)
                 self.apply_on_damage_taken_passive(defender, attacker, total_dmg, text_lines)
 
                 log.extend(text_lines)
-                await self.animate(inter, p, o, "\n".join(text_lines))
-                await asyncio.sleep(1.05)
+                await self.play_attack_animation(inter, p, o, side, "\n".join(text_lines))
 
-                # quick victory check mid-round
                 if all(u["hp"] <= 0 for u in pteam):
                     return "loss", log
                 if all(u["hp"] <= 0 for u in oteam):
                     return "win", log
 
-            # End-of-round statuses & auras
             for team in (pteam, oteam):
                 for unit in team:
                     if unit["hp"] <= 0:
@@ -1390,14 +1343,11 @@ class ArenaView(discord.ui.View):
                         if unit["status_timer"] <= 0:
                             unit["status"] = None
 
-            # Aura passives (healer/support)
             self.apply_round_end_passives(pteam, oteam, log)
 
             round_no += 1
-            if round_no > 60:  # hard cap to avoid endless turtle fights
+            if round_no > 60:
                 return "draw", log
-
-    # -------------------- match result & progression --------------------
 
     async def process_match_result(self, inter, result, log, opponent):
         rating = self.arena["rating"]
@@ -1430,7 +1380,6 @@ class ArenaView(discord.ui.View):
             xp += xp_gain
             res = f"Draw.\nXP +{xp_gain}"
 
-        # level-ups
         while xp >= 100:
             xp -= 100
             level += 1
@@ -1448,7 +1397,6 @@ class ArenaView(discord.ui.View):
             self.world["season"] += 1
             self.world["chaos"] = 0
             self.world["last_event"] = "A new Arena Season begins!"
-            # rotate environment for next lobby
             self.current_env = self.pick_environment()
 
         save_state()
@@ -1467,9 +1415,6 @@ class ArenaView(discord.ui.View):
             color=discord.Color.gold()
         )
         await inter.edit_original_response(content=None, embed=embed)
-
-    # -------------------- team editing & ladder --------------------
-
     async def edit_team(self, inter):
         if not self.owned:
             return await inter.response.send_message("You own no animals.", ephemeral=True)
@@ -1547,7 +1492,6 @@ class ArenaView(discord.ui.View):
 
         await inter.response.edit_message(embed=embed, view=v)
 
-    # -------------------- crown shop --------------------
 
     async def crown_shop(self, inter):
         items = {
@@ -1608,10 +1552,6 @@ class ArenaView(discord.ui.View):
 
         await inter.response.edit_message(embed=embed, view=v)
 
-
-# ---------------------------------------------------------------------------
-#  Extension setup
-# ---------------------------------------------------------------------------
 
 async def setup(bot):
     await bot.add_cog(HorseyArena(bot))
