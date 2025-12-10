@@ -30,7 +30,15 @@ class VoidMaze(commands.Cog):
         vm.setdefault("runs", 0)
         vm.setdefault("streak", 0)
         vm.setdefault("last_log", "The Maze awakens and stares back.")
-        vm["active"] = True
+        vm.setdefault("best_depth", 0)
+        if vm["active"] is False:
+            vm["depth"] = 0
+            vm["clarity"] = vm["max_clarity"]
+            vm["anomalies"] = []
+            vm["boons"] = []
+            vm["artifacts"] = []
+            vm["keys"] = 0
+            vm["fragments"] = 0
 
         world = state.setdefault("voidmaze_world", {})
         world.setdefault("storm", 0.0)
@@ -195,11 +203,21 @@ class VoidmazeView(discord.ui.View):
 
         await update_balance(self.uid, reward)
 
+        self.vm["best_depth"] = max(self.vm["best_depth"], self.vm["depth"])
+
         self.vm["active"] = False
         self.vm["runs"] += 1
         self.vm["streak"] += 1
-        self.vm["last_log"] = f"You escape the Maze with {reward} horsenncy."
 
+        self.vm["depth"] = 0
+        self.vm["clarity"] = self.vm["max_clarity"]
+        self.vm["anomalies"] = []
+        self.vm["boons"] = []
+        self.vm["artifacts"] = []
+        self.vm["keys"] = 0
+        self.vm["fragments"] = 0
+
+        self.vm["last_log"] = f"You escape the Maze with {reward} horsenncy."
         save_state()
 
         await inter.response.edit_message(
