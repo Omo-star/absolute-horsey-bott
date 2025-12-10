@@ -247,20 +247,13 @@
       ],
       "stocks": {},
       "dungeon": {
-        "active": false,
-        "floor": 17,
-        "hp": 44,
+        "active": true,
+        "floor": 1,
+        "hp": 100,
         "max_hp": 100,
-        "energy": 9,
-        "relics": [
-          "Gilded Neighstone",
-          "Omega Hoofprint",
-          "Star-Shear Bridle",
-          "Gilded Neighstone"
-        ],
-        "curses": [
-          "Fractured Time"
-        ],
+        "energy": 5,
+        "relics": [],
+        "curses": [],
         "skills": {
           "power": 0,
           "fortune": 0,
@@ -277,7 +270,7 @@
         },
         "cooldowns": {},
         "last_event": null,
-        "last_log": "A violent rift swells the global boss and drags at your thoughts.",
+        "last_log": "You descend into a fresh rifted dungeon.",
         "skill_points": 3,
         "last_floor_cleared": 7,
         "raid_tokens": 0,
@@ -286,9 +279,10 @@
         "boss_kills": 2,
         "mutations": [],
         "afflictions": [],
-        "sanity": 84,
+        "sanity": 100,
         "max_sanity": 100,
-        "rift_depth": 0
+        "rift_depth": 0,
+        "session_id": 244160479729
       },
       "raid": {
         "joined": false,
