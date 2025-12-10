@@ -1247,36 +1247,40 @@ async def bot_roast(msg, uid, mode):
 async def on_ready():
     print(f"Logged in as {bot.user}")
 
-    # Wipe global commands first (even though you have none)
-    try:
-        cmds = await bot.tree.sync()
-        print(f"Global cmds: {len(cmds)} — wiping...")
-        for cmd in cmds:
-            bot.tree.remove_command(cmd.name)
-        await bot.tree.sync()
-        print("Global wiped.")
-    except Exception as e:
-        print("Global wipe failed:", e)
+    extensions = [
+        "voidmaze",
+        "arena",
+        "lab",
+        "economy",
+        "code",
+        "lichess_status"
+    ]
 
-    # NOW WIPE GUILD COMMANDS (this is where your commands actually are)
+    for ext in extensions:
+        try:
+            await bot.load_extension(ext)
+            print(f"{ext} loaded")
+        except Exception as e:
+            print(f"FAILED to load {ext}: {e}")
+
+    try:
+        await bot.add_cog(SlashCommands(bot))
+        print("SlashCommands cog loaded successfully.")
+    except Exception as e:
+        print(f"FAILED to load SlashCommands cog: {e}")
+
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synced {len(synced)} global commands.")
+    except Exception as e:
+        print(f"Global sync failed: {e}")
+
     for guild in bot.guilds:
         try:
-            print(f"Wiping guild commands in: {guild.name}")
-            cmds = await bot.tree.sync(guild=guild)
-
-            for cmd in cmds:
-                bot.tree.remove_command(cmd.name)
-
             await bot.tree.sync(guild=guild)
-            print(f"Guild {guild.name} wiped.")
+            print(f"Synced commands for guild {guild.name}")
         except Exception as e:
-            print(f"Guild wipe failed for {guild.name}: {e}")
-
-    print("✅ ALL guild and global commands wiped.")
-    print("⚠️ STOP the bot and restore your normal on_ready().")
-
-
-
+            print(f"Guild sync failed for {guild.name}: {e}")
 
 @bot.event
 async def on_message(message):
@@ -1410,6 +1414,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
