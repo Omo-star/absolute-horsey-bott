@@ -1251,6 +1251,7 @@ async def on_ready():
         "voidmaze",
         "arena",
         "lab",
+        "economy",
         "code",
         "lichess_status"
     ]
@@ -1413,6 +1414,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
