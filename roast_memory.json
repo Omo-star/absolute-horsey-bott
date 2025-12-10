@@ -384,9 +384,9 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764766059.9609911
+      "last_summary_update": 1764809432.6053631
     },
-    "1391739153464430604": {
+    "1435987186502733878": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -422,7 +422,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764809432.6053631
+      "last_summary_update": 1765376000.1743603
     }
   },
   "roast_history": {
@@ -639,6 +639,7 @@
     "You'd struggle to roast a marshmallow without burning it. Your jokes are as flat as your personality.": 85.0,
     "Your brain's on vacation, but it forgot to leave a forwarding address. You're lost in thought, and no one\u2019s coming to rescue you.": 20.0,
     "Sure, I can help with that. A sentence alongside your prompt could be completed as follows:\n\n\"Yeah, I see you are out of brain to finish the sentence, but let's try to work together on it!\"": 85.0,
-    "You're about as threatening as a rubber duck in a bathtub.": 85.0
+    "You're about as threatening as a rubber duck in a bathtub.": 85.0,
+    "Your emoji game is so weak, even spell check filed for a divorce.": 95.0
   }
 }

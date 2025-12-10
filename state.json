@@ -253,15 +253,15 @@
         "offense_bonus": 0
       },
       "arena": {
-        "rating": 1015,
-        "tokens": 2,
-        "crowns": 0,
-        "wins": 1,
+        "rating": 1038,
+        "tokens": 1,
+        "crowns": 1,
+        "wins": 2,
         "losses": 0,
-        "streak": 1,
+        "streak": 2,
         "level": 1,
-        "xp": 26,
-        "last_log": "Victory!\nRating +15\nXP +26\nCrowns +0",
+        "xp": 76,
+        "last_log": "Victory!\nRating +23\nXP +50\nCrowns +1",
         "in_battle": true,
         "loadout": [
           {
@@ -291,9 +291,11 @@
           }
         ],
         "last_opponent": [
-          "Ox",
-          "Sheep",
-          "Chicken"
+          "\ud83e\udd8c Deer",
+          "\ud83e\udd8e Lizard",
+          "\ud83e\udd8d Titan Gorilla",
+          "\ud83e\udda3 Mammoth Calf",
+          "\ud83e\udd84 Unicorn Fawn"
         ],
         "passives": {}
       }
@@ -470,6 +472,57 @@
         "defense_bonus": 0,
         "offense_bonus": 0
       }
+    },
+    "1435987186502733878": {
+      "balance": 0,
+      "last_daily": null,
+      "last_work": null,
+      "fish_cooldown": null,
+      "hunt_cooldown": null,
+      "inventory": {},
+      "roast_protection_until": null,
+      "pray": 0,
+      "last_pray": null,
+      "codepad": {},
+      "owned_animals": [],
+      "team": [],
+      "stocks": {},
+      "dungeon": {
+        "active": false,
+        "floor": 1,
+        "hp": 100,
+        "max_hp": 100,
+        "energy": 3,
+        "relics": [],
+        "curses": [],
+        "skills": {
+          "power": 0,
+          "fortune": 0,
+          "endurance": 0,
+          "instability": 0,
+          "might": 0,
+          "ward": 0,
+          "greed": 0,
+          "warp": 0,
+          "instinct": 0,
+          "focus": 0,
+          "agility": 0,
+          "spirit": 0
+        },
+        "cooldowns": {},
+        "last_event": null,
+        "last_log": ""
+      },
+      "raid": {
+        "joined": false,
+        "damage": 0,
+        "relic_bonus": 0
+      },
+      "pvp": {
+        "invasion_cooldown": null,
+        "defense_bonus": 0,
+        "offense_bonus": 0
+      }
     }
   },
   "items": {
@@ -592,8 +645,8 @@
   },
   "arena_world": {
     "season": 1,
-    "chaos": 0.02,
-    "total_matches": 1,
+    "chaos": 0.05,
+    "total_matches": 2,
     "last_champion": null,
     "last_event": "The sands are quiet.",
     "ladder": {}
