@@ -1,7 +1,7 @@
 {
   "users": {
     "1255130792372342816": {
-      "balance": 21697,
+      "balance": 20396,
       "last_daily": "2025-12-10T00:56:11.775379",
       "last_work": null,
       "fish_cooldown": "2025-12-10T05:56:38.005845",
@@ -68,6 +68,20 @@
         "invasion_cooldown": null,
         "defense_bonus": 0,
         "offense_bonus": 0
+      },
+      "lab": {
+        "level": 1,
+        "xp": 25,
+        "stability": 74,
+        "max_stability": 100,
+        "anomalies": [
+          "Quantum Noise",
+          "Phantom Feedback"
+        ],
+        "breakthroughs": [],
+        "queue": [],
+        "running": false,
+        "last_log": "The experiment misbehaves. Extra loss 252 horsenncy and anomaly Phantom Feedback appears."
       }
     },
     "1238242784679563265": {
@@ -583,5 +597,10 @@
     "last_champion": null,
     "last_event": "The sands are quiet.",
     "ladder": {}
+  },
+  "lab_world": {
+    "instability": 0.30000000000000004,
+    "discoveries": 0,
+    "last_event": "Experimental waves distort the lab complex."
   }
 }
