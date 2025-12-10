@@ -1247,18 +1247,40 @@ async def bot_roast(msg, uid, mode):
 async def on_ready():
     print(f"Logged in as {bot.user}")
 
-    for ext in ["arena", "lab", "voidmaze", "economy", "etc"]:
+    extensions = [
+        "voidmaze",
+        "arena",
+        "lab",
+        "economy",
+        "code",
+        "lichess_status"
+    ]
+
+    for ext in extensions:
         try:
             await bot.load_extension(ext)
+            print(f"{ext} loaded")
         except Exception as e:
-            print("Error loading extension:", e)
+            print(f"FAILED to load {ext}: {e}")
+
+    try:
+        await bot.add_cog(SlashCommands(bot))
+        print("SlashCommands cog loaded successfully.")
+    except Exception as e:
+        print(f"FAILED to load SlashCommands cog: {e}")
+
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synced {len(synced)} global commands.")
+    except Exception as e:
+        print(f"Global sync failed: {e}")
 
     for guild in bot.guilds:
         try:
             await bot.tree.sync(guild=guild)
             print(f"Synced commands for guild {guild.name}")
         except Exception as e:
-            print("Guild sync failed:", e)
+            print(f"Guild sync failed for {guild.name}: {e}")
 
 
 @bot.event
@@ -1393,6 +1415,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
