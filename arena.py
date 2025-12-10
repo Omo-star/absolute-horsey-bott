@@ -597,6 +597,11 @@ class HorseyArena(commands.Cog):
         user = get_user(uid)
 
         arena = user.setdefault("arena", {})
+        now = datetime.datetime.utcnow().date().isoformat()
+        if arena.get("last_token_reset") != now:
+            arena["tokens"] = 3
+            arena["last_token_reset"] = now
+
         arena.setdefault("rating", 1000)
         arena.setdefault("tokens", 3)
         arena.setdefault("crowns", 0)
@@ -1355,17 +1360,20 @@ class ArenaView(discord.ui.View):
         level = self.arena["level"]
         streak = self.arena["streak"]
 
-        if result == "win":
-            delta = random.randint(18, 32)
-            xp_gain = random.randint(30, 55)
-            crowns = random.randint(0, 2)
-            rating += delta
-            xp += xp_gain
-            streak += 1
-            self.arena["wins"] += 1
-            self.arena["crowns"] += crowns
-            self.world["chaos"] += 0.03
-            res = f"Victory!\nRating +{delta}\nXP +{xp_gain}\nCrowns +{crowns}"
+    if result == "win":
+        delta = random.randint(18, 32)
+        xp_gain = random.randint(30, 55)
+        crowns = random.randint(0, 2)
+        rating += delta
+        xp += xp_gain
+        streak += 1
+        self.arena["wins"] += 1
+        self.arena["crowns"] += crowns
+        self.world["chaos"] += 0.03
+        if self.arena["tokens"] < 5:
+            self.arena["tokens"] += 1
+        res = f"Victory!\nRating +{delta}\nXP +{xp_gain}\nCrowns +{crowns}\n+1 Fight Token"
+
         elif result == "loss":
             delta = -random.randint(10, 24)
             xp_gain = random.randint(12, 26)
