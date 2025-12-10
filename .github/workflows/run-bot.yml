@@ -16,6 +16,17 @@ jobs:
     permissions:
       contents: write
 
+    env:
+      PYTHONUNBUFFERED: 1
+      GROQ: ${{ secrets.GROQ }}
+      DEEPINFRA: ${{ secrets.DEEPINFRA }}
+      OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+      DISCORDKEY: ${{ secrets.DISCORDKEY }}
+      OPENAI: ${{ secrets.OPENAI }}
+      GITHUB: ${{ secrets.GITHUB }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,31 +37,31 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.14"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Start bot + autosaver
+      - name: Run Discord Bot
         run: |
-          python -u bbot.py &
-          BOT_PID=$!
+          echo "Starting bot..."
+          python -u bbot.py
+          echo "Bot run complete."
 
-          echo "Bot PID: $BOT_PID"
+      - name: Commit & Push bot state
+        if: always()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
 
-          while kill -0 $BOT_PID 2> /dev/null; do
-            git config user.name "github-actions"
-            git config user.email "github-actions@github.com"
+          git fetch origin main
+          git pull origin main --strategy-option theirs
 
-            git add state.json roast_memory.json 2>/dev/null || true
+          git add state.json roast_memory.json || true
 
-            if ! git diff --cached --quiet; then
-              echo "Detected changes, committing..."
-              git commit -m "Autosave economy/maze state"
-              git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} main
-            else
-              echo "No changes to save."
-            fi
-
-            sleep 120
-          done
+          if ! git diff --cached --quiet; then
+            git commit -m "Update bot state"
+            git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} main
+          else
+            echo "No state changes to commit."
+          fi
