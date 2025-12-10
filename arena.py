@@ -838,6 +838,37 @@ class ArenaView(discord.ui.View):
             return 1.0
         return self.TYPE_CHART.get((move_elem, target_elem), 1.0)
 
+    def build_team_stats(self, team):
+        stats = []
+        passives = self.arena.setdefault("passives", {})
+        power_mult = 1.0 + passives.get("power_boost", 0.0)
+        speed_mult = 1.0 + passives.get("speed_boost", 0.0)
+        def_mult = 1.0 + passives.get("def_boost", 0.0)
+        crit_bonus = passives.get("crit_boost", 0.0)
+        chaos_factor = 1.0 + self.world["chaos"] * 0.2
+        for unit in team:
+            name = unit["name"] if isinstance(unit, dict) else str(unit)
+            base_power = random.randint(40, 90)
+            base_speed = random.randint(20, 60)
+            base_def = random.randint(10, 40)
+            crit = random.uniform(0.05, 0.15) + crit_bonus
+            base_power = int(base_power * chaos_factor * power_mult)
+            base_speed = int(base_speed * speed_mult)
+            base_def = int(base_def * def_mult)
+            if crit > 0.6:
+                crit = 0.6
+            if crit < 0.01:
+                crit = 0.01
+            stats.append({
+                "name": name,
+                "hp": base_power * 2,
+                "power": base_power,
+                "speed": base_speed,
+                "def": base_def,
+                "crit": crit,
+            })
+        return stats
+
     async def start_match(self, inter):
         self.arena["tokens"] -= 1
         self.arena["in_battle"] = True
@@ -1175,6 +1206,7 @@ class ArenaView(discord.ui.View):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Arena.", ephemeral=True)
         await self.crown_shop(inter)
+
 
 async def setup(bot):
     await bot.add_cog(HorseyArena(bot))
