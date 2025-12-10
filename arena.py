@@ -1420,13 +1420,15 @@ class ArenaView(discord.ui.View):
             return await inter.response.send_message("You own no animals.", ephemeral=True)
 
         options = []
-        for pet in self.owned:
+        for i, pet in enumerate(self.owned):
             nm = self.pet_name(pet)
             el = self.infer_element(nm)
             role, rarity, _ = self.assign_role_rarity(nm)
-            label = nm
-            desc = f"{rarity} {role}, {el}"
-            options.append(discord.SelectOption(label=label, value=nm, description=desc))
+            options.append(discord.SelectOption(
+                label=nm,
+                value=f"{nm}:{i}",
+                description=f"{rarity} {role}, {el}"
+            ))
 
         select = discord.ui.Select(
             placeholder="Select up to 5 animals for your Arena team",
@@ -1438,8 +1440,9 @@ class ArenaView(discord.ui.View):
         async def select_callback(sel_inter):
             if sel_inter.user.id != self.uid:
                 return await sel_inter.response.send_message("Not your Arena.", ephemeral=True)
-            self.arena["loadout"] = list(select.values)
-            self.arena["last_log"] = f"Team updated: {', '.join(select.values)}"
+            chosen = [v.split(":", 1)[0] for v in select.values]
+            self.arena["loadout"] = chosen
+            self.arena["last_log"] = f"Team updated: {', '.join(chosen)}"
             save_state()
             await sel_inter.response.edit_message(embed=self.render_lobby(), view=self)
 
