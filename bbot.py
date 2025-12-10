@@ -1247,25 +1247,34 @@ async def bot_roast(msg, uid, mode):
 async def on_ready():
     print(f"Logged in as {bot.user}")
 
+    # Wipe global commands first (even though you have none)
     try:
-        # Fetch all currently registered global slash commands
         cmds = await bot.tree.sync()
-        print(f"Found {len(cmds)} global commands. Removing...")
-
-        # Remove each command
+        print(f"Global cmds: {len(cmds)} — wiping...")
         for cmd in cmds:
             bot.tree.remove_command(cmd.name)
-            print(f"Removed: /{cmd.name}")
-
-        # Push the update (this wipes them on Discord side)
         await bot.tree.sync()
-        print("✅ All global commands wiped!")
+        print("Global wiped.")
     except Exception as e:
-        print("❌ Failed to wipe commands:", e)
+        print("Global wipe failed:", e)
 
-    # We do NOT load any cogs here.
-    # This startup ONLY exists to clean Discord's registry.
-    print("⚠️ Now STOP the bot and restore your normal on_ready().")
+    # NOW WIPE GUILD COMMANDS (this is where your commands actually are)
+    for guild in bot.guilds:
+        try:
+            print(f"Wiping guild commands in: {guild.name}")
+            cmds = await bot.tree.sync(guild=guild)
+
+            for cmd in cmds:
+                bot.tree.remove_command(cmd.name)
+
+            await bot.tree.sync(guild=guild)
+            print(f"Guild {guild.name} wiped.")
+        except Exception as e:
+            print(f"Guild wipe failed for {guild.name}: {e}")
+
+    print("✅ ALL guild and global commands wiped.")
+    print("⚠️ STOP the bot and restore your normal on_ready().")
+
 
 
 
@@ -1401,6 +1410,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
