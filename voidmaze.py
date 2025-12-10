@@ -494,11 +494,11 @@ class VoidmazeView(discord.ui.View):
         if "Glass Feather" in arts and "Silent Pebble" in arts:
             self.adjust_clarity(self.vm, 2)
         if "Abyssal Crown" in arts and "Inverse Lantern" in arts:
-            self.world["storm"] += 0.02]
+            self.world["storm"] += 0.02
         if "Omega Prism" in arts:
-            self.vm["fragments"] += 1]
+            self.vm["fragments"] += 1
         if "Ghost Spiral" in arts and self.world["pulse"] > 0.3:
-            self.vm["depth"] += 1]
+            self.vm["depth"] += 1
         if "Echo Crown" in arts and "Recursive Loop" in anoms:
             self.adjust_clarity(self.vm, -3)
             self.vm["fragments"] += 2
