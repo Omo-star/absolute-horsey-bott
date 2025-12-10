@@ -119,7 +119,7 @@
       }
     },
     "1238242784679563265": {
-      "balance": 4362,
+      "balance": 4942,
       "last_daily": "2025-12-10T14:40:22.102078",
       "last_work": "2025-12-10T15:06:51.392576",
       "fish_cooldown": "2025-12-10T20:11:11.461069",
@@ -349,23 +349,25 @@
       },
       "voidmaze": {
         "active": false,
-        "depth": 3,
-        "clarity": 73,
+        "depth": 8,
+        "clarity": 83,
         "max_clarity": 100,
         "keys": 0,
         "artifacts": [
-          "Glass Feather"
+          "Glass Feather",
+          "Echo Crown"
         ],
         "boons": [],
         "anomalies": [
           "Fractured Insight",
           "Mind Static",
+          "Fractured Insight",
           "Fractured Insight"
         ],
-        "fragments": 3,
-        "runs": 1,
-        "streak": 1,
-        "last_log": "You escape the Maze with 105 horsenncy."
+        "fragments": 7,
+        "runs": 3,
+        "streak": 3,
+        "last_log": "You escape the Maze with 425 horsenncy."
       }
     },
     "1350372198992314451": {
