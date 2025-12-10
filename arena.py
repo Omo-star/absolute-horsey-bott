@@ -1360,19 +1360,25 @@ class ArenaView(discord.ui.View):
         level = self.arena["level"]
         streak = self.arena["streak"]
 
-    if result == "win":
-        delta = random.randint(18, 32)
-        xp_gain = random.randint(30, 55)
-        crowns = random.randint(0, 2)
-        rating += delta
-        xp += xp_gain
-        streak += 1
-        self.arena["wins"] += 1
-        self.arena["crowns"] += crowns
-        self.world["chaos"] += 0.03
-        if self.arena["tokens"] < 5:
-            self.arena["tokens"] += 1
-        res = f"Victory!\nRating +{delta}\nXP +{xp_gain}\nCrowns +{crowns}\n+1 Fight Token"
+        if result == "win":
+            delta = random.randint(18, 32)
+            xp_gain = random.randint(30, 55)
+            crowns = random.randint(0, 2)
+            rating += delta
+            xp += xp_gain
+            streak += 1
+            self.arena["wins"] += 1
+            self.arena["crowns"] += crowns
+            self.world["chaos"] += 0.03
+            if self.arena["tokens"] < 5:
+                self.arena["tokens"] += 1
+            res = (
+                f"Victory!\n"
+                f"Rating +{delta}\n"
+                f"XP +{xp_gain}\n"
+                f"Crowns +{crowns}\n"
+                f"+1 Fight Token"
+            )
 
         elif result == "loss":
             delta = -random.randint(10, 24)
@@ -1382,7 +1388,12 @@ class ArenaView(discord.ui.View):
             streak = 0
             self.arena["losses"] += 1
             self.world["chaos"] += 0.015
-            res = f"Defeat.\nRating {delta}\nXP +{xp_gain}"
+            res = (
+                f"Defeat.\n"
+                f"Rating {delta}\n"
+                f"XP +{xp_gain}"
+            )
+
         else:
             xp_gain = random.randint(8, 16)
             xp += xp_gain
@@ -1422,7 +1433,9 @@ class ArenaView(discord.ui.View):
             ),
             color=discord.Color.gold()
         )
+
         await inter.edit_original_response(content=None, embed=embed)
+
     async def edit_team(self, inter):
         if not self.owned:
             return await inter.response.send_message("You own no animals.", ephemeral=True)
