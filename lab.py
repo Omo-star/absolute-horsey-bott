@@ -4,8 +4,8 @@ import asyncio
 import datetime
 from discord.ext import commands
 from discord import app_commands
-
-from economy import get_user, save_state, state, update_balance, get_balance, get_pray_boost
+from economy_shared import state, save_state
+from economy import get_user, update_balance, get_balance, get_pray_boost
 
 
 class ResearchLab(commands.Cog):
