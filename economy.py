@@ -7,8 +7,7 @@ import datetime
 import asyncio
 import random
 import json, os
-from economy_shared import state, load_state, save_state
-load_state()
+from economy_shared import state, save_state
 
 STOCKS = {
     "HRS":   {"name": "Horsey Corp",              "price": 120, "volatility": 0.05},
