@@ -31,6 +31,7 @@ class VoidMaze(commands.Cog):
         vm.setdefault("streak", 0)
         vm.setdefault("last_log", "The Maze awakens and stares back.")
         vm.setdefault("best_depth", 0)
+
         if vm["active"] is False:
             vm["depth"] = 0
             vm["clarity"] = vm["max_clarity"]
@@ -39,6 +40,8 @@ class VoidMaze(commands.Cog):
             vm["artifacts"] = []
             vm["keys"] = 0
             vm["fragments"] = 0
+
+        vm["active"] = True
 
         world = state.setdefault("voidmaze_world", {})
         world.setdefault("storm", 0.0)
@@ -69,16 +72,10 @@ class VoidMaze(commands.Cog):
             if v["clarity"] == 0 and "Mind-Hollowed" not in v["anomalies"]:
                 v["anomalies"].append("Mind-Hollowed")
 
-        view = VoidmazeView(
-            uid,
-            vm,
-            world,
-            power,
-            clarity_mod,
-            adjust_clarity
-        )
-
+        view = VoidmazeView(uid, vm, world, power, clarity_mod, adjust_clarity)
         await interaction.response.send_message(embed=view.render(), view=view)
+
+
 class VoidmazeView(discord.ui.View):
     def __init__(self, uid, vm, world, power_fn, clarity_fn, adjust_clarity_fn):
         super().__init__(timeout=240)
@@ -147,8 +144,8 @@ class VoidmazeView(discord.ui.View):
             self.room_echo_storm
         ]
         weights = [4, 3, 3, 3, 2, 1]
-
         pool = []
+
         for fn, w in zip(choices, weights):
             for _ in range(w):
                 pool.append(fn)
@@ -170,6 +167,9 @@ class VoidmazeView(discord.ui.View):
         if index < 1 or index > len(self.current_rooms):
             return await inter.response.send_message("Invalid room.", ephemeral=True)
 
+        if not self.vm["active"]:
+            return await inter.response.send_message("This Maze run has ended. Start a new run.", ephemeral=True)
+
         room = self.current_rooms[index - 1]
         await room["handler"](inter)
 
@@ -190,8 +190,10 @@ class VoidmazeView(discord.ui.View):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
 
+        final_depth = self.vm["depth"]
+
         reward = int(
-            self.vm["depth"] * 40
+            final_depth * 40
             + len(self.vm["artifacts"]) * 120
             + self.vm["keys"] * 20
             + self.vm["fragments"] * 15
@@ -200,10 +202,9 @@ class VoidmazeView(discord.ui.View):
         )
 
         reward = max(0, reward)
-
         await update_balance(self.uid, reward)
 
-        self.vm["best_depth"] = max(self.vm["best_depth"], self.vm["depth"])
+        self.vm["best_depth"] = max(self.vm["best_depth"], final_depth)
 
         self.vm["active"] = False
         self.vm["runs"] += 1
@@ -224,13 +225,14 @@ class VoidmazeView(discord.ui.View):
             embed=discord.Embed(
                 title="🌀 VOIDMAZE — Run Complete",
                 description=(
-                    f"You reached depth **{self.vm['depth']}**.\n"
+                    f"You reached depth **{final_depth}**.\n"
                     f"Reward: **{reward} horsenncy**."
                 ),
                 color=discord.Color.green()
             ),
             view=None
         )
+
     def room_abyss_door(self):
         return {
             "name": "Door of the Abyss",
@@ -272,12 +274,16 @@ class VoidmazeView(discord.ui.View):
             "desc": "The Maze convulses with cosmic thunder. Global effects ripple outward.",
             "handler": self.handle_echo_storm
         }
+
     async def handle_abyss_door(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
 
+        if not self.vm["active"]:
+            return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
+
         pwr = self.power(self.vm)
-        mult, cpen = self.clarity_mod(self.vm)
+        m, cpen = self.clarity_mod(self.vm)
 
         gain = int(8 + self.vm["depth"] * 1.7 + pwr * 0.12)
         clarity_loss = random.randint(5, 14)
@@ -289,7 +295,7 @@ class VoidmazeView(discord.ui.View):
         if random.random() < cpen:
             anomaly = random.choice(["Hollow Static", "Worming Echo", "Loose Geometry"])
             self.vm["anomalies"].append(anomaly)
-            log = f"The door floods you with power but twists you. Gain {gain} power fragments and anomaly {anomaly}."
+            log = f"The door floods you with power but twists you. Gain {gain} fragments and anomaly {anomaly}."
         else:
             log = f"The door pulses. Gain {gain} fragments but lose {clarity_loss} clarity."
 
@@ -298,10 +304,12 @@ class VoidmazeView(discord.ui.View):
         save_state()
         await self.update(inter)
 
-
     async def handle_key_node(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
+
+        if not self.vm["active"]:
+            return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
         puzzle = random.choice(["left", "right", "center"])
         choice = random.choice(["left", "right", "center"])
@@ -313,7 +321,7 @@ class VoidmazeView(discord.ui.View):
             self.vm["keys"] += 1
             self.vm["depth"] += 1
             self.adjust_clarity(self.vm, clarity_shift)
-            log = f"Your intuition aligns with the Maze. Gain 1 Maze Key and {clarity_shift} clarity."
+            log = f"Your intuition aligns with the Maze. Gain 1 key and {clarity_shift} clarity."
         else:
             self.adjust_clarity(self.vm, -abs(clarity_shift))
             anomaly = random.choice(["Fractured Insight", "Recursive Loop"])
@@ -325,10 +333,12 @@ class VoidmazeView(discord.ui.View):
         save_state()
         await self.update(inter)
 
-
     async def handle_artifact_vault(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
+
+        if not self.vm["active"]:
+            return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
         tier = 1 + self.vm["depth"] // 5
         tier = min(tier, 5)
@@ -353,20 +363,25 @@ class VoidmazeView(discord.ui.View):
             anomaly = random.choice(["Artifact Backlash", "Mirror Shatter"])
             self.vm["anomalies"].append(anomaly)
             self.adjust_clarity(self.vm, -clarity_hit)
-            log = f"The vault yields {artifact}, but backlash inflicts {anomaly} and {clarity_hit} clarity loss."
+            log = (
+                f"The vault yields {artifact}, but backlash inflicts "
+                f"{anomaly} and {clarity_hit} clarity loss."
+            )
         else:
             self.adjust_clarity(self.vm, random.randint(1, 5))
-            log = f"The vault gifts you **{artifact}**. The Maze hums approvingly."
+            log = f"The vault gifts you {artifact}. The Maze hums approvingly."
 
         self.vm["last_log"] = log
         self.current_rooms = self.generate_rooms()
         save_state()
         await self.update(inter)
 
-
     async def handle_fracture(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
+
+        if not self.vm["active"]:
+            return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
         roll = random.random()
         pwr = self.power(self.vm)
@@ -377,7 +392,7 @@ class VoidmazeView(discord.ui.View):
             self.vm["depth"] += 2
             self.vm["fragments"] += 4
             self.adjust_clarity(self.vm, -random.randint(5, 15))
-            log = f"The fracture erupts with wealth. Gain {drop} horsenncy and surge upward."
+            log = f"The fracture erupts with wealth. Gain {drop} horsenncy."
         elif roll < 0.55:
             art = random.choice(["Echo Crown", "Warp Tablet", "Obsidian Bloom"])
             self.vm["artifacts"].append(art)
@@ -396,11 +411,10 @@ class VoidmazeView(discord.ui.View):
             penalty = min(penalty, await get_balance(self.uid))
             await update_balance(self.uid, -penalty)
             save_state()
-
             return await inter.response.edit_message(
                 embed=discord.Embed(
                     title="💀 VOIDMAZE — Collapse",
-                    description=f"The fracture consumes you.\nYou lose **{penalty} horsenncy**.",
+                    description=f"The fracture consumes you. You lose {penalty} horsenncy.",
                     color=discord.Color.red()
                 ),
                 view=None
@@ -411,10 +425,12 @@ class VoidmazeView(discord.ui.View):
         save_state()
         await self.update(inter)
 
-
     async def handle_rest(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
+
+        if not self.vm["active"]:
+            return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
         danger = 0.25 + self.world["storm"] * 0.1
 
@@ -423,7 +439,7 @@ class VoidmazeView(discord.ui.View):
             self.adjust_clarity(self.vm, -dmg)
             anomaly = random.choice(["Parasitic Dream", "Mind Static"])
             self.vm["anomalies"].append(anomaly)
-            log = f"Rest is shattered by a Maze whisper. Lose {dmg} clarity and gain {anomaly}."
+            log = f"Rest is shattered by a whisper. Lose {dmg} clarity."
         else:
             heal = random.randint(10, 25)
             self.adjust_clarity(self.vm, heal)
@@ -435,10 +451,12 @@ class VoidmazeView(discord.ui.View):
         save_state()
         await self.update(inter)
 
-
     async def handle_echo_storm(self, inter):
         if inter.user.id != self.uid:
             return await inter.response.send_message("Not your Maze.", ephemeral=True)
+
+        if not self.vm["active"]:
+            return await inter.response.send_message("This Maze run has ended.", ephemeral=True)
 
         r = random.random()
 
@@ -447,26 +465,27 @@ class VoidmazeView(discord.ui.View):
             self.world["pulse"] += 0.1
             self.vm["depth"] += 1
             self.adjust_clarity(self.vm, -random.randint(6, 12))
-            log = "The Maze convulses. Storm intensity spikes dramatically."
+            log = "The Maze convulses. Storm intensifies."
         elif r < 0.66:
             self.world["pulse"] += 0.3
             reward = int(60 + self.vm["depth"] * 5)
             await update_balance(self.uid, reward)
             self.vm["fragments"] += 3
-            log = f"A resonant pulse grants {reward} horsenncy and 3 fragments."
+            log = f"The pulse grants {reward} horsenncy."
         else:
             self.world["season"] += 1
             self.world["storm"] *= 0.5
             self.world["pulse"] *= 0.3
             self.vm["depth"] += 2
             self.adjust_clarity(self.vm, random.randint(4, 12))
-            log = "A season turns. The Maze resets part of itself."
+            log = "A season turns. The Maze shifts."
 
         self.world["last_event"] = log
         self.vm["last_log"] = log
         self.current_rooms = self.generate_rooms()
         save_state()
         await self.update(inter)
+
     def apply_synergies(self):
         arts = self.vm["artifacts"]
         anoms = self.vm["anomalies"]
@@ -474,68 +493,49 @@ class VoidmazeView(discord.ui.View):
 
         if "Glass Feather" in arts and "Silent Pebble" in arts:
             self.adjust_clarity(self.vm, 2)
-
         if "Abyssal Crown" in arts and "Inverse Lantern" in arts:
-            self.world["storm"] += 0.02
-
+            self.world["storm"] += 0.02]
         if "Omega Prism" in arts:
-            self.vm["fragments"] += 1
-
+            self.vm["fragments"] += 1]
         if "Ghost Spiral" in arts and self.world["pulse"] > 0.3:
-            self.vm["depth"] += 1
-
+            self.vm["depth"] += 1]
         if "Echo Crown" in arts and "Recursive Loop" in anoms:
             self.adjust_clarity(self.vm, -3)
             self.vm["fragments"] += 2
-
         if "Warp Tablet" in arts and "Phase Drift" in anoms:
             self.vm["keys"] += 1
-
         if "Temporal Harness" in arts and "Time Shear" in anoms:
             self.vm["depth"] += 1
-
         if "Fractal Glyph" in arts:
             self.vm["depth"] += 1
-
         if "Reversed Compass" in arts:
             if random.random() < 0.15:
                 self.vm["depth"] += 1
-
         if "Cubic Heart" in arts and "Worming Echo" in anoms:
             self.adjust_clarity(self.vm, -2)
-
         if "Eternal Coil" in arts:
             self.world["pulse"] += 0.01
-
         if "Star-Bleed Idol" in arts and self.vm["clarity"] < 40:
             self.vm["fragments"] += 4
-
         if "Obsidian Bloom" in arts:
             if random.random() < 0.20:
                 self.vm["fragments"] += 3
-
         if "Hollow Static" in anoms:
             self.adjust_clarity(self.vm, -1)
-
         if "Loose Geometry" in anoms:
             if random.random() < 0.1:
                 self.vm["depth"] += 1
-
         if "Parasitic Dream" in anoms:
             self.vm["clarity"] = max(1, self.vm["clarity"] - 1)
-
         if "Mind Static" in anoms:
             if random.random() < 0.10:
                 self.vm["keys"] = max(0, self.vm["keys"] - 1)
-
         if "Recursion Blessing" in boons:
             if random.random() < 0.15:
                 self.vm["fragments"] += 2
-
         if "Stillheart Boon" in boons:
             if self.vm["clarity"] < self.vm["max_clarity"]:
                 self.adjust_clarity(self.vm, 1)
-
         if "Stormwalker Boon" in boons:
             if self.world["storm"] > 0.5:
                 self.vm["depth"] += 1
@@ -571,6 +571,7 @@ class VoidmazeView(discord.ui.View):
         self.apply_passive_world_effects()
         save_state()
         await self.update(inter)
+
+
 async def setup(bot):
     await bot.add_cog(VoidMaze(bot))
-
