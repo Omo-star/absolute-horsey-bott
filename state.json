@@ -791,13 +791,13 @@
         }
       ],
       "style_vector": {
-        "aggressive": 5.64978,
-        "stealthy": 1.6003799999999995,
-        "bruteforce": 466.14,
-        "elegant": 5.8496999999999995,
-        "experimental": 7.598999999999999
+        "aggressive": 6.954846,
+        "stealthy": 1.1502659999999996,
+        "bruteforce": 329.29799999999994,
+        "elegant": 7.09479,
+        "experimental": 8.319299999999998
       },
-      "chaos_affinity": 3.0077999999999996,
+      "chaos_affinity": 6.011699999999999,
       "chaos_unlocks": []
     }
   },
@@ -821,6 +821,26 @@
       "battles": 3,
       "wins": 2,
       "losses": 1
+    },
+    "<@1440004841559560214>:5": {
+      "id": "<@1440004841559560214>:5",
+      "name": "<@1440004841559560214>",
+      "difficulty": 5,
+      "security_integrity": 165,
+      "anomaly_detection": 90,
+      "bandwidth_pressure": 70,
+      "forensic_risk": 105,
+      "temperament": "evasive",
+      "style_bias": {
+        "aggressive": 0.18619343989112536,
+        "stealthy": 0.3195894143551872,
+        "bruteforce": 0.29866792535487036,
+        "elegant": 0.3389953955582803,
+        "experimental": 0.23029656404678167
+      },
+      "battles": 0,
+      "wins": 0,
+      "losses": 0
     }
   }
 }
