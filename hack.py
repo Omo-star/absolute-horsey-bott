@@ -24,9 +24,7 @@ def detect_gcc_version():
 clang_candidates = sorted(glob.glob("/usr/lib/llvm-*/lib/libclang.so"))
 
 preferred = None
-preferred_versions = ["llvm-16", "llvm-17", "llvm-18", "llvm-19", "llvm-20"]
-
-
+preferred_versions = ["llvm-17"]
 
 for path in clang_candidates:
     if any(v in path for v in preferred_versions):
