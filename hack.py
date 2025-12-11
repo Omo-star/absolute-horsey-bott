@@ -21,24 +21,13 @@ def detect_gcc_version():
     except Exception:
         return "13"
 
-clang_candidates = sorted(glob.glob("/usr/lib/llvm-*/lib/libclang.so"))
+clang_path = "/usr/lib/llvm-18/lib/libclang.so"
 
-preferred = None
-preferred_versions = ["llvm-17"]
-
-for path in clang_candidates:
-    if any(v in path for v in preferred_versions):
-        preferred = path
-        break
-
-chosen = preferred or (clang_candidates[0] if clang_candidates else None)
-
-if chosen:
-    Config.set_library_file(chosen)
-    print("Loaded clang from:", chosen)
+if os.path.exists(clang_path):
+    Config.set_library_file(clang_path)
+    print("Loaded clang from:", clang_path)
 else:
-    print("WARNING: Could not find any libclang")
-
+    print("ERROR: libclang 18 not found at", clang_path)
 
 try:
     from openai import OpenAI
