@@ -295,31 +295,35 @@
         "offense_bonus": 0
       },
       "arena": {
-        "rating": 1059,
-        "tokens": 0,
-        "crowns": 2,
-        "wins": 3,
+        "rating": 1091,
+        "tokens": 3,
+        "crowns": 5,
+        "wins": 4,
         "losses": 0,
-        "streak": 3,
+        "streak": 4,
         "level": 2,
-        "xp": 21,
-        "last_log": "Team updated: \ud83e\udd9d Raccoon, \ud83e\udd83 Turkey, \ud83e\udd85 Eagle, \ud83d\udc00 Rat, \ud83d\udc10 Mountain Goat",
+        "xp": 71,
+        "last_log": "Victory!\nRating +32\nXP +50\nCrowns +3\n+1 Fight Token",
         "in_battle": true,
         "loadout": [
-          "\ud83e\udd9d Raccoon",
-          "\ud83e\udd83 Turkey",
-          "\ud83e\udd85 Eagle",
-          "\ud83d\udc00 Rat",
-          "\ud83d\udc10 Mountain Goat"
+          "\ud83d\udc04 Cow (baby)",
+          "\ud83e\udd86 Duck",
+          "\ud83d\udc15 Stray Dog",
+          "\ud83d\udc15 Stray Dog",
+          "\ud83e\udd83 Turkey"
         ],
         "last_opponent": [
-          "\ud83d\udc3a Wolf",
-          "\ud83d\udc10 Mountain Goat",
-          "\ud83d\udd25 Phoenix",
+          "\ud83e\udd8c Elk",
+          "\ud83e\udd8e Lizard",
+          "\ud83e\udda1 Badger",
           "\ud83c\udf0c Cosmic Dragon",
-          "\ud83e\udd8d Titan Gorilla"
+          "\ud83d\udc09 Forest Dragonling"
         ],
-        "passives": {}
+        "passives": {},
+        "last_token_reset": "2025-12-10",
+        "evolved": {},
+        "last_mutator": "Chaotic Whirl",
+        "last_ult": "\ud83d\udc09 Forest Dragonling used Inferno Collapse"
       },
       "voidmaze": {
         "active": false,
@@ -725,13 +729,19 @@
   },
   "arena_world": {
     "season": 1,
-    "chaos": 0.13,
-    "total_matches": 3,
+    "chaos": 0.18,
+    "total_matches": 4,
     "last_champion": null,
     "last_event": "The sands are quiet.",
     "ladder": {
       "1238242784679563265": 1059
-    }
+    },
+    "mutator": [
+      "Chaotic Whirl",
+      "Random stat swings each round.",
+      1.0,
+      1.0
+    ]
   },
   "lab_world": {
     "instability": 0.30000000000000004,
