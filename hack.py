@@ -680,7 +680,7 @@ class HackerUniverse(commands.Cog):
             "forensic_risk": forensic,
         }
 
-    def compute_profile_modifiers(self, profile, chaos_level):
+    def compute_profile_modifiers(self, profile, difficulty, chaos_level):
         skill = profile.get("skill", 1)
         tier = profile.get("tier", 1)
         trace = profile.get("trace", 0)
