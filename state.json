@@ -758,13 +758,13 @@
   },
   "hacker_profiles": {
     "1238242784679563265": {
-      "skill": 6,
-      "xp": 34,
-      "tier": 1,
-      "trace": 3,
-      "reputation": 6,
-      "streak": 1,
-      "last_hack": "2025-12-11T22:40:10.523658",
+      "skill": 26,
+      "xp": 193,
+      "tier": 2,
+      "trace": 0,
+      "reputation": 35,
+      "streak": 4,
+      "last_hack": "2025-12-11T23:01:06.096643",
       "specializations": [],
       "hack_history": [
         {
@@ -788,16 +788,40 @@
           "quality": "perfect_chain",
           "chaos": 0,
           "timestamp": "2025-12-11T22:40:10.523658"
+        },
+        {
+          "target": "<@1440004841559560214>",
+          "difficulty": 1,
+          "success": true,
+          "quality": "singularity",
+          "chaos": 3,
+          "timestamp": "2025-12-11T22:54:23.427983"
+        },
+        {
+          "target": "<@1440004841559560214>",
+          "difficulty": 5,
+          "success": true,
+          "quality": "clean",
+          "chaos": 3,
+          "timestamp": "2025-12-11T22:57:20.575763"
+        },
+        {
+          "target": "<@1440004841559560214>",
+          "difficulty": 5,
+          "success": true,
+          "quality": "clean",
+          "chaos": 0,
+          "timestamp": "2025-12-11T23:01:06.096643"
         }
       ],
       "style_vector": {
-        "aggressive": 6.954846,
-        "stealthy": 1.1502659999999996,
-        "bruteforce": 329.29799999999994,
-        "elegant": 7.09479,
-        "experimental": 8.319299999999998
+        "aggressive": 8.955512178,
+        "stealthy": 0.46024123799999983,
+        "bruteforce": 119.51921399999995,
+        "elegant": 9.00351297,
+        "experimental": 9.423519899999999
       },
-      "chaos_affinity": 6.011699999999999,
+      "chaos_affinity": 32.5234,
       "chaos_unlocks": []
     }
   },
@@ -806,10 +830,10 @@
       "id": "<@1440004841559560214>:1",
       "name": "<@1440004841559560214>",
       "difficulty": 1,
-      "security_integrity": 47.28163500000001,
-      "anomaly_detection": 31.200000000000003,
+      "security_integrity": 48.70008405000001,
+      "anomaly_detection": 32.44800000000001,
       "bandwidth_pressure": 31.212000000000003,
-      "forensic_risk": 33.660000000000004,
+      "forensic_risk": 34.333200000000005,
       "temperament": "paranoid",
       "style_bias": {
         "aggressive": 0.028452953744058124,
@@ -818,18 +842,18 @@
         "elegant": 0.13024173304114442,
         "experimental": -0.07430090887902521
       },
-      "battles": 3,
+      "battles": 4,
       "wins": 2,
-      "losses": 1
+      "losses": 2
     },
     "<@1440004841559560214>:5": {
       "id": "<@1440004841559560214>:5",
       "name": "<@1440004841559560214>",
       "difficulty": 5,
-      "security_integrity": 165,
-      "anomaly_detection": 90,
+      "security_integrity": 175.04850000000002,
+      "anomaly_detection": 97.34400000000001,
       "bandwidth_pressure": 70,
-      "forensic_risk": 105,
+      "forensic_risk": 109.242,
       "temperament": "evasive",
       "style_bias": {
         "aggressive": 0.18619343989112536,
@@ -838,9 +862,9 @@
         "elegant": 0.3389953955582803,
         "experimental": 0.23029656404678167
       },
-      "battles": 0,
+      "battles": 2,
       "wins": 0,
-      "losses": 0
+      "losses": 2
     }
   }
 }
