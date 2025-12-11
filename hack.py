@@ -337,7 +337,7 @@ class HackerUniverse(commands.Cog):
                 loops += 1
             if k in (CursorKind.IF_STMT, CursorKind.SWITCH_STMT, CursorKind.CASE_STMT, CursorKind.DEFAULT_STMT, CursorKind.CONDITIONAL_OPERATOR):
                 branches += 1
-            if k in (CursorKind.CALL_EXPR, CursorKind.CXX_MEMBER_CALL_EXPR):
+            if k == CursorKind.CALL_EXPR:
                 calls += 1
             if k in (CursorKind.CLASS_TEMPLATE, CursorKind.FUNCTION_TEMPLATE, CursorKind.TYPE_REF, CursorKind.TEMPLATE_REF):
                 template_nodes += 1
