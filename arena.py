@@ -1774,7 +1774,7 @@ class ArenaView(discord.ui.View):
         async def back_callback(bi):
             if bi.user.id != self.uid:
                 return await bi.response.send_message("Not your Arena.", ephemeral=True)
-            await bi.edit_original_response(embed=self.render_lobby(), view=self)
+            await bi.response.edit_message(embed=self.render_lobby(), view=self)
 
         back_btn = discord.ui.Button(label="Back", style=discord.ButtonStyle.secondary)
         back_btn.callback = back_callback
