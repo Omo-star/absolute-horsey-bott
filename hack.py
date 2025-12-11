@@ -279,6 +279,21 @@ class HackerUniverse(commands.Cog):
             print("   ", a)
         try:
             tu = self.clang_index.parse(tmp_path, args=args)
+            print("[CLANG DEBUG] TU object:", tu)
+            if tu:
+                print("[CLANG DEBUG] TU.spelling:", getattr(tu, "spelling", None))
+                print("[CLANG DEBUG] TU.cursor:", getattr(tu, "cursor", None))
+
+                cursor = getattr(tu, "cursor", None)
+                if cursor:
+                    print("[CLANG DEBUG] TU.cursor.kind:", getattr(cursor.kind, "name", None))
+                    children = list(cursor.get_children())
+                    print("[CLANG DEBUG] AST child count:", len(children))
+                else:
+                    print("[CLANG DEBUG] cursor is None")
+            else:
+                print("[CLANG DEBUG] TU is None")
+
         except Exception as e:
             print("[CLANG DEBUG] Exception during parse:", e)
             tu = None
