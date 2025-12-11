@@ -24,8 +24,10 @@ def detect_gcc_version():
 clang_candidates = sorted(glob.glob("/usr/lib/llvm-*/lib/libclang.so"))
 
 preferred = None
+preferred_versions = ["llvm-16", "llvm-17", "llvm-18"]
+
 for path in clang_candidates:
-    if any(v in path for v in ["llvm-14", "llvm-15", "llvm-16"]):
+    if any(v in path for v in preferred_versions):
         preferred = path
         break
 
@@ -257,14 +259,13 @@ class HackerUniverse(commands.Cog):
             print("[CLANG DEBUG] Temp file created:", tmp_path)
 
         if language.lower() == "cpp":
-            gcc_ver = detect_gcc_version()
-
             args = [
                 "-std=c++17",
                 "-I/usr/include",
-                f"-I/usr/include/c++/{gcc_ver}",
-                f"-I/usr/include/x86_64-linux-gnu/c++/{gcc_ver}",
-                f"-I/usr/include/c++/{gcc_ver}/backward",
+                "-I/usr/include/c++/13",
+                "-I/usr/include/x86_64-linux-gnu/c++/13",
+                "-I/usr/lib/gcc/x86_64-linux-gnu/13/include",
+                "-I/usr/include/c++/13/backward",
             ]
         else:
             args = [
