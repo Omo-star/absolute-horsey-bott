@@ -2,6 +2,7 @@ from economy_shared import state, save_state
 import discord
 from discord.ext import commands
 from discord import app_commands
+import clang.cindex
 from clang.cindex import Index, CursorKind, Config
 import ast
 import random
@@ -21,13 +22,15 @@ def detect_gcc_version():
     except Exception:
         return "13"
 
-clang_path = "/usr/lib/llvm-18/lib/libclang.so"
-
-if os.path.exists(clang_path):
-    Config.set_library_file(clang_path)
-    print("Loaded clang from:", clang_path)
-else:
-    print("ERROR: libclang 18 not found at", clang_path)
+try:
+    clang_path = clang.cindex.Config.library_path
+    if clang_path and os.path.exists(clang_path):
+        Config.set_library_file(clang_path)
+        print("Loaded libclang from:", clang_path)
+    else:
+        print("Could not auto-locate libclang; using default loader.")
+except Exception as e:
+    print("Failed to set libclang:", e)
 
 try:
     from openai import OpenAI
