@@ -276,14 +276,14 @@ Over **30+ items**, each with entirely custom logic.
 
 # 🤖 12. Lichess Bot
 
-**User: [@icbmsaregoated2](https://lichess.org/@/icbmsaregoated2)
+**User: [@icbmsaregoated2](https://lichess.org/@/icbmsaregoated2)**
 ### '/lichess'
 
-View current status of lichess bot
+View current status of lichess bot on a user-friendly dashbored.
 
 ### '/lichess_game'
 
-View current moves of the game it is playing
+View current moves of the game it is playing.
 
 **Example statistics**
 
@@ -294,11 +294,279 @@ View current moves of the game it is playing
 
 ---
 
-# Notes
+# 🌀 13. Voidmaze System — `/voidmaze`
 
-- All systems use persistent storage.
-- Some systems (Raid Boss, Rift Instability) are **global** and affect all players.
-- Many mechanics interact with each other (e.g., prayer boosts gambling and dungeon, items boost hunting or fish rewards).
+A cosmic, sanity-bending roguelite where every choice reshapes both **you** and the **Maze**.
+
+### CORE FEATURES
+- Depth-based progression  
+- Clarity (HP) system with degrading thresholds  
+- Artifacts with powerful combo synergies  
+- Anomalies that corrupt and hinder your run  
+- Boons granting rare buffs  
+- Fragments, keys, and combo chaining  
+- Procedurally generated rooms  
+- Global world-state variables (Storm, Pulse, Season)  
+- Seasonal shifts that alter Maze behavior  
+- Passive synergy engine that triggers automatically  
+- High-risk collapse events that can delete horsenncy  
+- Run history, best depth, streak tracking  
+
+---
+
+### ROOM TYPES
+- **Door of the Abyss** — Gain depth & fragments; lose clarity; anomaly chance  
+- **Tangle Key Node** — Puzzle granting keys, clarity, or anomalies  
+- **Artifact Vault** — Earn artifacts with scaling power; may backlash  
+- **Reality Fracture** — Extremely high risk; artifacts, wealth, anomalies, or instant collapse  
+- **Locus of Stillness** — Restore clarity or be ambushed  
+- **Echo Storm** — Alters world-state (Storm, Pulse, Season)  
+
+---
+
+### BUTTON ACTIONS
+- **Room 1 / Room 2 / Room 3** — Choose one of three procedurally generated events  
+- **Leave Maze** — End the run and convert progress into horsenncy  
+
+Rewards depend on:  
+Depth, artifacts, anomalies, fragments, keys, combo streak, and world-state conditions.
+
+---
+
+# 🏟️ 14. Arena System — `/arena`
+
+A fast-paced **auto-battler arena** where your animals fight through elemental matchups, ultimates, passives, and seasonal modifiers.
+
+### CORE FEATURES
+- Auto-battler combat with full stat generation  
+- Elements, roles, rarities, crits, shields, and speed ordering  
+- Ultimate abilities for every element  
+- Status effects: burn, poison, bleed, stun, regen  
+- Environment cycles that boost/nerf certain elements  
+- Global Arena Seasons & Chaos meter  
+- Match Mutators (Bloodsport, Iron Wall, Arcane Storm, etc.)  
+- Win streak rewards & evolution system  
+- Permanent passive upgrades via Crown Shop  
+- Rating ladder with top-10 leaderboard  
+- Daily fight tokens (3 per day)
+
+---
+
+### WHAT YOU CAN DO
+- **Fight Match** — Enter a full auto-battle with animations, abilities, and ultimates  
+- **Edit Team** — Choose up to 5 animals from your Owned Animals  
+- **View Ladder** — See global top ratings  
+- **Crown Shop** — Buy permanent Arena buffs  
+- **Leave Arena** — Exit the lobby
+
+---
+
+### BATTLE SYSTEM
+Each fighter is assigned:
+- **Element** (fire, water, air, earth, dark, mystic, beast)  
+- **Role** (tank, striker, support, healer, trickster)  
+- **Rarity** (Common → Legendary)  
+- **Unique passive ability**  
+- **Randomized combat stats:** HP, Power, Defense, Speed, Crit Rate
+
+Combat includes:
+- Type advantages  
+- Shields, buffs, debuffs  
+- DOTs (burn/poison/bleed)  
+- Momentum boosts  
+- Round-end passives (heals, speed auras, etc.)  
+- Full team synergy bonuses  
+
+---
+
+### EVOLUTIONS
+Win streaks evolve animals into stronger forms (Wolf → Dire Wolf → Moon Wolf, etc.).  
+Evolutioned units replace the older form in future teams.
+
+---
+
+### REWARDS
+Match results give:
+- **Rating** (MMR)  
+- **XP** (leveling → crowns)  
+- **Crowns** (permanent upgrades)  
+- **Streak bonuses**  
+- **Seasonal world progression**
+
+---
+
+### SUMMARY
+The Arena is a **deep auto-battler** combining:
+- Team building  
+- Synergies  
+- RNG chaos  
+- Strategic passives  
+- Seasonal meta shifts  
+
+Master your squad, climb the ladder, and become the Arena Champion.
+
+---
+
+# 🧪 15. Research Lab System — `/lab`
+
+A high-risk, high-reward **scientific progression system** where stability, anomalies, breakthroughs, and world instability shape your research journey.
+
+### CORE FEATURES
+- Lab leveling & XP system  
+- Stability & max-stability management  
+- Global instability meter  
+- Random anomalies with escalating danger  
+- Breakthroughs that permanently enhance your account  
+- Research, experiments, and stabilization cycles  
+- Lab world events shared across all players  
+- Risk-based horsenncy experiments  
+- Chance-based breakthrough unlock table  
+- Persistent logs & research queue
+
+---
+
+### BUTTON ACTIONS
+- **Research** — Gain XP, raise instability, reduce stability, chance for breakthroughs  
+- **Experiment** — Gamble horsenncy with high variance; can yield XP, anomalies, or catastrophes  
+- **Stabilize** — Spend lab XP to restore stability, reduce world instability, and sometimes purge anomalies  
+- **Breakthroughs** — View all permanent upgrades unlocked  
+- **Leave** — Exit the lab interface
+
+---
+
+### SYSTEM MECHANICS
+
+#### **Stability**
+- Core safety meter: if it hits zero → **Core Fracture** anomaly  
+- Experiments & research reduce stability  
+- Stabilization restores stability and may remove anomalies
+
+#### **Instability (World)**
+- Shared across labs globally  
+- Rises with research & experiments  
+- High levels increase breakthrough rates and catastrophe odds  
+- Certain thresholds trigger world events
+
+#### **Breakthroughs**
+Unique permanent upgrades such as:
+- Efficient Stock Algos  
+- Dungeon Resonance Mapping  
+- Arena Combat Analytics  
+- Prayer Wave Amplifier  
+- Casino Edge Tuning  
+- Meta-Currency Compression  
+
+Each breakthrough adds flavor, future upgrades, or system synergies.
+
+#### **Experiments**
+Outcome tiers:
+- **Major Success** — High horsenncy gain + XP, major instability spike  
+- **Minor Success** — Small net gain, mild instability  
+- **Failure** — Horsenncy loss + new anomaly  
+- **Catastrophic Failure** — Huge loss, stability crash, severe anomaly
+
+---
+
+### SUMMARY
+The Research Lab is a **progression + risk management system** built around:
+- XP growth  
+- Stability juggling  
+- Random anomalies  
+- Permanent breakthroughs  
+- Horsenncy wagers  
+- A global evolving instability field  
+
+Master the lab, tame the anomalies, and advance scientific chaos.
+
+---
+
+# 🛠️ 16. Hacker RPG System — `/hack`
+
+A fully simulated **multi-phase hacking RPG** powered by your **own codepad scripts**.  
+Every hack evaluates your scripts for performance, efficiency, stealth, stability, and complexity — creating a deeply customizable cyber-RPG loop.
+
+---
+
+### CORE FEATURES
+- Four-phase hacking chain: **Recon → Access → Payload → Extraction**  
+- Script analysis engine (performance, entropy, recursion, imports, stealth, parallelism, stability)  
+- Automatic module selection or manual script assignment  
+- Difficulty tiers (1–5) with unique target security profiles  
+- Skill, Tier, Reputation, Trace, and XP progression  
+- Success quality grading (flawless, barely, almost, failed)  
+- Synergy bonuses for archetype alignment or diversity  
+- Animated phase-by-phase hack visualization  
+- Cooldowns that adapt to skill, tier, and trace  
+- Persistent hack history (20 most recent runs stored)
+
+---
+
+### BUTTONLESS SYSTEM  
+All actions occur through the `/hack` command and your **codepad**.
+
+### HOW IT WORKS
+1. Create code files using `/code_new` and `/code_edit`.  
+2. Name them according to role keywords:  
+   - **Recon** — recon, scan, probe  
+   - **Access** — access, login, auth  
+   - **Payload** — payload, inject, exploit  
+   - **Extraction** — extract, exfil, leak  
+3. Run `/hack` and optionally specify which scripts to use.  
+4. Watch the engine analyze your code and simulate a cyber intrusion.
+
+---
+
+### PHASES
+- **Reconnaissance** — Mapping endpoints, fingerprinting, topology analysis  
+- **Access Vector** — Credential distortion, solver heuristics, exploit probes  
+- **Payload Orchestration** — Packing, obfuscation, execution hooks  
+- **Extraction** — Proxy braiding, masking envelopes, sealing channels  
+
+Each phase compares:  
+**your script power** vs **target threshold**, modified by skill, tier, trace, and synergy.
+
+---
+
+### OUTCOME TYPES
+- **Perfect Chain** — Stunning execution; massive XP & stat boosts  
+- **Strong** — Solid multi-phase breach  
+- **Clean** — Consistent success  
+- **Shaky** — Success with instability  
+- **Near Miss** — Almost broke in  
+- **Messy** — Failed with noise  
+- **Catastrophic** — Severe failure; high trace
+
+---
+
+### PROGRESSION
+Hacks reward or penalize:
+- **XP** (skill-up & tier progression)  
+- **Skill** (hack power scaling)  
+- **Reputation** (public notoriety)  
+- **Trace** (forensic heat)  
+- **Streaks** (bonus consistency multiplier)
+
+Trace also increases cooldown time.
+
+---
+
+### CHAIN BUILDING
+During execution:
+- System animates each phase  
+- Evaluates module matchups  
+- Calculates margin %, quality, synergy, RNG volatility  
+- Produces a detailed final report
+
+---
+
+### SUMMARY
+The `/hack` system is a **deep technical RPG** where:
+- Your scripts = your equipment  
+- Your skill & tier = your stats  
+- Trace = your danger meter  
+- Each target = a unique puzzle
+
+Build better scripts, form strong phase chains, and climb the hacker ranks.
 
 ---
 
