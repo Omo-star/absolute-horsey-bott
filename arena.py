@@ -856,7 +856,7 @@ class ArenaView(discord.ui.View):
 
     async def animate(self, inter, p, o, text, p_offset=0, o_offset=0):
         field = self.format_field(p, o, p_offset=p_offset, o_offset=o_offset)
-        await inter.edit_original_response(content=f"```{field}\n\n{text}```", embed=None)
+        await inter.interaction.response.edit_message(content=f"```{field}\n\n{text}```", embed=None)
 
     async def play_attack_animation(self, inter, attacker, defender, side, text):
         lines = text.split("\n")
@@ -882,7 +882,7 @@ class ArenaView(discord.ui.View):
         p = attacker
         o = defender
         field = self.format_field(p, o, p_offset=0, o_offset=0)
-        await inter.edit_original_response(content=f"```{box}\n\n{field}```", embed=None)
+        await inter.interaction.response.edit_message(content=f"```{box}\n\n{field}```", embed=None)
         await asyncio.sleep(0.7)
 
     def render_lobby(self):
@@ -1358,7 +1358,7 @@ class ArenaView(discord.ui.View):
                     shield = int(u["max_hp"] * 0.15)
                     u["shield"] += shield
                     log.append(f"{u['name']}'s {u['ability_name']} grants a {shield} HP shield!")
-        await inter.edit_original_response(content="```The crowd roars... The match begins!```")
+        await inter.interaction.response.edit_message(content="```The crowd roars... The match begins!```")
         await asyncio.sleep(0.5)
         round_no = 1
         while True:
@@ -1664,7 +1664,7 @@ class ArenaView(discord.ui.View):
             ),
             color=discord.Color.gold()
         )
-        await inter.edit_original_response(content=None, embed=embed)
+        await inter.interaction.response.edit_message(content=None, embed=embed)
 
     async def edit_team(self, inter):
         if not self.owned:
@@ -1728,7 +1728,7 @@ class ArenaView(discord.ui.View):
         back_btn = discord.ui.Button(label="Back", style=discord.ButtonStyle.secondary)
         back_btn.callback = back_callback
         v.add_item(back_btn)
-        await inter.edit_original_response(embed=embed, view=v)
+        await inter.interaction.response.edit_message(embed=embed, view=v)
 
     async def crown_shop(self, inter):
         items = {
