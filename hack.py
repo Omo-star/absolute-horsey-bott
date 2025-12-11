@@ -235,9 +235,18 @@ class HackerUniverse(commands.Cog):
             tmp.write(code.encode("utf-8"))
             tmp_path = tmp.name
         if language == "cpp":
-            args = ["-std=c++17"]
+            args = [
+                "-std=c++17",
+                "-I/usr/include",
+                "-I/usr/include/c++/11",
+                "-I/usr/include/x86_64-linux-gnu/c++/11",
+                "-I/usr/lib/llvm-18/include",
+            ]
         else:
-            args = ["-std=c11"]
+            args = [
+                "-std=c11",
+                "-I/usr/include",
+            ]
         try:
             tu = self.clang_index.parse(tmp_path, args=args)
         except Exception:
