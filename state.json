@@ -295,15 +295,15 @@
         "offense_bonus": 0
       },
       "arena": {
-        "rating": 1116,
+        "rating": 1141,
         "tokens": 3,
-        "crowns": 2,
-        "wins": 5,
+        "crowns": 5,
+        "wins": 6,
         "losses": 0,
-        "streak": 5,
+        "streak": 6,
         "level": 3,
-        "xp": 21,
-        "last_log": "Victory!\nRating +25\nXP +50\nCrowns +0\n+1 Fight Token",
+        "xp": 60,
+        "last_log": "Victory!\nRating +25\nXP +39\nCrowns +3\n+1 Fight Token",
         "in_battle": true,
         "loadout": [
           "\ud83e\udd86 Duck",
@@ -313,19 +313,19 @@
           "\ud83e\udd9d Raccoon"
         ],
         "last_opponent": [
-          "\ud83e\udd84 Eternal Unicorn",
-          "\ud83d\udc05 Young Tiger",
-          "\ud83e\udda4 Giant Dodo",
-          "\ud83e\udd8c Elk",
-          "\ud83d\udc0a Abyssal Crocodile"
+          "\ud83e\udd8e Lizard",
+          "\ud83d\udc0a Baby Crocodile",
+          "\ud83d\udc0a Abyssal Crocodile",
+          "\ud83e\udd8f Rhino (baby)",
+          "\ud83e\udd83 Turkey"
         ],
         "passives": {
           "crit_boost": 0.03
         },
         "last_token_reset": "2025-12-11",
         "evolved": {},
-        "last_mutator": "Iron Wall",
-        "last_ult": "\ud83d\udc07 Bunny used Primal Frenzy"
+        "last_mutator": "Blessed Grounds",
+        "last_ult": "\ud83e\udd83 Turkey used Primal Frenzy"
       },
       "voidmaze": {
         "active": false,
@@ -731,18 +731,18 @@
   },
   "arena_world": {
     "season": 1,
-    "chaos": 0.27999999999999997,
-    "total_matches": 5,
+    "chaos": 0.32999999999999996,
+    "total_matches": 6,
     "last_champion": null,
     "last_event": "The sands are quiet.",
     "ladder": {
       "1238242784679563265": 1091
     },
     "mutator": [
-      "Iron Wall",
-      "Defense and shields stronger.",
+      "Blessed Grounds",
+      "Healing stronger, damage slightly lower.",
       0.9,
-      1.3
+      1.25
     ]
   },
   "lab_world": {
