@@ -755,5 +755,55 @@
     "pulse": 0.0,
     "season": 1,
     "last_event": "The labyrinth hums with cold awareness."
+  },
+  "hacker_profiles": {
+    "1238242784679563265": {
+      "skill": 1,
+      "xp": 3,
+      "tier": 1,
+      "trace": 2,
+      "reputation": 0,
+      "streak": 0,
+      "last_hack": "2025-12-11T15:03:56.052059",
+      "specializations": [],
+      "hack_history": [
+        {
+          "target": "<@1440004841559560214>",
+          "difficulty": 1,
+          "success": false,
+          "quality": "catastrophic",
+          "timestamp": "2025-12-11T15:03:56.052059"
+        }
+      ],
+      "style_vector": {
+        "aggressive": 0.66,
+        "stealthy": 1.8599999999999999,
+        "bruteforce": 0.0,
+        "elegant": 0.8999999999999999,
+        "experimental": 3.0
+      }
+    }
+  },
+  "hack_targets": {
+    "<@1440004841559560214>:1": {
+      "id": "<@1440004841559560214>:1",
+      "name": "<@1440004841559560214>",
+      "difficulty": 1,
+      "security_integrity": 45.45,
+      "anomaly_detection": 30,
+      "bandwidth_pressure": 30.6,
+      "forensic_risk": 33,
+      "temperament": "paranoid",
+      "style_bias": {
+        "aggressive": 0.028452953744058124,
+        "stealthy": 0.07961431033219246,
+        "bruteforce": 0.027245970084486593,
+        "elegant": 0.13024173304114442,
+        "experimental": -0.07430090887902521
+      },
+      "battles": 1,
+      "wins": 1,
+      "losses": 0
+    }
   }
 }
