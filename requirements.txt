@@ -7,5 +7,4 @@ aiosqlite
 regex
 python-dotenv
 requests
-libclang
-
+libclang==18.1.3
