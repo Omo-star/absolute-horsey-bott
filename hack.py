@@ -479,32 +479,42 @@ class HackerUniverse(commands.Cog):
         def pick(name, role):
             if name and name in analyses:
                 return analyses[name]
+
             candidates = [a for a in analyses.values() if a["archetype"] == role]
             if not candidates:
                 candidates = list(analyses.values())
             if not candidates:
                 return None
-            candidates.sort(key=lambda a: (
-                a["ast"]["efficiency"] +
-                a["ast"]["elegance"] +
-                a["ast"]["stealth"] +
-                a["ast"]["experimental"]
-            ), reverse=True)
+
+            candidates.sort(
+                key=lambda a: (
+                    a["ast"]["efficiency"]
+                    + a["ast"]["elegance"]
+                    + a["ast"]["stealth"]
+                    + a["ast"]["experimental"]
+                ),
+                reverse=True,
+            )
             return candidates[0]
-        usage = {}
-        for mod in [recon, access, payload, extraction]:
-            if mod:
-                fn = mod["filename"]
-                usage[fn] = usage.get(fn, 0) + 1
-        for mod in [recon, access, payload, extraction]:
-            if mod:
-                mod["reuse_count"] = usage.get(mod["filename"], 1)
-        return {
+
+        modules = {
             "recon": pick(recon_name, "recon"),
             "access": pick(access_name, "access"),
             "payload": pick(payload_name, "payload"),
             "extraction": pick(extract_name, "extraction"),
         }
+
+        usage = {}
+        for mod in modules.values():
+            if mod:
+                fn = mod["filename"]
+                usage[fn] = usage.get(fn, 0) + 1
+
+        for mod in modules.values():
+            if mod:
+                mod["reuse_count"] = usage.get(mod["filename"], 1)
+
+        return modules
 
     def get_target_space(self):
         if "hack_targets" not in state:
