@@ -764,7 +764,7 @@
       "trace": 4,
       "reputation": 0,
       "streak": 0,
-      "last_hack": "2025-12-11T15:15:20.639516",
+      "last_hack": "2025-12-11T22:38:19.828976",
       "specializations": [],
       "hack_history": [
         {
@@ -783,12 +783,14 @@
         }
       ],
       "style_vector": {
-        "aggressive": 1.1219999999999999,
-        "stealthy": 3.162,
-        "bruteforce": 0.0,
-        "elegant": 1.5299999999999998,
-        "experimental": 5.1
-      }
+        "aggressive": 3.7854,
+        "stealthy": 2.2433999999999994,
+        "bruteforce": 274.2,
+        "elegant": 4.071,
+        "experimental": 6.569999999999999
+      },
+      "chaos_affinity": 1.5038999999999998,
+      "chaos_unlocks": []
     }
   },
   "hack_targets": {
