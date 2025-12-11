@@ -98,8 +98,11 @@ class HackerUniverse(commands.Cog):
     def _init_clang(self):
         try:
             self.clang_index = Index.create()
-        except Exception:
+            print("[CLANG DEBUG] Index created successfully")
+        except Exception as e:
+            print("[CLANG DEBUG] FAILED TO INITIALIZE INDEX:", e)
             self.clang_index = None
+
 
     def get_profile(self, user_id):
         uid = str(user_id)
