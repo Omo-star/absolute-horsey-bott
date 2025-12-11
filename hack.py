@@ -260,7 +260,6 @@ class HackerUniverse(commands.Cog):
         if language.lower() == "cpp":
             args = [
                 "-std=c++17",
-                "-nostdinc++",
                 "-I/usr/include",
                 f"-I/usr/include/c++/{gcc_ver}",
                 f"-I/usr/include/x86_64-linux-gnu/c++/{gcc_ver}",
