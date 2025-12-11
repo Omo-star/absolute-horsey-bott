@@ -297,14 +297,14 @@
       "arena": {
         "rating": 1091,
         "tokens": 3,
-        "crowns": 5,
+        "crowns": 1,
         "wins": 4,
         "losses": 0,
         "streak": 4,
         "level": 2,
         "xp": 71,
-        "last_log": "Victory!\nRating +32\nXP +50\nCrowns +3\n+1 Fight Token",
-        "in_battle": true,
+        "last_log": "Purchased Lucky Emblem.",
+        "in_battle": false,
         "loadout": [
           "\ud83d\udc04 Cow (baby)",
           "\ud83e\udd86 Duck",
@@ -319,8 +319,10 @@
           "\ud83c\udf0c Cosmic Dragon",
           "\ud83d\udc09 Forest Dragonling"
         ],
-        "passives": {},
-        "last_token_reset": "2025-12-10",
+        "passives": {
+          "crit_boost": 0.03
+        },
+        "last_token_reset": "2025-12-11",
         "evolved": {},
         "last_mutator": "Chaotic Whirl",
         "last_ult": "\ud83d\udc09 Forest Dragonling used Inferno Collapse"
