@@ -7,11 +7,19 @@ import ast
 import random
 import math
 import datetime
-import asyncio
+import asynacio
 import os
 import re
 import glob
-print("DEBUG: LLVM versions found:", glob.glob("/usr/lib/llvm-*"))
+import subprocess
+
+def detect_gcc_version():
+    try:
+        out = subprocess.check_output(["g++", "-dumpversion"], text=True).strip()
+        major = out.split(".")[0]
+        return major
+    except:
+        return "11"
 
 clang_candidates = sorted(glob.glob("/usr/lib/llvm-*/lib/libclang.so"))
 
@@ -246,12 +254,14 @@ class HackerUniverse(commands.Cog):
             tmp.write(code.encode("utf-8"))
             tmp_path = tmp.name
         if language.lower() == "cpp":
+            gcc_ver = detect_gcc_version()
+
             args = [
                 "-std=c++17",
                 "-I/usr/include",
-                "-I/usr/include/c++/11",
-                "-I/usr/include/x86_64-linux-gnu/c++/11",
-                "-I/usr/include/c++/11/backward",
+                f"-I/usr/include/c++/{gcc_ver}",
+                f"-I/usr/include/x86_64-linux-gnu/c++/{gcc_ver}",
+                f"-I/usr/include/c++/{gcc_ver}/backward",
             ]
         else:
             args = [
