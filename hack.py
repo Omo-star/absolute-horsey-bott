@@ -226,6 +226,7 @@ class HackerUniverse(commands.Cog):
         }
 
     def analyze_cpp_libclang(self, filename, code, language):
+        print("[CLANG DEBUG] ENTERED C++ ANALYZER, language =", language)
         if not self.clang_index:
             try:
                 self.clang_index = Index.create()
@@ -244,7 +245,7 @@ class HackerUniverse(commands.Cog):
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             tmp.write(code.encode("utf-8"))
             tmp_path = tmp.name
-        if language == "cpp":
+        if language.lower() == "cpp":
             args = [
                 "-std=c++17",
                 "-I/usr/include",
@@ -421,7 +422,7 @@ class HackerUniverse(commands.Cog):
         for fn, code in pad.items():
             if not isinstance(code, str) or not code.strip():
                 continue
-            lang = self.script_language(fn, code)
+            lang = self.script_language(fn, code).lower()
             print(f"[DEBUG] Analyzing file: {fn} (lang={lang})")
 
             if lang in ("c", "cpp"):
