@@ -758,13 +758,13 @@
   },
   "hacker_profiles": {
     "1238242784679563265": {
-      "skill": 26,
-      "xp": 193,
-      "tier": 2,
-      "trace": 0,
-      "reputation": 35,
-      "streak": 4,
-      "last_hack": "2025-12-11T23:01:06.096643",
+      "skill": 25,
+      "xp": 14,
+      "tier": 3,
+      "trace": 6,
+      "reputation": 34,
+      "streak": 0,
+      "last_hack": "2025-12-11T23:19:08.569668",
       "specializations": [],
       "hack_history": [
         {
@@ -812,16 +812,24 @@
           "quality": "clean",
           "chaos": 0,
           "timestamp": "2025-12-11T23:01:06.096643"
+        },
+        {
+          "target": "<@1435987186502733878>",
+          "difficulty": 5,
+          "success": false,
+          "quality": "messy",
+          "chaos": 0,
+          "timestamp": "2025-12-11T23:19:08.569668"
         }
       ],
       "style_vector": {
-        "aggressive": 8.955512178,
-        "stealthy": 0.46024123799999983,
-        "bruteforce": 119.51921399999995,
-        "elegant": 9.00351297,
-        "experimental": 9.423519899999999
+        "aggressive": 9.268858524599999,
+        "stealthy": 0.3521688665999999,
+        "bruteforce": 86.66344979999995,
+        "elegant": 9.302459078999998,
+        "experimental": 9.596463929999999
       },
-      "chaos_affinity": 32.5234,
+      "chaos_affinity": 34.027300000000004,
       "chaos_unlocks": []
     }
   },
@@ -865,6 +873,26 @@
       "battles": 2,
       "wins": 0,
       "losses": 2
+    },
+    "<@1435987186502733878>:5": {
+      "id": "<@1435987186502733878>:5",
+      "name": "<@1435987186502733878>",
+      "difficulty": 5,
+      "security_integrity": 214.5,
+      "anomaly_detection": 121.05000000000001,
+      "bandwidth_pressure": 86.1,
+      "forensic_risk": 136.5,
+      "temperament": "paranoid",
+      "style_bias": {
+        "aggressive": 0.2045726554185709,
+        "stealthy": 0.2983057164605207,
+        "bruteforce": 0.07221567356629516,
+        "elegant": 0.301644019225305,
+        "experimental": 0.29522015042233746
+      },
+      "battles": 1,
+      "wins": 1,
+      "losses": 0
     }
   }
 }
