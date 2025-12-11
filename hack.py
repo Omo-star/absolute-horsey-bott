@@ -300,6 +300,7 @@ class HackerUniverse(commands.Cog):
             print("[CLANG DEBUG] Starting AST walk...")
 
         except Exception:
+            print("[CLANG DEBUG] EXCEPTION BEFORE PARSE:", e)
             return None
         loops = 0
         branches = 0
