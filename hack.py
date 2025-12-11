@@ -245,68 +245,70 @@ class HackerUniverse(commands.Cog):
                 return None
         import tempfile
         lower = filename.lower()
-        if lower.endswith(".cpp") or lower.endswith(".cxx") or lower.endswith(".cc"):
+        if language.lower() == "cpp":
             suffix = ".cpp"
-        elif lower.endswith(".hpp"):
-            suffix = ".hpp"
         elif lower.endswith(".h"):
-            suffix = ".h"
+            suffix = ".hpp"
         else:
             suffix = ".c"
         with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=suffix) as tmp:
             tmp.write(code)
             tmp.flush()
             tmp_path = tmp.name
-            print("[CLANG DEBUG] Temp file created:", tmp_path)
-
+            print("[CLANG DEBUG] Temp file:", tmp_path)
+        gcc_ver = detect_gcc_version()
         if language.lower() == "cpp":
             args = [
                 "-std=c++17",
+                "-nostdinc++",
                 "-I/usr/include",
-                "-I/usr/include/c++/13",
-                "-I/usr/include/x86_64-linux-gnu/c++/13",
-                "-I/usr/lib/gcc/x86_64-linux-gnu/13/include",
-                "-I/usr/include/c++/13/backward",
+                f"-I/usr/include/c++/{gcc_ver}",
+                f"-I/usr/include/x86_64-linux-gnu/c++/{gcc_ver}",
+                f"-I/usr/include/c++/{gcc_ver}/backward",
+                f"-I/usr/lib/gcc/x86_64-linux-gnu/{gcc_ver}/include",
             ]
         else:
             args = [
                 "-std=c11",
                 "-I/usr/include",
             ]
+        print("[CLANG DEBUG] -------------------------------")
+        print(f"[CLANG DEBUG] Parsing file: {filename}")
+        print(f"[CLANG DEBUG] Using libclang: {Config.library_file}")
+        print("[CLANG DEBUG] Args:")
+        for a in args:
+            print("   ", a)
         try:
-            print("\n[CLANG DEBUG] -------------------------------")
-            print(f"[CLANG DEBUG] Parsing file: {filename}")
-            print(f"[CLANG DEBUG] Temp file: {tmp_path}")
-            print(f"[CLANG DEBUG] Using libclang: {Config.library_file}")
-            print("[CLANG DEBUG] Args:")
-            for a in args:
-                print("   ", a)
-
-            try:
-                tu = self.clang_index.parse(tmp_path, args=args)
-                print(f"[CLANG DEBUG] TU object:", tu)
-            except Exception as e:
-                print("[CLANG DEBUG] Exception during parse:", e)
-                return None
-            try:
-                if hasattr(tu, 'diagnostics'):
-                    for d in tu.diagnostics:
-                        print("[CLANG DIAG]", d)
-                else:
-                    print("[CLANG DEBUG] No diagnostics attribute (unexpected)")
-            except Exception as e:
-                print("[CLANG DEBUG] Failed reading diagnostics:", e)
-
-            if not tu or not tu.cursor:
-                print("[CLANG DEBUG] ERROR: Translation unit is NULL")
-                return None
-
-            print("[CLANG DEBUG] Root cursor kind:", tu.cursor.kind)
-            print("[CLANG DEBUG] Starting AST walk...")
-
-        except Exception:
-            print("[CLANG DEBUG] EXCEPTION BEFORE PARSE:", e)
-            return None
+            tu = self.clang_index.parse(tmp_path, args=args)
+        except Exception as e:
+            print("[CLANG DEBUG] Exception during parse:", e)
+            tu = None
+        if tu and hasattr(tu, "diagnostics"):
+            for d in tu.diagnostics:
+                print("[CLANG DIAG]", d)
+        if not tu or not getattr(tu, "cursor", None):
+            print("[CLANG DEBUG] NULL TU, returning minimal AST")
+            lines = code.splitlines()
+            return {
+                "filename": filename,
+                "line_count": len(lines),
+                "non_empty": len([l for l in lines if l.strip()]),
+                "token_count": len(re.findall(r\"\\S+\", code)),
+                "unique_tokens": len(set(re.findall(r\"\\S+\", code))),
+                "fn_defs": 0,
+                "class_defs": 0,
+                "loops": 0,
+                "branches": 0,
+                "comprehensions": 0,
+                "calls": 0,
+                "recursion": False,
+                "max_depth": 1,
+                "efficiency": 3,
+                "elegance": 2,
+                "aggression": 1,
+                "stealth": 1,
+                "experimental": 1,
+            }
         loops = 0
         branches = 0
         fn_defs = 0
@@ -314,7 +316,6 @@ class HackerUniverse(commands.Cog):
         calls = 0
         max_depth = 0
         template_nodes = 0
-
         def visit(node, depth=0):
             nonlocal loops, branches, fn_defs, class_defs, calls, max_depth, template_nodes
             max_depth = max(max_depth, depth)
@@ -333,12 +334,10 @@ class HackerUniverse(commands.Cog):
                 template_nodes += 1
             for child in node.get_children():
                 visit(child, depth + 1)
-
         visit(tu.cursor, 0)
         lines = code.splitlines()
         line_count = len(lines)
-        non_empty = [l for l in lines if l.strip()]
-        non_empty_count = len(non_empty)
+        non_empty = len([l for l in lines if l.strip()])
         tokens = re.findall(r"\S+", code)
         token_count = len(tokens)
         unique_tokens = len(set(tokens))
@@ -357,7 +356,7 @@ class HackerUniverse(commands.Cog):
         return {
             "filename": filename,
             "line_count": line_count,
-            "non_empty": non_empty_count,
+            "non_empty": non_empty,
             "token_count": token_count,
             "unique_tokens": unique_tokens,
             "fn_defs": fn_defs,
@@ -374,6 +373,7 @@ class HackerUniverse(commands.Cog):
             "stealth": stealth,
             "experimental": experimental,
         }
+
 
     def infer_archetype(self, filename, stats, code):
         name = filename.lower()
