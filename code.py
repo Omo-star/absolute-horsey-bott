@@ -9,11 +9,10 @@ import math
 import random
 import statistics
 import itertools
+import tempfile
+import os
 
 def sandbox_exec(code: str):
-    # runs python code, which may or may not be risky. who cares anyway tbh
-    
-    # allowed commands
     allowed_builtins = {
         "print": print,
         "range": range,
@@ -52,6 +51,85 @@ def sandbox_exec(code: str):
         output.append(tb)
 
     return "\n".join(output)
+
+async def run_cpp(code: str) -> str:
+    tmpdir = tempfile.mkdtemp(prefix="codepad_cpp_")
+    src_path = os.path.join(tmpdir, "main.cpp")
+    bin_path = os.path.join(tmpdir, "main.out")
+
+    try:
+        with open(src_path, "w", encoding="utf-8") as f:
+            f.write(code)
+
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                "g++",
+                src_path,
+                "-O2",
+                "-std=c++17",
+                "-o",
+                bin_path,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except FileNotFoundError:
+            return "g++ compiler not found on this system."
+
+        try:
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10)
+        except asyncio.TimeoutError:
+            proc.kill()
+            return "Compilation timed out."
+
+        if proc.returncode != 0:
+            err = stderr.decode(errors="ignore")
+            if not err.strip():
+                err = "Unknown compilation error."
+            return "Compilation failed:\n" + err
+
+        try:
+            run_proc = await asyncio.create_subprocess_exec(
+                bin_path,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except FileNotFoundError:
+            return "Compiled binary missing after build."
+
+        try:
+            rstdout, rstderr = await asyncio.wait_for(run_proc.communicate(), timeout=3)
+        except asyncio.TimeoutError:
+            run_proc.kill()
+            return "Program execution timed out."
+
+        out = ""
+        if rstdout:
+            out += rstdout.decode(errors="ignore")
+        if rstderr:
+            if out:
+                out += "\n"
+            out += "stderr:\n" + rstderr.decode(errors="ignore")
+
+        if not out.strip():
+            out = "(no output)"
+
+        return out
+    finally:
+        try:
+            if os.path.exists(src_path):
+                os.remove(src_path)
+        except Exception:
+            pass
+        try:
+            if os.path.exists(bin_path):
+                os.remove(bin_path)
+        except Exception:
+            pass
+        try:
+            if os.path.isdir(tmpdir):
+                os.rmdir(tmpdir)
+        except Exception:
+            pass
 
 class CodeEditModal(discord.ui.Modal, title="Edit Code File"):
     filename: str
@@ -109,7 +187,6 @@ class Codepad(commands.Cog):
         modal = CodeEditModal(filename, pad[filename])
         await interaction.response.send_modal(modal)
 
-
     @app_commands.command(name="code_view", description="View code in a file.")
     async def code_view(self, interaction: discord.Interaction, filename: str):
         pad = self.get_user_pad(interaction.user.id)
@@ -149,7 +226,7 @@ class Codepad(commands.Cog):
 
         await interaction.response.send_message(f"🗑️ Deleted **{filename}**.")
 
-    @app_commands.command(name="code_run", description="Run a code file safely.")
+    @app_commands.command(name="code_run", description="Run a code file (Python or C++).")
     async def code_run(self, interaction: discord.Interaction, filename: str):
         pad = self.get_user_pad(interaction.user.id)
 
@@ -163,7 +240,12 @@ class Codepad(commands.Cog):
 
         await interaction.response.defer()
 
-        output = sandbox_exec(code)
+        ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
+
+        if ext in ("cpp", "cc", "cxx"):
+            output = await run_cpp(code)
+        else:
+            output = sandbox_exec(code)
 
         if len(output) > 1900:
             output = output[:1900] + "\n...<truncated>"
@@ -175,7 +257,6 @@ class Codepad(commands.Cog):
         )
 
         await interaction.followup.send(embed=embed)
-
 
 async def setup(bot):
     await bot.add_cog(Codepad(bot))
