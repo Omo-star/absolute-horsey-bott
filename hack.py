@@ -10,15 +10,14 @@ import datetime
 import asyncio
 import os
 import re
+import glob
 
-for path in [
-    "/usr/lib/llvm-18/lib/libclang.so",
-    "/usr/lib/llvm-18/lib/libclang-18.so",
-    "/usr/lib/llvm-18/lib/libclang.so.1"
-]:
-    if os.path.exists(path):
-        Config.set_library_file(path)
-        break
+clang_paths = glob.glob("/usr/lib/llvm-*/lib/libclang.so")
+if clang_paths:
+    Config.set_library_file(clang_paths[0])
+    print("Loaded clang from:", clang_paths[0])
+else:
+    print("WARNING: No libclang found")
 
 try:
     from openai import OpenAI
