@@ -110,12 +110,36 @@ class HackerUniverse(commands.Cog):
 
     def get_user_pad(self, user_id):
         uid = str(user_id)
+
         if "codepad" not in state:
             state["codepad"] = {}
+
         if uid not in state["codepad"]:
             state["codepad"][uid] = {}
             save_state()
-        return state["codepad"][uid]
+
+        pad = state["codepad"][uid]
+
+        normalized = {}
+        changed = False
+
+        for fn, val in pad.items():
+            if isinstance(val, str):
+                normalized[fn] = val
+                continue
+
+            if isinstance(val, dict) and "content" in val and isinstance(val["content"], str):
+                normalized[fn] = val["content"]
+                changed = True
+                continue
+
+            changed = True
+
+        if changed:
+            state["codepad"][uid] = normalized
+            save_state()
+
+        return normalized
 
     def analyze_script_ast(self, filename, code):
         try:
