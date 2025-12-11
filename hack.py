@@ -759,8 +759,10 @@ class HackerUniverse(commands.Cog):
                     base_power *= 1.12
                 script_factor *= 1.05
             elif lang == "cpp":
-                base_power *= 1.18
-                script_factor *= 1.25
+                if phase != "recon":
+                    base_power *= 1.18
+                    script_factor *= 1.25
+
         if chaos_level >= 2 and module:
             chaos_bias = module.get("chaos", 0.0) * 0.03
             base_power *= 1.0 + chaos_bias * 0.03
@@ -795,7 +797,6 @@ class HackerUniverse(commands.Cog):
         chaos_scalar = 1.0 + chaos_level * 0.08
         reuse = module.get("reuse_count", 1) if module else 1
         reuse_penalty = 0.55 ** (reuse - 1)
-
         power = (
             (base_power * profile_mod["global"] * bonus * chaos_scalar * reuse_penalty)
             + script_factor * 1.1
@@ -1263,9 +1264,13 @@ class HackerUniverse(commands.Cog):
         payload_res = self.compute_phase_score("payload", modules.get("payload"), profile_mod, diff_profile, profile, target_profile)
         extract_res = self.compute_phase_score("extraction", modules.get("extraction"), profile_mod, diff_profile, profile, target_profile)
         if not recon_res["success"]:
-            access_res["power"] *= 0.6
-            payload_res["power"] *= 0.7
-            extract_res["power"] *= 0.75
+            access_res["power"] *= 0.45
+            payload_res["power"] *= 0.5
+            extract_res["power"] *= 0.55
+            access_res["power"] -= access_res["threshold"] * 0.15
+            payload_res["power"] -= payload_res["threshold"] * 0.15
+            extract_res["power"] -= extract_res["threshold"] * 0.15
+
 
         if not access_res["success"]:
             payload_res["power"] *= 0.75
@@ -1275,8 +1280,9 @@ class HackerUniverse(commands.Cog):
             r["margin"] = r["power"] - r["threshold"]
             r["success"] = r["margin"] >= 0.0
             if r["success"]:
-                if r["margin"] > r["threshold"] * 0.35:
+                if recon_res["success"] and r["margin"] > r["threshold"] * 0.35:
                     r["quality"] = "flawless"
+
                 elif r["margin"] < r["threshold"] * 0.08:
                     r["quality"] = "barely"
                 else:
