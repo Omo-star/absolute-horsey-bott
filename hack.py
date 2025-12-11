@@ -450,7 +450,7 @@ class HackerUniverse(commands.Cog):
             else:
                 print(f"[DEBUG] SUCCESS → AST keys = {list(ast_stats.keys())}")
 
-            if not ast_stats:
+            if ast_stats is None:
                 continue
             archetype = self.infer_archetype(fn, ast_stats, code)
             rarity = self.rarity_from_stats(ast_stats)
