@@ -250,9 +250,12 @@ class HackerUniverse(commands.Cog):
             suffix = ".h"
         else:
             suffix = ".c"
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            tmp.write(code.encode("utf-8"))
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=suffix) as tmp:
+            tmp.write(code)
+            tmp.flush()
             tmp_path = tmp.name
+            print("[CLANG DEBUG] Temp file created:", tmp_path)
+
         if language.lower() == "cpp":
             gcc_ver = detect_gcc_version()
 
