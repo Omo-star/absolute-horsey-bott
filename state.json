@@ -758,13 +758,13 @@
   },
   "hacker_profiles": {
     "1238242784679563265": {
-      "skill": 1,
-      "xp": 6,
+      "skill": 6,
+      "xp": 34,
       "tier": 1,
-      "trace": 4,
-      "reputation": 0,
-      "streak": 0,
-      "last_hack": "2025-12-11T22:38:19.828976",
+      "trace": 3,
+      "reputation": 6,
+      "streak": 1,
+      "last_hack": "2025-12-11T22:40:10.523658",
       "specializations": [],
       "hack_history": [
         {
@@ -780,16 +780,24 @@
           "success": false,
           "quality": "catastrophic",
           "timestamp": "2025-12-11T15:15:20.639516"
+        },
+        {
+          "target": "<@1440004841559560214>",
+          "difficulty": 1,
+          "success": true,
+          "quality": "perfect_chain",
+          "chaos": 0,
+          "timestamp": "2025-12-11T22:40:10.523658"
         }
       ],
       "style_vector": {
-        "aggressive": 3.7854,
-        "stealthy": 2.2433999999999994,
-        "bruteforce": 274.2,
-        "elegant": 4.071,
-        "experimental": 6.569999999999999
+        "aggressive": 5.64978,
+        "stealthy": 1.6003799999999995,
+        "bruteforce": 466.14,
+        "elegant": 5.8496999999999995,
+        "experimental": 7.598999999999999
       },
-      "chaos_affinity": 1.5038999999999998,
+      "chaos_affinity": 3.0077999999999996,
       "chaos_unlocks": []
     }
   },
@@ -798,10 +806,10 @@
       "id": "<@1440004841559560214>:1",
       "name": "<@1440004841559560214>",
       "difficulty": 1,
-      "security_integrity": 45.904500000000006,
-      "anomaly_detection": 30,
+      "security_integrity": 47.28163500000001,
+      "anomaly_detection": 31.200000000000003,
       "bandwidth_pressure": 31.212000000000003,
-      "forensic_risk": 33,
+      "forensic_risk": 33.660000000000004,
       "temperament": "paranoid",
       "style_bias": {
         "aggressive": 0.028452953744058124,
@@ -810,9 +818,9 @@
         "elegant": 0.13024173304114442,
         "experimental": -0.07430090887902521
       },
-      "battles": 2,
+      "battles": 3,
       "wins": 2,
-      "losses": 0
+      "losses": 1
     }
   }
 }
