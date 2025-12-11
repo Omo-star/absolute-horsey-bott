@@ -247,7 +247,36 @@ class HackerUniverse(commands.Cog):
                 "-I/usr/include",
             ]
         try:
-            tu = self.clang_index.parse(tmp_path, args=args)
+            print("\n[CLANG DEBUG] -------------------------------")
+            print(f"[CLANG DEBUG] Parsing file: {filename}")
+            print(f"[CLANG DEBUG] Temp file: {tmp_path}")
+            print(f"[CLANG DEBUG] Using libclang: {Config.library_file}")
+            print("[CLANG DEBUG] Args:")
+            for a in args:
+                print("   ", a)
+
+            try:
+                tu = self.clang_index.parse(tmp_path, args=args)
+                print(f"[CLANG DEBUG] TU object:", tu)
+            except Exception as e:
+                print("[CLANG DEBUG] Exception during parse:", e)
+                return None
+            try:
+                if hasattr(tu, 'diagnostics'):
+                    for d in tu.diagnostics:
+                        print("[CLANG DIAG]", d)
+                else:
+                    print("[CLANG DEBUG] No diagnostics attribute (unexpected)")
+            except Exception as e:
+                print("[CLANG DEBUG] Failed reading diagnostics:", e)
+
+            if not tu or not tu.cursor:
+                print("[CLANG DEBUG] ERROR: Translation unit is NULL")
+                return None
+
+            print("[CLANG DEBUG] Root cursor kind:", tu.cursor.kind)
+            print("[CLANG DEBUG] Starting AST walk...")
+
         except Exception:
             return None
         loops = 0
@@ -382,10 +411,18 @@ class HackerUniverse(commands.Cog):
             if not isinstance(code, str) or not code.strip():
                 continue
             lang = self.script_language(fn, code)
+            print(f"[DEBUG] Analyzing file: {fn} (lang={lang})")
+
             if lang in ("c", "cpp"):
                 ast_stats = self.analyze_cpp_libclang(fn, code, lang)
             else:
                 ast_stats = self.analyze_script_ast(fn, code)
+
+            if ast_stats is None:
+                print(f"[DEBUG] FAILED → AST returned None for {fn}")
+            else:
+                print(f"[DEBUG] SUCCESS → AST keys = {list(ast_stats.keys())}")
+
             if not ast_stats:
                 continue
             archetype = self.infer_archetype(fn, ast_stats, code)
@@ -1098,8 +1135,13 @@ class HackerUniverse(commands.Cog):
                     return
         pad = self.get_user_pad(user.id)
         analyses = self.analyze_all_scripts(pad)
+        print("[DEBUG] ANALYSES RESULT:", analyses)
         if not analyses:
-            await interaction.response.send_message("❌ No usable scripts found in your codepad. Create scripts with `/code_new` and `/code_edit` first.", ephemeral=True)
+            print("[DEBUG] ANALYSES IS EMPTY → rejecting hack request")
+            await interaction.response.send_message(
+                "❌ No usable scripts found in your codepad. Create scripts with `/code_new` and `/code_edit` first.",
+                ephemeral=True,
+            )
             return
         profile = self.update_style_vector(profile, analyses, chaos_level)
         target_profile = self.get_or_create_target(target, difficulty)
