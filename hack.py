@@ -2,7 +2,7 @@ from economy_shared import state, save_state
 import discord
 from discord.ext import commands
 from discord import app_commands
-from libclang import Index, CursorKind, Config
+from clang.cindex import Index, CursorKind, Config
 import ast
 import random
 import math
