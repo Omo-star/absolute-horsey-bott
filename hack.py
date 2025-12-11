@@ -2,7 +2,7 @@ from economy_shared import state, save_state
 import discord
 from discord.ext import commands
 from discord import app_commands
-from clang.cindex import Index, CursorKind
+from clang.cindex import Index, CursorKind, Config
 import ast
 import random
 import math
@@ -10,6 +10,15 @@ import datetime
 import asyncio
 import os
 import re
+
+for path in [
+    "/usr/lib/llvm-18/lib/libclang.so",
+    "/usr/lib/llvm-18/lib/libclang-18.so",
+    "/usr/lib/llvm-18/lib/libclang.so.1"
+]:
+    if os.path.exists(path):
+        Config.set_library_file(path)
+        break
 
 try:
     from openai import OpenAI
@@ -93,6 +102,8 @@ class HackerUniverse(commands.Cog):
                     "elegant": 0.0,
                     "experimental": 0.0,
                 },
+                "chaos_affinity": 0.0,
+                "chaos_unlocks": [],
             }
             save_state()
         return state["hacker_profiles"][uid]
@@ -187,7 +198,6 @@ class HackerUniverse(commands.Cog):
             except Exception:
                 return None
         import tempfile
-        suffix = ""
         lower = filename.lower()
         if lower.endswith(".cpp") or lower.endswith(".cxx") or lower.endswith(".cc"):
             suffix = ".cpp"
@@ -200,7 +210,6 @@ class HackerUniverse(commands.Cog):
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             tmp.write(code.encode("utf-8"))
             tmp_path = tmp.name
-        args = []
         if language == "cpp":
             args = ["-std=c++17"]
         else:
@@ -254,7 +263,7 @@ class HackerUniverse(commands.Cog):
         efficiency = max(0.1, min(10.0, 4.0 + density * 0.25 - raw_complex * 0.03))
         elegance = max(0.1, min(10.0, 2.8 + class_defs * 0.6 + template_intensity * 4.0 - loops * 0.2))
         aggression = max(0.1, min(10.0, 2.5 + loops * 0.6 + calls * 0.2 + pointer_intensity * 3.0))
-        stealth = max(0.1, min(10.0, 4.5 + max_depth * -0.05 - branching_factor * 0.05 + template_intensity * 2.0))
+        stealth = max(0.1, min(10.0, 4.5 - max_depth * 0.05 - branching_factor * 0.05 + template_intensity * 2.0))
         experimental = max(0.1, min(10.0, 1.5 + unique_tokens / max(1, token_count) * 10.0 + template_intensity * 5.0))
         return {
             "filename": filename,
@@ -279,24 +288,24 @@ class HackerUniverse(commands.Cog):
 
     def infer_archetype(self, filename, stats, code):
         name = filename.lower()
-        if any(k in name for k in ["recon", "scan", "probe", "map", "survey"]):
+        if any(k in name for k in ["recon", "scan", "probe", "map", "survey", "spider"]):
             return "recon"
-        if any(k in name for k in ["auth", "login", "access", "breakin", "door"]):
+        if any(k in name for k in ["auth", "login", "access", "breakin", "door", "key"]):
             return "access"
-        if any(k in name for k in ["payload", "inject", "exploit", "shell", "bomb"]):
+        if any(k in name for k in ["payload", "inject", "exploit", "shell", "bomb", "virus"]):
             return "payload"
-        if any(k in name for k in ["exfil", "extract", "leak", "proxy", "tunnel", "drain"]):
+        if any(k in name for k in ["exfil", "extract", "leak", "proxy", "tunnel", "drain", "smuggle"]):
             return "extraction"
-        if any(k in name for k in ["core", "util", "common", "shared", "base"]):
+        if any(k in name for k in ["core", "util", "common", "shared", "base", "engine"]):
             return "support"
         text = code.lower()
-        if "socket" in text or "request" in text or "http" in text:
+        if "socket" in text or "request" in text or "http" in text or "curl" in text:
             return "recon"
-        if "encrypt" in text or "decrypt" in text or "hash" in text or "sha" in text or "aes" in text:
+        if "encrypt" in text or "decrypt" in text or "hash" in text or "sha" in text or "aes" in text or "cert" in text:
             return "access"
-        if "compress" in text or "encode" in text or "payload" in text or "packet" in text:
+        if "compress" in text or "encode" in text or "payload" in text or "packet" in text or "opcode" in text:
             return "payload"
-        if "proxy" in text or "route" in text or "vpn" in text or "exfil" in text or "upload" in text:
+        if "proxy" in text or "route" in text or "vpn" in text or "exfil" in text or "upload" in text or "relay" in text:
             return "extraction"
         return "generic"
 
@@ -324,6 +333,17 @@ class HackerUniverse(commands.Cog):
             return "rare"
         return "common"
 
+    def chaos_weight(self, stats, lang):
+        base = stats["experimental"] + stats["aggression"]
+        if lang == "cpp":
+            base *= 1.35
+        elif lang == "c":
+            base *= 1.2
+        elif lang == "python":
+            base *= 1.05
+        scale = 0.8 + (stats["max_depth"] + stats["loops"]) * 0.03
+        return base * scale
+
     def analyze_all_scripts(self, pad):
         analyses = {}
         for fn, code in pad.items():
@@ -338,12 +358,14 @@ class HackerUniverse(commands.Cog):
                 continue
             archetype = self.infer_archetype(fn, ast_stats, code)
             rarity = self.rarity_from_stats(ast_stats)
+            chaos = self.chaos_weight(ast_stats, lang)
             analyses[fn] = {
                 "filename": fn,
                 "language": lang,
                 "archetype": archetype,
                 "rarity": rarity,
                 "ast": ast_stats,
+                "chaos": chaos,
             }
         return analyses
 
@@ -356,17 +378,18 @@ class HackerUniverse(commands.Cog):
                 candidates = list(analyses.values())
             if not candidates:
                 return None
-            candidates.sort(key=lambda a: a["ast"]["efficiency"] + a["ast"]["elegance"] + a["ast"]["stealth"] + a["ast"]["experimental"], reverse=True)
+            candidates.sort(key=lambda a: (
+                a["ast"]["efficiency"] +
+                a["ast"]["elegance"] +
+                a["ast"]["stealth"] +
+                a["ast"]["experimental"]
+            ), reverse=True)
             return candidates[0]
-        recon = pick(recon_name, "recon")
-        access = pick(access_name, "access")
-        payload = pick(payload_name, "payload")
-        extraction = pick(extract_file, "extraction") if False else pick(extract_name, "extraction")
         return {
-            "recon": recon,
-            "access": access,
-            "payload": payload,
-            "extraction": extraction,
+            "recon": pick(recon_name, "recon"),
+            "access": pick(access_name, "access"),
+            "payload": pick(payload_name, "payload"),
+            "extraction": pick(extract_name, "extraction"),
         }
 
     def get_target_space(self):
@@ -384,7 +407,7 @@ class HackerUniverse(commands.Cog):
         anomaly = 15 + difficulty * 15
         bandwidth = 20 + difficulty * 10
         forensics = 15 + difficulty * 18
-        temperament = random.choice(["paranoid", "adaptive", "lazy", "spiky", "bursty", "evasive"])
+        temperament = random.choice(["paranoid", "adaptive", "lazy", "spiky", "bursty", "evasive", "erratic"])
         style_bias = {
             "aggressive": random.uniform(-0.2, 0.4),
             "stealthy": random.uniform(0.0, 0.5),
@@ -410,15 +433,20 @@ class HackerUniverse(commands.Cog):
         save_state()
         return profile
 
-    async def generate_target_lore(self, target_profile):
+    async def generate_target_lore(self, target_profile, chaos_level):
         name = target_profile["name"]
         difficulty = target_profile["difficulty"]
         temperament = target_profile["temperament"]
-        text = f"The {name} node is a difficulty {difficulty} defense surface behaving like a {temperament} network intelligence."
+        chaos_tag = ""
+        if chaos_level >= 3:
+            chaos_tag = " The topology jitters between states, eating malformed packets."
+        elif chaos_level == 2:
+            chaos_tag = " Its logs hum with low-level probabilistic anomalies."
+        text = f"The {name} node is a difficulty {difficulty} defense surface behaving like a {temperament} network intelligence." + chaos_tag
         if not self.openrouter_client and not self.groq_client and not self.gemini_models:
             return text
-        system = "You generate extremely short flavor blurbs about fictional network targets, 1-2 sentences, no markdown."
-        user = f"Describe the target system named {name} with temperament {temperament} in 1-2 vivid but concise sentences."
+        system = "You generate extremely short flavor blurbs about fictional network targets, 1-3 sentences, no markdown."
+        user = f"Describe the target system named {name} with temperament {temperament} at chaos level {chaos_level} in 1-3 vivid but concise sentences."
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
@@ -468,7 +496,7 @@ class HackerUniverse(commands.Cog):
             pass
         return text
 
-    def update_style_vector(self, profile, analyses):
+    def update_style_vector(self, profile, analyses, chaos_level):
         v = profile.get("style_vector", {})
         if not v:
             v = {
@@ -486,6 +514,7 @@ class HackerUniverse(commands.Cog):
             "experimental": 0.0,
         }
         count = 0
+        cpp_chaos = 0.0
         for mod in analyses.values():
             a = mod["ast"]
             total["aggressive"] += a["aggression"]
@@ -493,6 +522,8 @@ class HackerUniverse(commands.Cog):
             total["bruteforce"] += a["loops"] + a["branches"]
             total["elegant"] += a["elegance"]
             total["experimental"] += a["experimental"]
+            if mod.get("language") in ("c", "cpp"):
+                cpp_chaos += mod.get("chaos", 0.0)
             count += 1
         if count == 0:
             profile["style_vector"] = v
@@ -500,10 +531,21 @@ class HackerUniverse(commands.Cog):
         for k in total:
             avg = total[k] / count
             v[k] = v.get(k, 0.0) * 0.7 + avg * 0.3
+        affinity = profile.get("chaos_affinity", 0.0)
+        affinity += cpp_chaos * 0.01
+        affinity += chaos_level * 0.5
+        affinity = max(0.0, min(100.0, affinity))
         profile["style_vector"] = v
+        profile["chaos_affinity"] = affinity
+        unlocks = set(profile.get("chaos_unlocks", []))
+        if affinity >= 60 and "storm" not in unlocks:
+            unlocks.add("storm")
+        if affinity >= 80 and "singularity" not in unlocks:
+            unlocks.add("singularity")
+        profile["chaos_unlocks"] = list(unlocks)
         return profile
 
-    def difficulty_profile(self, target_profile, style_vector):
+    def difficulty_profile(self, target_profile, style_vector, chaos_level):
         s = target_profile
         base_security = s["security_integrity"]
         anomaly = s["anomaly_detection"]
@@ -520,6 +562,11 @@ class HackerUniverse(commands.Cog):
         anomaly *= 1.0 + (bias["experimental"] * scale * ex - bias["stealthy"] * scale * st)
         bandwidth *= 1.0 + (bias["bruteforce"] * scale * br)
         forensic *= 1.0 + (bias["stealthy"] * scale * st - bias["aggressive"] * scale * ag)
+        if chaos_level >= 3 and s["temperament"] in ("erratic", "bursty"):
+            anomaly *= random.uniform(0.8, 1.25)
+            base_security *= random.uniform(0.9, 1.15)
+        elif chaos_level == 2:
+            anomaly *= random.uniform(0.95, 1.15)
         return {
             "security_integrity": base_security,
             "anomaly_detection": anomaly,
@@ -527,7 +574,7 @@ class HackerUniverse(commands.Cog):
             "forensic_risk": forensic,
         }
 
-    def compute_profile_modifiers(self, profile):
+    def compute_profile_modifiers(self, profile, chaos_level):
         skill = profile.get("skill", 1)
         tier = profile.get("tier", 1)
         trace = profile.get("trace", 0)
@@ -536,16 +583,21 @@ class HackerUniverse(commands.Cog):
         base = 1.0 + min(1.5, (skill - 1) * 0.03 + (tier - 1) * 0.08 + rep * 0.02)
         streak_bonus = 1.0 + min(0.5, streak * 0.05)
         trace_penalty = 1.0 + min(0.9, trace * 0.05)
+        chaos_affinity = profile.get("chaos_affinity", 0.0)
+        chaos_scalar = 1.0 + chaos_affinity * 0.01 * chaos_level * 0.08
+        global_mod = base * streak_bonus * chaos_scalar
         return {
-            "global": base * streak_bonus,
+            "global": global_mod,
             "trace_penalty": trace_penalty,
-            "recon": 1.0 + min(0.6, (skill + tier) * 0.02),
-            "access": 1.0 + min(0.7, (skill + tier) * 0.025),
-            "payload": 1.0 + min(0.7, (skill + tier) * 0.025),
-            "extraction": 1.0 + min(0.6, (skill + tier) * 0.02),
+            "recon": 1.0 + min(0.6, (skill + tier) * 0.02 + chaos_level * 0.03),
+            "access": 1.0 + min(0.7, (skill + tier) * 0.025 + chaos_level * 0.03),
+            "payload": 1.0 + min(0.7, (skill + tier) * 0.025 + chaos_level * 0.04),
+            "extraction": 1.0 + min(0.6, (skill + tier) * 0.02 + chaos_level * 0.02),
+            "chaos_level": chaos_level,
         }
 
     def compute_phase_score(self, phase, module, profile_mod, diff_profile, profile, target_profile):
+        chaos_level = profile_mod.get("chaos_level", 0)
         if not module:
             base_power = 8.0
             script_factor = 2.0
@@ -565,16 +617,22 @@ class HackerUniverse(commands.Cog):
             else:
                 base_power = a["stealth"] * 1.6 + a["efficiency"] + a["experimental"] * 0.6
                 script_factor = a["max_depth"] * 0.4 + a["fn_defs"] * 0.3
-        if lang == "python":
-            base_power *= 1.05
-            if phase in ("recon", "extraction"):
-                script_factor *= 1.1
-        elif lang == "c":
-            base_power *= 1.1 if phase in ("access", "payload") else base_power * 1.0
-            script_factor *= 1.05
-        elif lang == "cpp":
-            base_power *= 1.08
-            script_factor *= 1.08
+        if module:
+            if lang == "python":
+                base_power *= 1.05
+                if phase in ("recon", "extraction"):
+                    script_factor *= 1.1
+            elif lang == "c":
+                if phase in ("access", "payload"):
+                    base_power *= 1.12
+                script_factor *= 1.05
+            elif lang == "cpp":
+                base_power *= 1.18
+                script_factor *= 1.25
+        if chaos_level >= 2 and module:
+            chaos_bias = module.get("chaos", 0.0) * 0.03
+            base_power *= 1.0 + chaos_bias * 0.03
+            script_factor *= 1.0 + chaos_bias * 0.02
         temperament = target_profile["temperament"]
         if temperament == "paranoid" and phase in ("recon", "access"):
             base_power *= 0.9
@@ -584,6 +642,8 @@ class HackerUniverse(commands.Cog):
             base_power *= 1.05
         if temperament == "evasive" and phase == "extraction":
             base_power *= 0.9
+        if temperament == "erratic" and chaos_level >= 2:
+            base_power *= random.uniform(0.75, 1.25)
         if phase == "recon":
             th = diff_profile["security_integrity"] * 0.75 + diff_profile["anomaly_detection"] * 0.5
             bonus = profile_mod["recon"]
@@ -597,20 +657,42 @@ class HackerUniverse(commands.Cog):
             th = diff_profile["forensic_risk"] * 1.0 + diff_profile["anomaly_detection"] * 0.8
             bonus = profile_mod["extraction"]
         th *= profile_mod["trace_penalty"]
-        power = (base_power * profile_mod["global"] * bonus) + script_factor * 1.1
+        chaos_scalar = 1.0 + chaos_level * 0.08
+        power = (base_power * profile_mod["global"] * bonus * chaos_scalar) + script_factor * 1.1
         margin = power - th
         success = margin >= 0.0
         closeness = abs(margin) / max(1.0, th)
-        rng_window = max(0.0, 0.18 - closeness)
+        base_rng_window = 0.18
+        if chaos_level == 1:
+            base_rng_window = 0.23
+        elif chaos_level == 2:
+            base_rng_window = 0.3
+        elif chaos_level >= 3:
+            base_rng_window = 0.4
+        rng_window = max(0.0, base_rng_window - closeness)
         flipped = False
+        chaos_event = None
         if rng_window > 0:
             roll = random.random()
-            if margin < 0 and roll < rng_window * 0.55:
-                success = True
+            if chaos_level >= 3 and roll < rng_window * 0.25:
+                if random.random() < 0.5:
+                    power *= random.uniform(0.3, 0.6)
+                    chaos_event = "catastrophic_glitch"
+                else:
+                    power *= random.uniform(1.6, 2.3)
+                    chaos_event = "overclock_spike"
+                margin = power - th
+                success = margin >= 0.0
                 flipped = True
-            elif margin > 0 and roll < rng_window * 0.3:
-                success = False
-                flipped = True
+            else:
+                if margin < 0 and roll < rng_window * 0.55:
+                    success = True
+                    flipped = True
+                    chaos_event = "lucky_break"
+                elif margin > 0 and roll < rng_window * 0.3:
+                    success = False
+                    flipped = True
+                    chaos_event = "traceback_spike"
         if success:
             if margin > th * 0.3:
                 quality = "flawless"
@@ -632,14 +714,15 @@ class HackerUniverse(commands.Cog):
             "success": success,
             "flipped": flipped,
             "quality": quality,
+            "chaos_event": chaos_event,
         }
 
-    def aggregate_outcome(self, phase_results):
+    def aggregate_outcome(self, phase_results, chaos_level):
         successes = [p for p in phase_results if p["success"]]
         fails = [p for p in phase_results if not p["success"]]
-        flawless = sum(1 for p in phase_results if p["quality"] == "flawless"]
-        barely = sum(1 for p in phase_results if p["quality"] == "barely"]
-        almost = sum(1 for p in phase_results if p["quality"] == "almost"]
+        flawless = sum(1 for p in phase_results if p["quality"] == "flawless")
+        barely = sum(1 for p in phase_results if p["quality"] == "barely")
+        almost = sum(1 for p in phase_results if p["quality"] == "almost")
         fail_count = len(fails)
         success = len(successes) >= 3 or (len(successes) >= 2 and flawless >= 1)
         if success:
@@ -660,6 +743,7 @@ class HackerUniverse(commands.Cog):
                 quality = "messy"
         archetypes = [p["module"]["archetype"] for p in phase_results if p["module"]]
         languages = [p["module"]["language"] for p in phase_results if p["module"] and "language" in p["module"]]
+        chaos_events = [p["chaos_event"] for p in phase_results if p.get("chaos_event")]
         synergy = 0.0
         if archetypes:
             if len(set(archetypes)) == 1:
@@ -671,15 +755,20 @@ class HackerUniverse(commands.Cog):
                 synergy += 0.1
             if len(set(languages)) == 1:
                 synergy += 0.05
+        if chaos_level >= 2 and chaos_events:
+            synergy += min(0.25, len(chaos_events) * 0.05)
+        if chaos_level >= 3 and quality == "perfect_chain" and len(fails) == 0:
+            quality = "singularity"
         return {
             "success": success,
             "quality": quality,
             "synergy": synergy,
             "flawless": flawless,
             "fails": fail_count,
+            "chaos_events": chaos_events,
         }
 
-    def apply_progression(self, profile, difficulty, outcome, phase_results, target_profile):
+    def apply_progression(self, profile, difficulty, outcome, phase_results, target_profile, chaos_level):
         base_xp = 12 * difficulty
         if outcome["quality"] == "perfect_chain":
             base_xp *= 2.4
@@ -691,14 +780,18 @@ class HackerUniverse(commands.Cog):
             base_xp *= 1.1
         elif outcome["quality"] == "near_miss":
             base_xp *= 0.8
-        elif outcome["quality"] == "messy":
-            base_xp *= 0.5
+        elif outcome["quality"] == "catastrophic":
+            base_xp *= 0.35
+        elif outcome["quality"] == "singularity":
+            base_xp *= 3.2
         else:
-            base_xp *= 0.3
+            base_xp *= 0.5
+        base_xp *= 1.0 + chaos_level * 0.2
         xp_gain = int(base_xp)
         skill_delta = 0
         rep_delta = 0
         trace_delta = 0
+        chaos_affinity = profile.get("chaos_affinity", 0.0)
         if outcome["success"]:
             skill_delta += 1 + difficulty // 2
             rep_delta += 1 + difficulty
@@ -707,16 +800,24 @@ class HackerUniverse(commands.Cog):
                 if p["success"] and p["quality"] == "flawless":
                     skill_delta += 1
                     rep_delta += 1
+            chaos_affinity += chaos_level * 1.5
         else:
             trace_delta += 1 + difficulty
             if profile.get("skill", 1) > 3:
                 skill_delta -= 1
             rep_delta -= 1
+            chaos_affinity += chaos_level * 0.5
+        if outcome["quality"] == "singularity":
+            skill_delta += 3
+            rep_delta += 5
+            chaos_affinity += 10
         profile["xp"] = profile.get("xp", 0) + xp_gain
         profile["skill"] = max(1, profile.get("skill", 1) + skill_delta)
         profile["reputation"] = max(0, profile.get("reputation", 0) + rep_delta)
         profile["trace"] = max(0, min(40, profile.get("trace", 0) + trace_delta))
         profile["streak"] = profile.get("streak", 0) + 1 if outcome["success"] else 0
+        chaos_affinity = max(0.0, min(100.0, chaos_affinity))
+        profile["chaos_affinity"] = chaos_affinity
         while profile["xp"] >= 120 * profile.get("tier", 1):
             profile["xp"] -= 120 * profile.get("tier", 1)
             profile["tier"] += 1
@@ -743,12 +844,15 @@ class HackerUniverse(commands.Cog):
             "trace_delta": trace_delta,
         }
 
-    def compute_cooldown(self, profile, difficulty):
+    def compute_cooldown(self, profile, difficulty, chaos_level):
         base = 45 + difficulty * 25
         base += profile.get("trace", 0) * 3
         base -= profile.get("skill", 1) * 1.5
         base -= profile.get("tier", 1) * 3
-        base = max(20, min(900, int(base)))
+        chaos_affinity = profile.get("chaos_affinity", 0.0)
+        base -= chaos_affinity * 0.3
+        base -= chaos_level * 6
+        base = max(10, min(900, int(base)))
         return base
 
     def format_module_summary(self, modules):
@@ -767,9 +871,12 @@ class HackerUniverse(commands.Cog):
 
     def format_profile_status(self, profile):
         sv = profile.get("style_vector", {})
+        chaos_affinity = profile.get("chaos_affinity", 0.0)
+        unlocks = profile.get("chaos_unlocks", [])
         lines = []
         lines.append(f"Skill: **{profile.get('skill', 1)}**  Tier: **{profile.get('tier', 1)}**  XP: **{profile.get('xp', 0)}**")
         lines.append(f"Trace: **{profile.get('trace', 0)} / 40**  Reputation: **{profile.get('reputation', 0)}**  Streak: **{profile.get('streak', 0)}**")
+        lines.append(f"Chaos resonance: **{chaos_affinity:.1f}**  Unlocks: {', '.join(unlocks) if unlocks else 'none'}")
         if sv:
             lines.append(f"Style → Aggressive {sv.get('aggressive', 0.0):.1f}, Stealthy {sv.get('stealthy', 0.0):.1f}, Bruteforce {sv.get('bruteforce', 0.0):.1f}, Elegant {sv.get('elegant', 0.0):.1f}, Experimental {sv.get('experimental', 0.0):.1f}")
         return "\n".join(lines)
@@ -785,13 +892,28 @@ class HackerUniverse(commands.Cog):
         lines.append(f"Record: **{t['wins']}W / {t['losses']}L** over {t['battles']} intrusions")
         return "\n".join(lines)
 
-    async def animate_chain(self, message, target, modules, difficulty, target_profile):
+    def chaos_badge(self, chaos_level, outcome_quality):
+        if chaos_level <= 0:
+            return "calm stack"
+        if chaos_level == 1:
+            return "soft entropy"
+        if chaos_level == 2:
+            if outcome_quality in ("perfect_chain", "strong", "singularity"):
+                return "stochastic edge"
+            return "unstable edge"
+        if chaos_level >= 3:
+            if outcome_quality == "singularity":
+                return "chaos singularity"
+            return "full desync"
+
+    async def animate_chain(self, message, target, modules, difficulty, target_profile, chaos_level):
         phases = [
             ("recon", "Reconnaissance", "📡", ["Mapping endpoints", "Fingerprinting defenses", "Sampling telemetry", "Building topology graph"]),
             ("access", "Access Vector", "🧬", ["Normalizing credential space", "Aligning solver heuristics", "Injecting probes", "Deforming auth surface"]),
             ("payload", "Payload Orchestration", "💾", ["Assembling segments", "Packing and encrypting", "Scrambling signatures", "Priming execution hooks"]),
             ("extraction", "Exfiltration", "🚀", ["Splicing data streams", "Braiding proxies", "Masking envelopes", "Evacuating ghost channels"]),
         ]
+        chaos_label = {0: "stabilized", 1: "jitter", 2: "storm", 3: "anomaly cascade"}
         for key, label, icon, steps in phases:
             for i in range(len(steps)):
                 rows = []
@@ -802,9 +924,12 @@ class HackerUniverse(commands.Cog):
                         prefix = "🟡"
                     else:
                         prefix = "⚪"
+                    if chaos_level >= 2 and random.random() < 0.08:
+                        step = step.replace(" ", " ")
                     rows.append(f"{prefix} {step}")
                 module = modules.get(key)
                 mod_name = module["filename"] if module else "no module"
+                chaos_text = chaos_label.get(chaos_level, "wild")
                 embed = discord.Embed(
                     title=f"{icon} {label} → {target}",
                     description="\n".join(rows),
@@ -813,16 +938,18 @@ class HackerUniverse(commands.Cog):
                 embed.add_field(name="Active module", value=f"`{mod_name}`", inline=False)
                 embed.add_field(name="Difficulty", value=str(difficulty), inline=True)
                 embed.add_field(name="Temperament", value=target_profile["temperament"], inline=True)
+                embed.add_field(name="Chaos mode", value=chaos_text, inline=True)
                 await message.edit(embed=embed)
                 await asyncio.sleep(0.6)
 
-    def build_final_embed(self, user, target, modules, profile, difficulty, target_profile, phase_results, outcome, progression, lore):
+    def build_final_embed(self, user, target, modules, profile, difficulty, target_profile, phase_results, outcome, progression, lore, chaos_level):
         success = outcome["success"]
+        badge = self.chaos_badge(chaos_level, outcome["quality"])
         if success:
-            title = f"✅ Breach Complete: {target}"
+            title = f"✅ Breach Complete: {target} [{badge}]"
             color = discord.Color.green()
         else:
-            title = f"❌ Intrusion Disrupted: {target}"
+            title = f"❌ Intrusion Disrupted: {target} [{badge}]"
             color = discord.Color.red()
         name_map = {
             "recon": "Reconnaissance",
@@ -830,6 +957,8 @@ class HackerUniverse(commands.Cog):
             "payload": "Payload",
             "extraction": "Extraction",
         }
+        chaos_events = outcome.get("chaos_events", [])
+        chaos_lines = []
         lines = []
         for res in phase_results:
             label = name_map.get(res["phase"], res["phase"].title())
@@ -841,12 +970,23 @@ class HackerUniverse(commands.Cog):
             module_name = res["module"]["filename"] if res["module"] else "no module"
             margin_pct = res["margin"] / max(1.0, res["threshold"])
             margin_pct = max(-1.0, min(1.0, margin_pct))
-            lines.append(f"{symbol} {label} | `{module_name}` | power {res['power']:.1f} vs {res['threshold']:.1f} ({margin_pct*100:.1f}%) → {res['quality']}")
+            chaos_tag = ""
+            if res.get("chaos_event") == "overclock_spike":
+                chaos_tag = " ⬆ overclock spike"
+            elif res.get("chaos_event") == "catastrophic_glitch":
+                chaos_tag = " ⬇ catastrophic glitch"
+            elif res.get("chaos_event") == "lucky_break":
+                chaos_tag = " ✨ lucky break"
+            elif res.get("chaos_event") == "traceback_spike":
+                chaos_tag = " ☢ trace spike"
+            lines.append(f"{symbol} {label} | `{module_name}` | power {res['power']:.1f} vs {res['threshold']:.1f} ({margin_pct*100:.1f}%) → {res['quality']}{chaos_tag}")
         desc = "\n".join(lines) if lines else "No phases evaluated."
         embed = discord.Embed(title=title, description=desc, color=color)
         out_lines = []
         if success:
-            if outcome["quality"] == "perfect_chain":
+            if outcome["quality"] == "singularity":
+                out_lines.append("Chain rating: **chaos singularity**")
+            elif outcome["quality"] == "perfect_chain":
                 out_lines.append("Chain rating: **perfect execution**")
             elif outcome["quality"] == "strong":
                 out_lines.append("Chain rating: **strong compromise**")
@@ -872,7 +1012,11 @@ class HackerUniverse(commands.Cog):
         out_lines.append(f"Trace: **{td:+d}**")
         if outcome["synergy"] != 0.0:
             out_lines.append(f"Module synergy bonus: **{int(outcome['synergy']*100)}%** cohesion")
+        if chaos_events:
+            chaos_lines.append(f"Phase anomalies: {', '.join(sorted(set(chaos_events)))}")
+        chaos_lines.append(f"Chaos mode: **{chaos_level}**")
         embed.add_field(name="Outcome", value="\n".join(out_lines), inline=False)
+        embed.add_field(name="Chaos telemetry", value="\n".join(chaos_lines), inline=False)
         embed.add_field(name="Modules", value=self.format_module_summary(modules), inline=False)
         embed.add_field(name="Hacker status", value=self.format_profile_status(profile), inline=False)
         embed.add_field(name="Target profile", value=self.format_target_status(target_profile), inline=False)
@@ -881,7 +1025,7 @@ class HackerUniverse(commands.Cog):
         embed.set_footer(text=f"Hacker ID {user.id} • Difficulty {difficulty}")
         return embed
 
-    @app_commands.command(name="hack", description="Execute a multi-phase code-based hacking run against an evolving AI target.")
+    @app_commands.command(name="hack", description="Execute a multi-phase code-chain intrusion against an evolving AI target.")
     @app_commands.describe(
         target="Target system name or identifier",
         difficulty="1=trivial, 5=insane",
@@ -889,6 +1033,7 @@ class HackerUniverse(commands.Cog):
         access_file="Optional access script filename from your codepad",
         payload_file="Optional payload script filename from your codepad",
         extract_file="Optional extraction script filename from your codepad",
+        chaos="Chaos level: 0=off, 1=fun, 2=storm, 3=full desync"
     )
     async def hack(
         self,
@@ -899,13 +1044,15 @@ class HackerUniverse(commands.Cog):
         access_file: str | None = None,
         payload_file: str | None = None,
         extract_file: str | None = None,
+        chaos: int = 0,
     ):
         user = interaction.user
         profile = self.get_profile(user.id)
         difficulty = max(1, min(5, difficulty))
+        chaos_level = max(0, min(3, chaos))
         now = datetime.datetime.utcnow()
         last_raw = profile.get("last_hack")
-        cd = self.compute_cooldown(profile, difficulty)
+        cd = self.compute_cooldown(profile, difficulty, chaos_level)
         if last_raw:
             try:
                 last = datetime.datetime.fromisoformat(last_raw)
@@ -922,34 +1069,36 @@ class HackerUniverse(commands.Cog):
         if not analyses:
             await interaction.response.send_message("❌ No usable scripts found in your codepad. Create scripts with `/code_new` and `/code_edit` first.", ephemeral=True)
             return
-        profile = self.update_style_vector(profile, analyses)
+        profile = self.update_style_vector(profile, analyses, chaos_level)
         target_profile = self.get_or_create_target(target, difficulty)
-        diff_profile = self.difficulty_profile(target_profile, profile.get("style_vector", {}))
+        diff_profile = self.difficulty_profile(target_profile, profile.get("style_vector", {}), chaos_level)
         modules = self.select_modules(analyses, recon_file, access_file, payload_file, extract_file)
         profile["last_hack"] = now.isoformat()
         save_state()
         await interaction.response.defer()
-        lore = await self.generate_target_lore(target_profile)
+        lore = await self.generate_target_lore(target_profile, chaos_level)
+        chaos_names = {0: "stabilized", 1: "playful jitter", 2: "code storm", 3: "desync cascade"}
         intro = discord.Embed(
             title=f"Initializing intrusion plan → {target}",
             description="Assembling phase chain from your code modules.",
             color=discord.Color.blurple(),
         )
+        intro.add_field(name="Chaos mode", value=f"{chaos_level} • {chaos_names.get(chaos_level, 'unknown')}", inline=False)
         intro.add_field(name="Hacker status", value=self.format_profile_status(profile), inline=False)
         intro.add_field(name="Modules", value=self.format_module_summary(modules), inline=False)
         intro.add_field(name="Target profile", value=self.format_target_status(target_profile), inline=False)
         if lore:
             intro.add_field(name="Target lore", value=lore, inline=False)
         msg = await interaction.followup.send(embed=intro)
-        await self.animate_chain(msg, target, modules, difficulty, target_profile)
-        profile_mod = self.compute_profile_modifiers(profile)
+        await self.animate_chain(msg, target, modules, difficulty, target_profile, chaos_level)
+        profile_mod = self.compute_profile_modifiers(profile, chaos_level)
         recon_res = self.compute_phase_score("recon", modules.get("recon"), profile_mod, diff_profile, profile, target_profile)
         access_res = self.compute_phase_score("access", modules.get("access"), profile_mod, diff_profile, profile, target_profile)
         payload_res = self.compute_phase_score("payload", modules.get("payload"), profile_mod, diff_profile, profile, target_profile)
         extract_res = self.compute_phase_score("extraction", modules.get("extraction"), profile_mod, diff_profile, profile, target_profile)
         phases = [recon_res, access_res, payload_res, extract_res]
-        outcome = self.aggregate_outcome(phases)
-        progression = self.apply_progression(profile, difficulty, outcome, phases, target_profile)
+        outcome = self.aggregate_outcome(phases, chaos_level)
+        progression = self.apply_progression(profile, difficulty, outcome, phases, target_profile, chaos_level)
         if "hack_history" not in profile:
             profile["hack_history"] = []
         profile["hack_history"].append(
@@ -958,15 +1107,46 @@ class HackerUniverse(commands.Cog):
                 "difficulty": difficulty,
                 "success": outcome["success"],
                 "quality": outcome["quality"],
+                "chaos": chaos_level,
                 "timestamp": now.isoformat(),
             }
         )
         profile["hack_history"] = profile["hack_history"][-30:]
         save_state()
-        final_embed = self.build_final_embed(user, target, modules, profile, difficulty, target_profile, phases, outcome, progression, lore)
+        final_embed = self.build_final_embed(user, target, modules, profile, difficulty, target_profile, phases, outcome, progression, lore, chaos_level)
         await msg.edit(embed=final_embed)
 
-    @app_commands.command(name="hack_profile", description="View your hacking profile, style vector, and recent runs.")
+    @app_commands.command(name="hack_chaos", description="Shortcut: fire a fully desynced chaos-chain at a target.")
+    @app_commands.describe(
+        target="Target system name or identifier",
+        difficulty="1=trivial, 5=insane",
+        recon_file="Optional recon script filename from your codepad",
+        access_file="Optional access script filename from your codepad",
+        payload_file="Optional payload script filename from your codepad",
+        extract_file="Optional extraction script filename from your codepad",
+    )
+    async def hack_chaos(
+        self,
+        interaction: discord.Interaction,
+        target: str,
+        difficulty: int = 3,
+        recon_file: str | None = None,
+        access_file: str | None = None,
+        payload_file: str | None = None,
+        extract_file: str | None = None,
+    ):
+        await self.hack(
+            interaction,
+            target=target,
+            difficulty=difficulty,
+            recon_file=recon_file,
+            access_file=access_file,
+            payload_file=payload_file,
+            extract_file=extract_file,
+            chaos=3,
+        )
+
+    @app_commands.command(name="hack_profile", description="View your hacking profile, chaos resonance, and recent runs.")
     async def hack_profile(self, interaction: discord.Interaction):
         profile = self.get_profile(interaction.user.id)
         hist = profile.get("hack_history", [])
@@ -974,7 +1154,7 @@ class HackerUniverse(commands.Cog):
         for h in hist[-10:]:
             stamp = h.get("timestamp", "")[:19]
             ok = "✅" if h.get("success") else "❌"
-            lines.append(f"{ok} {h.get('target','?')} d={h.get('difficulty',0)} q={h.get('quality','?')} at {stamp}")
+            lines.append(f"{ok} {h.get('target','?')} d={h.get('difficulty',0)} c={h.get('chaos',0)} q={h.get('quality','?')} at {stamp}")
         history_text = "\n".join(lines) if lines else "No runs recorded yet."
         embed = discord.Embed(
             title=f"Hacker profile for {interaction.user.display_name}",
@@ -991,13 +1171,30 @@ class HackerUniverse(commands.Cog):
             await interaction.response.send_message("No targets have been instantiated yet. Run `/hack` first.", ephemeral=True)
             return
         lines = []
-        for t in list(space.values())[:20]:
+        for t in list(space.values())[:30]:
             lines.append(f"• {t['name']} d={t['difficulty']} | {t['wins']}W/{t['losses']}L | sec {t['security_integrity']:.1f}, anom {t['anomaly_detection']:.1f}")
         text = "\n".join(lines)
         embed = discord.Embed(
             title="Known network entities",
             description=text,
             color=discord.Color.gold(),
+        )
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="hack_chaos_state", description="Peek at your chaos unlocks and tuning.")
+    async def hack_chaos_state(self, interaction: discord.Interaction):
+        profile = self.get_profile(interaction.user.id)
+        chaos_affinity = profile.get("chaos_affinity", 0.0)
+        unlocks = profile.get("chaos_unlocks", [])
+        sv = profile.get("style_vector", {})
+        lines = []
+        lines.append(f"Chaos resonance: **{chaos_affinity:.1f}**")
+        lines.append(f"Unlocks: {', '.join(unlocks) if unlocks else 'none'}")
+        lines.append(f"Preferred axes → Aggressive {sv.get('aggressive', 0.0):.1f}, Experimental {sv.get('experimental', 0.0):.1f}")
+        embed = discord.Embed(
+            title=f"Chaos diagnostics for {interaction.user.display_name}",
+            description="\n".join(lines),
+            color=discord.Color.purple(),
         )
         await interaction.response.send_message(embed=embed)
 
