@@ -2,6 +2,7 @@ from economy_shared import state, save_state
 import discord
 from discord.ext import commands
 from discord import app_commands
+from clang.cindex import Index, CursorKind
 import ast
 import random
 import math
@@ -32,7 +33,9 @@ class HackerUniverse(commands.Cog):
         self.openrouter_client = None
         self.groq_client = None
         self.gemini_models = []
+        self.clang_index = None
         self._init_ai_clients()
+        self._init_clang()
 
     def _init_ai_clients(self):
         or_key = os.getenv("OPENROUTER_KEY")
@@ -61,6 +64,12 @@ class HackerUniverse(commands.Cog):
                 self.gemini_models = ["gemini-2.5-flash", "gemini-2.0-flash"]
             except Exception:
                 self.gemini_models = []
+
+    def _init_clang(self):
+        try:
+            self.clang_index = Index.create()
+        except Exception:
+            self.clang_index = None
 
     def get_profile(self, user_id):
         uid = str(user_id)
@@ -112,13 +121,12 @@ class HackerUniverse(commands.Cog):
         max_depth = 0
 
         def visit(node, depth):
-            nonlocal loops, branches, comprehensions, calls, recursion, max_depth
+            nonlocal loops, branches, comprehensions, calls, recursion, max_depth, class_defs
             if depth > max_depth:
                 max_depth = depth
             if isinstance(node, ast.FunctionDef):
                 fn_defs.append(node.name)
             if isinstance(node, ast.ClassDef):
-                nonlocal class_defs
                 class_defs += 1
             if isinstance(node, (ast.For, ast.While, ast.AsyncFor)):
                 loops += 1
@@ -146,11 +154,11 @@ class HackerUniverse(commands.Cog):
         branching_factor = branches + loops + comprehensions
         structural_complexity = branching_factor + max_depth + (3 if recursion else 0)
         size_penalty = max(0.0, (code_len - 2000) / 3000.0) if code_len > 2000 else 0.0
-        efficiency = max(0.1, min(10.0, 4.0 + density * 0.3 - structural_complexity * 0.05 - size_penalty))
-        elegance = max(0.1, min(10.0, 3.0 + comprehensions * 0.6 + class_defs * 0.5 - loops * 0.3))
-        aggression = max(0.1, min(10.0, 2.0 + loops * 0.7 + calls * 0.2))
-        stealth = max(0.1, min(10.0, 5.0 + max_depth * 0.3 - branching_factor * 0.1))
-        experimental = max(0.1, min(10.0, 2.0 + (unique_tokens / max(1, token_count)) * 20.0))
+        efficiency = max(0.1, min(10.0, 4.2 + density * 0.35 - structural_complexity * 0.05 - size_penalty * 0.7))
+        elegance = max(0.1, min(10.0, 3.0 + comprehensions * 0.7 + class_defs * 0.6 - loops * 0.25))
+        aggression = max(0.1, min(10.0, 1.8 + loops * 0.6 + calls * 0.2))
+        stealth = max(0.1, min(10.0, 5.5 + max_depth * 0.25 - branching_factor * 0.08))
+        experimental = max(0.1, min(10.0, 2.2 + (unique_tokens / max(1, token_count)) * 18.0))
         return {
             "filename": filename,
             "line_count": line_count,
@@ -172,41 +180,169 @@ class HackerUniverse(commands.Cog):
             "experimental": experimental,
         }
 
+    def analyze_cpp_libclang(self, filename, code, language):
+        if not self.clang_index:
+            try:
+                self.clang_index = Index.create()
+            except Exception:
+                return None
+        import tempfile
+        suffix = ""
+        lower = filename.lower()
+        if lower.endswith(".cpp") or lower.endswith(".cxx") or lower.endswith(".cc"):
+            suffix = ".cpp"
+        elif lower.endswith(".hpp"):
+            suffix = ".hpp"
+        elif lower.endswith(".h"):
+            suffix = ".h"
+        else:
+            suffix = ".c"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp.write(code.encode("utf-8"))
+            tmp_path = tmp.name
+        args = []
+        if language == "cpp":
+            args = ["-std=c++17"]
+        else:
+            args = ["-std=c11"]
+        try:
+            tu = self.clang_index.parse(tmp_path, args=args)
+        except Exception:
+            return None
+        loops = 0
+        branches = 0
+        fn_defs = 0
+        class_defs = 0
+        calls = 0
+        max_depth = 0
+        template_nodes = 0
+
+        def visit(node, depth=0):
+            nonlocal loops, branches, fn_defs, class_defs, calls, max_depth, template_nodes
+            max_depth = max(max_depth, depth)
+            k = node.kind
+            if k in (CursorKind.FUNCTION_DECL, CursorKind.CXX_METHOD, CursorKind.CONSTRUCTOR, CursorKind.DESTRUCTOR):
+                fn_defs += 1
+            if k in (CursorKind.CLASS_DECL, CursorKind.STRUCT_DECL, CursorKind.CLASS_TEMPLATE):
+                class_defs += 1
+            if k in (CursorKind.FOR_STMT, CursorKind.WHILE_STMT, CursorKind.DO_STMT, CursorKind.CXX_FOR_RANGE_STMT):
+                loops += 1
+            if k in (CursorKind.IF_STMT, CursorKind.SWITCH_STMT, CursorKind.CASE_STMT, CursorKind.DEFAULT_STMT, CursorKind.CONDITIONAL_OPERATOR):
+                branches += 1
+            if k in (CursorKind.CALL_EXPR, CursorKind.CXX_MEMBER_CALL_EXPR):
+                calls += 1
+            if k in (CursorKind.CLASS_TEMPLATE, CursorKind.FUNCTION_TEMPLATE, CursorKind.TYPE_REF, CursorKind.TEMPLATE_REF):
+                template_nodes += 1
+            for child in node.get_children():
+                visit(child, depth + 1)
+
+        visit(tu.cursor, 0)
+        lines = code.splitlines()
+        line_count = len(lines)
+        non_empty = [l for l in lines if l.strip()]
+        non_empty_count = len(non_empty)
+        tokens = re.findall(r"\S+", code)
+        token_count = len(tokens)
+        unique_tokens = len(set(tokens))
+        pointer_ops = code.count("*")
+        ref_ops = code.count("&")
+        density = token_count / line_count if line_count else 0.0
+        branching_factor = branches + loops
+        raw_complex = branching_factor + max_depth + fn_defs * 0.3 + class_defs * 0.4
+        pointer_intensity = (pointer_ops + ref_ops) / max(1, line_count)
+        template_intensity = template_nodes / max(1, fn_defs + class_defs + 1)
+        efficiency = max(0.1, min(10.0, 4.0 + density * 0.25 - raw_complex * 0.03))
+        elegance = max(0.1, min(10.0, 2.8 + class_defs * 0.6 + template_intensity * 4.0 - loops * 0.2))
+        aggression = max(0.1, min(10.0, 2.5 + loops * 0.6 + calls * 0.2 + pointer_intensity * 3.0))
+        stealth = max(0.1, min(10.0, 4.5 + max_depth * -0.05 - branching_factor * 0.05 + template_intensity * 2.0))
+        experimental = max(0.1, min(10.0, 1.5 + unique_tokens / max(1, token_count) * 10.0 + template_intensity * 5.0))
+        return {
+            "filename": filename,
+            "line_count": line_count,
+            "non_empty": non_empty_count,
+            "token_count": token_count,
+            "unique_tokens": unique_tokens,
+            "fn_defs": fn_defs,
+            "class_defs": class_defs,
+            "loops": loops,
+            "branches": branches,
+            "comprehensions": 0,
+            "calls": calls,
+            "recursion": False,
+            "max_depth": max_depth,
+            "efficiency": efficiency,
+            "elegance": elegance,
+            "aggression": aggression,
+            "stealth": stealth,
+            "experimental": experimental,
+        }
+
     def infer_archetype(self, filename, stats, code):
         name = filename.lower()
-        if any(k in name for k in ["recon", "scan", "probe", "map"]):
+        if any(k in name for k in ["recon", "scan", "probe", "map", "survey"]):
             return "recon"
-        if any(k in name for k in ["auth", "login", "access", "breakin"]):
+        if any(k in name for k in ["auth", "login", "access", "breakin", "door"]):
             return "access"
-        if any(k in name for k in ["payload", "inject", "exploit", "shell"]):
+        if any(k in name for k in ["payload", "inject", "exploit", "shell", "bomb"]):
             return "payload"
-        if any(k in name for k in ["exfil", "extract", "leak", "proxy", "tunnel"]):
+        if any(k in name for k in ["exfil", "extract", "leak", "proxy", "tunnel", "drain"]):
             return "extraction"
-        if any(k in name for k in ["core", "util", "common", "shared"]):
+        if any(k in name for k in ["core", "util", "common", "shared", "base"]):
             return "support"
         text = code.lower()
-        if "socket" in text or "request" in text:
+        if "socket" in text or "request" in text or "http" in text:
             return "recon"
-        if "encrypt" in text or "decrypt" in text or "hash" in text:
+        if "encrypt" in text or "decrypt" in text or "hash" in text or "sha" in text or "aes" in text:
             return "access"
-        if "compress" in text or "encode" in text or "payload" in text:
+        if "compress" in text or "encode" in text or "payload" in text or "packet" in text:
             return "payload"
-        if "proxy" in text or "route" in text or "vpn" in text:
+        if "proxy" in text or "route" in text or "vpn" in text or "exfil" in text or "upload" in text:
             return "extraction"
         return "generic"
+
+    def script_language(self, filename, code):
+        lower = filename.lower()
+        if lower.endswith(".py"):
+            return "python"
+        if lower.endswith(".cpp") or lower.endswith(".cxx") or lower.endswith(".cc") or lower.endswith(".hpp"):
+            return "cpp"
+        if lower.endswith(".c") or lower.endswith(".h"):
+            if "class " in code or "template<" in code or "std::" in code:
+                return "cpp"
+            return "c"
+        return "python"
+
+    def rarity_from_stats(self, stats):
+        score = stats["efficiency"] + stats["elegance"] + stats["stealth"] + stats["experimental"] + stats["aggression"]
+        if score >= 40:
+            return "mythic"
+        if score >= 32:
+            return "legendary"
+        if score >= 25:
+            return "epic"
+        if score >= 18:
+            return "rare"
+        return "common"
 
     def analyze_all_scripts(self, pad):
         analyses = {}
         for fn, code in pad.items():
             if not isinstance(code, str) or not code.strip():
                 continue
-            ast_stats = self.analyze_script_ast(fn, code)
+            lang = self.script_language(fn, code)
+            if lang in ("c", "cpp"):
+                ast_stats = self.analyze_cpp_libclang(fn, code, lang)
+            else:
+                ast_stats = self.analyze_script_ast(fn, code)
             if not ast_stats:
                 continue
             archetype = self.infer_archetype(fn, ast_stats, code)
+            rarity = self.rarity_from_stats(ast_stats)
             analyses[fn] = {
                 "filename": fn,
+                "language": lang,
                 "archetype": archetype,
+                "rarity": rarity,
                 "ast": ast_stats,
             }
         return analyses
@@ -220,12 +356,12 @@ class HackerUniverse(commands.Cog):
                 candidates = list(analyses.values())
             if not candidates:
                 return None
-            candidates.sort(key=lambda a: a["ast"]["efficiency"] + a["ast"]["elegance"] + a["ast"]["stealth"], reverse=True)
+            candidates.sort(key=lambda a: a["ast"]["efficiency"] + a["ast"]["elegance"] + a["ast"]["stealth"] + a["ast"]["experimental"], reverse=True)
             return candidates[0]
         recon = pick(recon_name, "recon")
         access = pick(access_name, "access")
         payload = pick(payload_name, "payload")
-        extraction = pick(extract_name, "extraction")
+        extraction = pick(extract_file, "extraction") if False else pick(extract_name, "extraction")
         return {
             "recon": recon,
             "access": access,
@@ -278,7 +414,7 @@ class HackerUniverse(commands.Cog):
         name = target_profile["name"]
         difficulty = target_profile["difficulty"]
         temperament = target_profile["temperament"]
-        text = f"{name} is a digital fortress rated difficulty {difficulty}, behaving like a {temperament} defense AI."
+        text = f"The {name} node is a difficulty {difficulty} defense surface behaving like a {temperament} network intelligence."
         if not self.openrouter_client and not self.groq_client and not self.gemini_models:
             return text
         system = "You generate extremely short flavor blurbs about fictional network targets, 1-2 sentences, no markdown."
@@ -359,6 +495,7 @@ class HackerUniverse(commands.Cog):
             total["experimental"] += a["experimental"]
             count += 1
         if count == 0:
+            profile["style_vector"] = v
             return profile
         for k in total:
             avg = total[k] / count
@@ -412,8 +549,10 @@ class HackerUniverse(commands.Cog):
         if not module:
             base_power = 8.0
             script_factor = 2.0
+            lang = "none"
         else:
             a = module["ast"]
+            lang = module.get("language", "python")
             if phase == "recon":
                 base_power = a["efficiency"] * 1.2 + a["stealth"] * 1.4 + a["experimental"] * 0.8
                 script_factor = a["elegance"] + a["loops"] * 0.4
@@ -426,6 +565,16 @@ class HackerUniverse(commands.Cog):
             else:
                 base_power = a["stealth"] * 1.6 + a["efficiency"] + a["experimental"] * 0.6
                 script_factor = a["max_depth"] * 0.4 + a["fn_defs"] * 0.3
+        if lang == "python":
+            base_power *= 1.05
+            if phase in ("recon", "extraction"):
+                script_factor *= 1.1
+        elif lang == "c":
+            base_power *= 1.1 if phase in ("access", "payload") else base_power * 1.0
+            script_factor *= 1.05
+        elif lang == "cpp":
+            base_power *= 1.08
+            script_factor *= 1.08
         temperament = target_profile["temperament"]
         if temperament == "paranoid" and phase in ("recon", "access"):
             base_power *= 0.9
@@ -488,9 +637,9 @@ class HackerUniverse(commands.Cog):
     def aggregate_outcome(self, phase_results):
         successes = [p for p in phase_results if p["success"]]
         fails = [p for p in phase_results if not p["success"]]
-        flawless = sum(1 for p in phase_results if p["quality"] == "flawless")
-        barely = sum(1 for p in phase_results if p["quality"] == "barely")
-        almost = sum(1 for p in phase_results if p["quality"] == "almost")
+        flawless = sum(1 for p in phase_results if p["quality"] == "flawless"]
+        barely = sum(1 for p in phase_results if p["quality"] == "barely"]
+        almost = sum(1 for p in phase_results if p["quality"] == "almost"]
         fail_count = len(fails)
         success = len(successes) >= 3 or (len(successes) >= 2 and flawless >= 1)
         if success:
@@ -510,12 +659,18 @@ class HackerUniverse(commands.Cog):
             else:
                 quality = "messy"
         archetypes = [p["module"]["archetype"] for p in phase_results if p["module"]]
+        languages = [p["module"]["language"] for p in phase_results if p["module"] and "language" in p["module"]]
         synergy = 0.0
         if archetypes:
             if len(set(archetypes)) == 1:
                 synergy += 0.15
             if len(set(archetypes)) >= 3:
                 synergy += 0.15
+        if languages:
+            if len(set(languages)) >= 3:
+                synergy += 0.1
+            if len(set(languages)) == 1:
+                synergy += 0.05
         return {
             "success": success,
             "quality": quality,
@@ -604,7 +759,9 @@ class HackerUniverse(commands.Cog):
                 parts.append(f"{key.title()}: none")
                 continue
             a = mod["ast"]
-            seg = f"{key.title()}: `{mod['filename']}` | eff {a['efficiency']:.1f}, stealth {a['stealth']:.1f}, aggr {a['aggression']:.1f}, eleg {a['elegance']:.1f}"
+            lang = mod.get("language", "python")
+            rarity = mod.get("rarity", "common")
+            seg = f"{key.title()}: `{mod['filename']}` [{lang}/{rarity}] | eff {a['efficiency']:.1f}, stealth {a['stealth']:.1f}, aggr {a['aggression']:.1f}, eleg {a['elegance']:.1f}"
             parts.append(seg)
         return "\n".join(parts) if parts else "No modules."
 
