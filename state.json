@@ -715,7 +715,7 @@
   },
   "codepad": {
     "1238242784679563265": {
-      "code.py": "print(\"Yes, that is my PFP!\")"
+      "code.cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"attacking user..\" << endl;\n    for (int i = 0; i < 5; i++){\n        cout << \"USER ATTACKED!\" << endl;\n    }\n    cout << \"hack succesful!!!\";\n    return 0;\n}"
     }
   },
   "world": {
@@ -759,12 +759,12 @@
   "hacker_profiles": {
     "1238242784679563265": {
       "skill": 1,
-      "xp": 3,
+      "xp": 6,
       "tier": 1,
-      "trace": 2,
+      "trace": 4,
       "reputation": 0,
       "streak": 0,
-      "last_hack": "2025-12-11T15:03:56.052059",
+      "last_hack": "2025-12-11T15:15:20.639516",
       "specializations": [],
       "hack_history": [
         {
@@ -773,14 +773,21 @@
           "success": false,
           "quality": "catastrophic",
           "timestamp": "2025-12-11T15:03:56.052059"
+        },
+        {
+          "target": "<@1440004841559560214>",
+          "difficulty": 1,
+          "success": false,
+          "quality": "catastrophic",
+          "timestamp": "2025-12-11T15:15:20.639516"
         }
       ],
       "style_vector": {
-        "aggressive": 0.66,
-        "stealthy": 1.8599999999999999,
+        "aggressive": 1.1219999999999999,
+        "stealthy": 3.162,
         "bruteforce": 0.0,
-        "elegant": 0.8999999999999999,
-        "experimental": 3.0
+        "elegant": 1.5299999999999998,
+        "experimental": 5.1
       }
     }
   },
@@ -789,9 +796,9 @@
       "id": "<@1440004841559560214>:1",
       "name": "<@1440004841559560214>",
       "difficulty": 1,
-      "security_integrity": 45.45,
+      "security_integrity": 45.904500000000006,
       "anomaly_detection": 30,
-      "bandwidth_pressure": 30.6,
+      "bandwidth_pressure": 31.212000000000003,
       "forensic_risk": 33,
       "temperament": "paranoid",
       "style_bias": {
@@ -801,8 +808,8 @@
         "elegant": 0.13024173304114442,
         "experimental": -0.07430090887902521
       },
-      "battles": 1,
-      "wins": 1,
+      "battles": 2,
+      "wins": 2,
       "losses": 0
     }
   }
