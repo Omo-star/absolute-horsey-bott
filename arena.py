@@ -858,7 +858,7 @@ class ArenaView(discord.ui.View):
         field = self.format_field(p, o, p_offset=p_offset, o_offset=o_offset)
         await inter.edit_original_response(content=f"```{field}\n\n{text}```", embed=None)
 
-    async def play_attack_animation(self, inter, p, o, side, text):
+    async def play_attack_animation(self, inter, attacker, defender, side, text):
         lines = text.split("\n")
         headline = lines[0] if lines else text
         frames = []
@@ -872,15 +872,15 @@ class ArenaView(discord.ui.View):
             frames.append((0, 5, text))
             frames.append((0, 1, text))
         for i, (p_off, o_off, txt) in enumerate(frames):
-            await self.animate(inter, p, o, txt, p_offset=p_off, o_offset=o_off)
+            await self.animate(inter, attacker, defender, txt, p_offset=p_off, o_offset=o_off)
             await asyncio.sleep(0.18 if i < len(frames) - 1 else 0.08)
 
     async def play_ultimate_animation(self, inter, attacker, defender, side, title_lines):
         top = "═" * 31
         mid = "\n".join(title_lines)
         box = f"{top}\n{mid}\n{top}"
-        p = attacker if side == "p" else defender
-        o = defender if side == "p" else attacker
+        p = attacker
+        o = defender
         field = self.format_field(p, o, p_offset=0, o_offset=0)
         await inter.edit_original_response(content=f"```{box}\n\n{field}```", embed=None)
         await asyncio.sleep(0.7)
@@ -1051,6 +1051,8 @@ class ArenaView(discord.ui.View):
                 "has_rebirthed": False,
                 "ult_charge": 0,
                 "ult_ready": False,
+                "clutch": rarity in ("Common", "Uncommon"),
+                "clutch_used": False,
             })
         return stats
 
@@ -1183,6 +1185,12 @@ class ArenaView(discord.ui.View):
 
     def apply_on_damage_taken_passive(self, defender, attacker, dmg, log):
         aid = defender["ability_id"]
+        if defender.get("clutch") and not defender.get("clutch_used") and defender["hp"] / defender["max_hp"] < 0.2:
+            defender["atk_mod"] *= 1.15
+            defender["spd_mod"] *= 1.20
+            defender["crit"] = min(0.6, defender["crit"] + 0.15)
+            defender["clutch_used"] = True
+            log.append(f"{defender['name']}'s survival instinct triggers!")
         if aid == "berserker":
             if defender["hp"] / defender["max_hp"] < 0.4:
                 defender["atk_mod"] *= 1.10
@@ -1374,31 +1382,32 @@ class ArenaView(discord.ui.View):
                 enemies = oteam if side == "p" else pteam
                 if all(u["hp"] <= 0 for u in enemies):
                     break
+                target = self.pick_target(enemies)
+                if not target:
+                    continue
                 if unit["ult_ready"]:
                     title = self.pick_ultimate_name(unit)
+                    attacker, defender = (unit, target) if side == "p" else (target, unit)
                     await self.play_ultimate_animation(
                         inter,
-                        unit if side == "p" else enemies[0],
-                        enemies[0] if side == "p" else unit,
+                        attacker,
+                        defender,
                         side,
                         [f"{unit['name']} — ULTIMATE", title.upper()]
                     )
                     self.perform_ultimate(unit, allies, enemies, log)
                     continue
-                target = self.pick_target(enemies)
-                if not target or target["hp"] <= 0:
-                    continue
                 moves = self.get_moves_for(unit)
                 move = random.choice(moves)
                 text_lines = [f"Round {round_no}", f"{unit['name']} used {move['name']}!"]
                 if unit["status"] == "stun":
-                    text_lines.append(f"{unit['name']} is stunned and cannot move!")
+                    text_lines = [f"Round {round_no}", f"{unit['name']} is stunned and cannot move!"]
                     unit["status"] = None
                     unit["status_timer"] = 0
                     log.extend(text_lines)
-                    p_ref = pteam[0]
-                    o_ref = oteam[0]
-                    await self.play_attack_animation(inter, p_ref, o_ref, side, "\n".join(text_lines))
+                    attacker, defender = (unit, target) if side == "p" else (target, unit)
+                    await self.play_attack_animation(inter, attacker, defender, side, "\n".join(text_lines))
+                    self.charge_ult(unit, 5)
                     continue
                 if move["kind"] == "buff":
                     if move["status"] == "atk_up":
@@ -1415,17 +1424,15 @@ class ArenaView(discord.ui.View):
                         unit["status_timer"] = 3
                         text_lines.append(f"{unit['name']} is surrounded by healing energy!")
                     log.extend(text_lines)
-                    p_ref = pteam[0]
-                    o_ref = oteam[0]
-                    await self.play_attack_animation(inter, p_ref, o_ref, side, "\n".join(text_lines))
+                    attacker, defender = (unit, target) if side == "p" else (target, unit)
+                    await self.play_attack_animation(inter, attacker, defender, side, "\n".join(text_lines))
                     self.charge_ult(unit, 15)
                     continue
                 if random.random() > move["accuracy"]:
                     text_lines.append("But it missed!")
                     log.extend(text_lines)
-                    p_ref = pteam[0]
-                    o_ref = oteam[0]
-                    await self.play_attack_animation(inter, p_ref, o_ref, side, "\n".join(text_lines))
+                    attacker, defender = (unit, target) if side == "p" else (target, unit)
+                    await self.play_attack_animation(inter, attacker, defender, side, "\n".join(text_lines))
                     self.charge_ult(unit, 10)
                     continue
                 hits = 1
@@ -1441,6 +1448,9 @@ class ArenaView(discord.ui.View):
                     if random.random() < unit["crit"]:
                         crit = True
                         base *= 1.7
+                    if random.random() < 0.3:
+                        unit["atk_mod"] *= 1.12
+                        log.append(f"{unit['name']} surges with momentum!")
                     stab = 1.2 if move["element"] == unit["element"] else 1.0
                     type_mult = self.type_multiplier(move["element"], target["element"])
                     dmg = int(base * move["power"] * stab * type_mult * random.uniform(0.85, 1.0))
@@ -1501,9 +1511,8 @@ class ArenaView(discord.ui.View):
                 self.charge_ult(unit, 18)
                 self.charge_ult(target, 12)
                 log.extend(text_lines)
-                p_ref = pteam[0]
-                o_ref = oteam[0]
-                await self.play_attack_animation(inter, p_ref, o_ref, side, "\n".join(text_lines))
+                attacker, defender = (unit, target) if side == "p" else (target, unit)
+                await self.play_attack_animation(inter, attacker, defender, side, "\n".join(text_lines))
                 if all(u["hp"] <= 0 for u in pteam):
                     return "loss", log
                 if all(u["hp"] <= 0 for u in oteam):
@@ -1540,9 +1549,20 @@ class ArenaView(discord.ui.View):
                     for u in team:
                         if u["hp"] <= 0:
                             continue
-                        u["atk_mod"] *= random.uniform(0.95, 1.05)
-                        u["def_mod"] *= random.uniform(0.95, 1.05)
-                        u["spd_mod"] *= random.uniform(0.95, 1.05)
+                        u["atk_mod"] *= random.uniform(0.85, 1.20)
+                        u["def_mod"] *= random.uniform(0.85, 1.20)
+                        u["spd_mod"] *= random.uniform(0.85, 1.20)
+                        if random.random() < 0.1:
+                            u["ult_charge"] = min(100, u["ult_charge"] + random.randint(20, 40))
+                        if random.random() < 0.15:
+                            u["status"] = random.choice(["burn", "poison", "bleed", "stun", None])
+                            u["status_timer"] = random.randint(1, 3) if u["status"] else 0
+                        if random.random() < 0.1:
+                            u["atk_mod"], u["def_mod"] = u["def_mod"], u["atk_mod"]
+                        if random.random() < 0.06 and team:
+                            t = random.choice(team)
+                            if t["hp"] > 0 and t != u:
+                                u["spd_mod"], t["spd_mod"] = t["spd_mod"], u["spd_mod"]
             self.apply_round_end_passives(pteam, oteam, log)
             round_no += 1
 
