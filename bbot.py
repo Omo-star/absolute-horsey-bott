@@ -1257,7 +1257,8 @@ async def on_ready():
         "dungeon",
         "economy",
         "code",
-        "lichess_status"
+        "lichess_status",
+        "hack"
     ]
 
     for ext in extensions:
@@ -1418,6 +1419,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
