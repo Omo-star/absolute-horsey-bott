@@ -12,12 +12,22 @@ import os
 import re
 import glob
 
-clang_paths = glob.glob("/usr/lib/llvm-*/lib/libclang.so")
-if clang_paths:
-    Config.set_library_file(clang_paths[0])
-    print("Loaded clang from:", clang_paths[0])
+clang_candidates = sorted(glob.glob("/usr/lib/llvm-*/lib/libclang.so"))
+
+preferred = None
+for path in clang_candidates:
+    if any(v in path for v in ["llvm-14", "llvm-15", "llvm-16"]):
+        preferred = path
+        break
+
+chosen = preferred or (clang_candidates[0] if clang_candidates else None)
+
+if chosen:
+    Config.set_library_file(chosen)
+    print("Loaded clang from:", chosen)
 else:
-    print("WARNING: No libclang found")
+    print("WARNING: Could not find any libclang")
+
 
 try:
     from openai import OpenAI
