@@ -491,6 +491,14 @@ class HackerUniverse(commands.Cog):
                 a["ast"]["experimental"]
             ), reverse=True)
             return candidates[0]
+        usage = {}
+        for mod in [recon, access, payload, extraction]:
+            if mod:
+                fn = mod["filename"]
+                usage[fn] = usage.get(fn, 0) + 1
+        for mod in [recon, access, payload, extraction]:
+            if mod:
+                mod["reuse_count"] = usage.get(mod["filename"], 1)
         return {
             "recon": pick(recon_name, "recon"),
             "access": pick(access_name, "access"),
@@ -509,7 +517,7 @@ class HackerUniverse(commands.Cog):
         key = f"{target_id}:{difficulty}"
         if key in space:
             return space[key]
-        base_security = 25 + difficulty * 20
+        base_security = 40 + difficulty * 25
         anomaly = 15 + difficulty * 15
         bandwidth = 20 + difficulty * 10
         forensics = 15 + difficulty * 18
@@ -625,7 +633,7 @@ class HackerUniverse(commands.Cog):
             a = mod["ast"]
             total["aggressive"] += a["aggression"]
             total["stealthy"] += a["stealth"]
-            total["bruteforce"] += a["loops"] + a["branches"]
+            total["bruteforce"] += min(10, a["loops"] + a["branches"])
             total["elegant"] += a["elegance"]
             total["experimental"] += a["experimental"]
             if mod.get("language") in ("c", "cpp"):
@@ -710,6 +718,13 @@ class HackerUniverse(commands.Cog):
             lang = "none"
         else:
             a = module["ast"]
+            if (
+                a["fn_defs"] <= 1
+                and a["loops"] <= 1
+                and a["line_count"] < 30
+            ):
+                base_power *= 0.6
+
             lang = module.get("language", "python")
             if phase == "recon":
                 base_power = a["efficiency"] * 1.2 + a["stealth"] * 1.4 + a["experimental"] * 0.8
@@ -764,7 +779,14 @@ class HackerUniverse(commands.Cog):
             bonus = profile_mod["extraction"]
         th *= profile_mod["trace_penalty"]
         chaos_scalar = 1.0 + chaos_level * 0.08
-        power = (base_power * profile_mod["global"] * bonus * chaos_scalar) + script_factor * 1.1
+        reuse = module.get("reuse_count", 1) if module else 1
+        reuse_penalty = 1.0 / (1.0 + 0.35 * (reuse - 1))
+
+        power = (
+            (base_power * profile_mod["global"] * bonus * chaos_scalar * reuse_penalty)
+            + script_factor * 1.1
+        )
+        power = min(power, th * 3.0)
         margin = power - th
         success = margin >= 0.0
         closeness = abs(margin) / max(1.0, th)
