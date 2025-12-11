@@ -11,6 +11,7 @@ import asyncio
 import os
 import re
 import glob
+print("DEBUG: LLVM versions found:", glob.glob("/usr/lib/llvm-*"))
 
 clang_candidates = sorted(glob.glob("/usr/lib/llvm-*/lib/libclang.so"))
 
