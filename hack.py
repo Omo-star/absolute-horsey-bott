@@ -15,11 +15,11 @@ import subprocess
 
 def detect_gcc_version():
     try:
-        out = subprocess.check_output(["g++", "-dumpversion"], text=True).strip()
+        out = subprocess.check_output(["g++", "-dumpfullversion", "-dumpversion"], text=True).strip()
         major = out.split(".")[0]
         return major
-    except:
-        return "11"
+    except Exception:
+        return "13"
 
 clang_candidates = sorted(glob.glob("/usr/lib/llvm-*/lib/libclang.so"))
 
