@@ -7,3 +7,4 @@ aiosqlite
 regex
 python-dotenv
 requests
+clang
