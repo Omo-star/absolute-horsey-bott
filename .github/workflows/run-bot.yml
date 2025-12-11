@@ -39,14 +39,6 @@ jobs:
         with:
           python-version: "3.14"
           
-      - name: Install clang 16 + libclang
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget gnupg
-          wget https://apt.llvm.org/llvm.sh
-          sudo bash llvm.sh 16
-          sudo apt-get install -y clang-16 libclang-16-dev
-          
       - name: Install dependencies
         run: pip install -r requirements.txt
 
