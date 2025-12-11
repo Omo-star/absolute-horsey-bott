@@ -24,9 +24,10 @@ def detect_gcc_version():
 
 try:
     clang_path = clang.cindex.Config.library_path
-    if clang_path and os.path.exists(clang_path):
-        Config.set_library_file(clang_path)
-        print("Loaded libclang from:", clang_path)
+    if clang_path and os.path.isdir(clang_path):
+        libs = glob.glob(os.path.join(clang_path, "libclang.so*"))
+        if libs:
+            Config.set_library_file(libs[0])
     else:
         print("Could not auto-locate libclang; using default loader.")
 except Exception as e:
