@@ -1728,7 +1728,7 @@ class ArenaView(discord.ui.View):
         back_btn = discord.ui.Button(label="Back", style=discord.ButtonStyle.secondary)
         back_btn.callback = back_callback
         v.add_item(back_btn)
-        await inter.response.edit_message(embed=embed, view=v)
+        await inter.edit_original_response(embed=embed, view=v)
 
     async def crown_shop(self, inter):
         items = {
@@ -1762,7 +1762,7 @@ class ArenaView(discord.ui.View):
             passives[key] = passives.get(key, 0.0) + amount
             self.arena["last_log"] = f"Purchased {data['name']}."
             save_state()
-            await sel_inter.response.edit_message(embed=self.render_lobby(), view=self)
+            await sel_inter.edit_original_response(embed=self.render_lobby(), view=self)
         select.callback = select_callback
         v = discord.ui.View(timeout=180)
         v.add_item(select)
@@ -1774,7 +1774,8 @@ class ArenaView(discord.ui.View):
         async def back_callback(bi):
             if bi.user.id != self.uid:
                 return await bi.response.send_message("Not your Arena.", ephemeral=True)
-            await bi.response.edit_message(embed=self.render_lobby(), view=self)
+            await bi.edit_original_response(embed=self.render_lobby(), view=self)
+
         back_btn = discord.ui.Button(label="Back", style=discord.ButtonStyle.secondary)
         back_btn.callback = back_callback
         v.add_item(back_btn)
