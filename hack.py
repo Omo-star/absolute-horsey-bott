@@ -76,7 +76,7 @@ class HackerUniverse(commands.Cog):
                         "X-Title": "Discord Hack RPG",
                     },
                 )
-            except Exception:
+            except Exception as e:
                 self.openrouter_client = None
         groq_key = os.getenv("GROQ")
         if Groq and groq_key:
