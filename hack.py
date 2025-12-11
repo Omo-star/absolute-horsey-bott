@@ -713,11 +713,12 @@ class HackerUniverse(commands.Cog):
         return {
             "global": global_mod,
             "trace_penalty": trace_penalty,
-            "recon": 1.0 + min(0.6, (skill + tier) * 0.02 + chaos_level * 0.03),
-            "access": 1.0 + min(0.7, (skill + tier) * 0.025 + chaos_level * 0.03),
-            "payload": 1.0 + min(0.7, (skill + tier) * 0.025 + chaos_level * 0.04),
-            "extraction": 1.0 + min(0.6, (skill + tier) * 0.02 + chaos_level * 0.02),
+            "recon": 1.0 + min(0.35, (skill + tier) * 0.012 + chaos_level * 0.015),
+            "access": 1.0 + min(0.40, (skill + tier) * 0.014 + chaos_level * 0.015),
+            "payload": 1.0 + min(0.40, (skill + tier) * 0.014 + chaos_level * 0.020),
+            "extraction": 1.0 + min(0.35, (skill + tier) * 0.012 + chaos_level * 0.010),
             "chaos_level": chaos_level,
+            "difficulty": difficulty,
         }
 
     def compute_phase_score(self, phase, module, profile_mod, diff_profile, profile, target_profile):
@@ -780,6 +781,7 @@ class HackerUniverse(commands.Cog):
             bonus = profile_mod["recon"]
         elif phase == "access":
             th = diff_profile["security_integrity"] * 1.25 + diff_profile["anomaly_detection"] * 0.7
+            base_power = min(base_power, th * 1.4)
             bonus = profile_mod["access"]
         elif phase == "payload":
             th = diff_profile["bandwidth_pressure"] * 1.0 + diff_profile["security_integrity"] * 0.8
@@ -788,9 +790,11 @@ class HackerUniverse(commands.Cog):
             th = diff_profile["forensic_risk"] * 1.0 + diff_profile["anomaly_detection"] * 0.8
             bonus = profile_mod["extraction"]
         th *= profile_mod["trace_penalty"]
+        diff = profile_mod.get("difficulty", 1)
+        th *= 1.0 + 0.30 * (diff - 1)
         chaos_scalar = 1.0 + chaos_level * 0.08
         reuse = module.get("reuse_count", 1) if module else 1
-        reuse_penalty = 1.0 / (1.0 + 0.35 * (reuse - 1))
+        reuse_penalty = 0.55 ** (reuse - 1)
 
         power = (
             (base_power * profile_mod["global"] * bonus * chaos_scalar * reuse_penalty)
@@ -812,16 +816,13 @@ class HackerUniverse(commands.Cog):
         chaos_event = None
         if rng_window > 0:
             roll = random.random()
-            if chaos_level >= 3 and roll < rng_window * 0.25:
-                if random.random() < 0.5:
-                    power *= random.uniform(0.3, 0.6)
-                    chaos_event = "catastrophic_glitch"
-                else:
-                    power *= random.uniform(1.6, 2.3)
-                    chaos_event = "overclock_spike"
+            if roll < rng_window * (0.18 + 0.08 * chaos_level):
+                power *= random.uniform(0.55, 0.85)
+                chaos_event = "entropy_collapse"
                 margin = power - th
                 success = margin >= 0.0
                 flipped = True
+
             else:
                 if margin < 0 and roll < rng_window * 0.55:
                     success = True
@@ -855,14 +856,25 @@ class HackerUniverse(commands.Cog):
             "chaos_event": chaos_event,
         }
 
-    def aggregate_outcome(self, phase_results, chaos_level):
+    def aggregate_outcome(self, phase_results, chaos_level, difficulty):
         successes = [p for p in phase_results if p["success"]]
         fails = [p for p in phase_results if not p["success"]]
         flawless = sum(1 for p in phase_results if p["quality"] == "flawless")
         barely = sum(1 for p in phase_results if p["quality"] == "barely")
         almost = sum(1 for p in phase_results if p["quality"] == "almost")
         fail_count = len(fails)
-        success = len(successes) >= 3 or (len(successes) >= 2 and flawless >= 1)
+
+        if any(p["phase"] == "recon" and not p["success"] for p in phase_results):
+            success = False
+        elif difficulty >= 5:
+            success = all(p["success"] for p in phase_results) and sum(1 for p in phase_results if p["quality"] == "flawless") >= 2
+        elif difficulty >= 4:
+            success = all(p["success"] for p in phase_results)
+        else:
+            success = len(successes) >= 3 or (len(successes) >= 2 and flawless >= 1)
+
+        if difficulty >= 3 and any(p["quality"] in ("barely", "almost") for p in phase_results):
+            success = False
         if success:
             if flawless >= 2 and fail_count == 0:
                 quality = "perfect_chain"
@@ -907,7 +919,7 @@ class HackerUniverse(commands.Cog):
         }
 
     def apply_progression(self, profile, difficulty, outcome, phase_results, target_profile, chaos_level):
-        base_xp = 12 * difficulty
+        base_xp = int(14 * (difficulty ** 1.35))
         if outcome["quality"] == "perfect_chain":
             base_xp *= 2.4
         elif outcome["quality"] == "strong":
@@ -964,16 +976,27 @@ class HackerUniverse(commands.Cog):
         if tid in tspace:
             t = tspace[tid]
             t["battles"] += 1
+            diff = difficulty
+
             if outcome["success"]:
                 t["losses"] += 1
-                t["security_integrity"] *= 1.03
-                t["anomaly_detection"] *= 1.04
-                t["forensic_risk"] *= 1.02
+                t["security_integrity"] *= 1.06 + diff * 0.02
+                t["anomaly_detection"] *= 1.07 + diff * 0.025
+                t["forensic_risk"] *= 1.05 + diff * 0.02
+                t["bandwidth_pressure"] *= 1.04 + diff * 0.015
             else:
                 t["wins"] += 1
-                t["security_integrity"] *= 1.01
-                t["bandwidth_pressure"] *= 1.02
+                t["security_integrity"] *= 1.10 + diff * 0.04
+                t["anomaly_detection"] *= 1.12 + diff * 0.045
+                t["forensic_risk"] *= 1.10 + diff * 0.04
+                t["bandwidth_pressure"] *= 1.08 + diff * 0.03
+
             tspace[tid] = t
+        if chaos_level >= 2:
+            chaos_scale = 1.0 + chaos_level * 0.12 + difficulty * 0.08
+            target_profile["security_integrity"] *= chaos_scale
+            target_profile["anomaly_detection"] *= chaos_scale
+
         save_state()
         return {
             "xp_gain": xp_gain,
@@ -1239,8 +1262,33 @@ class HackerUniverse(commands.Cog):
         access_res = self.compute_phase_score("access", modules.get("access"), profile_mod, diff_profile, profile, target_profile)
         payload_res = self.compute_phase_score("payload", modules.get("payload"), profile_mod, diff_profile, profile, target_profile)
         extract_res = self.compute_phase_score("extraction", modules.get("extraction"), profile_mod, diff_profile, profile, target_profile)
+        if not recon_res["success"]:
+            access_res["power"] *= 0.6
+            payload_res["power"] *= 0.7
+            extract_res["power"] *= 0.75
+
+        if not access_res["success"]:
+            payload_res["power"] *= 0.75
+            extract_res["power"] *= 0.8
+        for r in (access_res, payload_res, extract_res):
+            r["power"] = min(r["power"], r["threshold"] * 3.0)
+            r["margin"] = r["power"] - r["threshold"]
+            r["success"] = r["margin"] >= 0.0
+            if r["success"]:
+                if r["margin"] > r["threshold"] * 0.35:
+                    r["quality"] = "flawless"
+                elif r["margin"] < r["threshold"] * 0.08:
+                    r["quality"] = "barely"
+                else:
+                    r["quality"] = "clean"
+            else:
+                if r["margin"] > -r["threshold"] * 0.12:
+                    r["quality"] = "almost"
+                else:
+                    r["quality"] = "failed"
+
         phases = [recon_res, access_res, payload_res, extract_res]
-        outcome = self.aggregate_outcome(phases, chaos_level)
+        outcome = self.aggregate_outcome(phases, chaos_level, difficulty)
         progression = self.apply_progression(profile, difficulty, outcome, phases, target_profile, chaos_level)
         if "hack_history" not in profile:
             profile["hack_history"] = []
