@@ -1115,7 +1115,7 @@ class HackerUniverse(commands.Cog):
             intro.add_field(name="Target lore", value=lore, inline=False)
         msg = await interaction.followup.send(embed=intro)
         await self.animate_chain(msg, target, modules, difficulty, target_profile, chaos_level)
-        profile_mod = self.compute_profile_modifiers(profile, chaos_level)
+        profile_mod = self.compute_profile_modifiers(profile, difficulty, chaos_level)
         recon_res = self.compute_phase_score("recon", modules.get("recon"), profile_mod, diff_profile, profile, target_profile)
         access_res = self.compute_phase_score("access", modules.get("access"), profile_mod, diff_profile, profile, target_profile)
         payload_res = self.compute_phase_score("payload", modules.get("payload"), profile_mod, diff_profile, profile, target_profile)
