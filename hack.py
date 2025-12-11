@@ -1135,7 +1135,8 @@ class HackerUniverse(commands.Cog):
         payload_file: str | None = None,
         extract_file: str | None = None,
     ):
-        await self.hack(
+        await self.hack.callback(
+            self,
             interaction,
             target=target,
             difficulty=difficulty,
