@@ -248,11 +248,10 @@ class HackerUniverse(commands.Cog):
             args = [
                 "-std=c++17",
                 "-I/usr/include",
-                "-I/usr/include/c++/9",
-                "-I/usr/include/x86_64-linux-gnu/c++/9",
-                "-I/usr/lib/llvm-18/include",
+                "-I/usr/include/c++/11",
+                "-I/usr/include/x86_64-linux-gnu/c++/11",
+                "-I/usr/include/c++/11/backward",
             ]
-
         else:
             args = [
                 "-std=c11",
