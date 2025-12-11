@@ -38,14 +38,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
-      - name: Install LLVM 17
-        run: |
-          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" 17
-
-      - name: Install libclang 17
-        run: sudo apt-get install -y libclang-17-dev
-
-
+          
       - name: Install dependencies
         run: pip install -r requirements.txt
 
