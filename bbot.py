@@ -67,7 +67,6 @@ intents.message_content = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-brain_runtime = BrainRuntime(bot, bot_chat)
 
 def extract_text_with_logging(model_name, resp):
     try:
@@ -1141,6 +1140,7 @@ async def bot_chat(msg):
         "My brain is buffering. I couldn't get a response from any of my chat partners."
     )
 
+brain_runtime = BrainRuntime(bot, bot_chat)
 
 async def embed_text(text):
     loop = asyncio.get_event_loop()
@@ -1354,6 +1354,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
