@@ -1,5 +1,6 @@
 import re
 import time
+from bbot import safe_completion, extract_text_with_logging
 from typing import List
 
 MAX_WORDS = 10
