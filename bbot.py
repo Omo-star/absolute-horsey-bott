@@ -1339,6 +1339,9 @@ async def on_message(message):
     await brain_runtime.on_message(message)
     await bot.process_commands(message)
 
-bot.run(os.getenv("DISCORDKEY"))
+if __name__ == "__main__":
+    bot.run(os.getenv("DISCORDKEY"))
+
+
 
 
