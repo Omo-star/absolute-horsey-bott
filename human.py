@@ -4,9 +4,15 @@ import asyncio
 import re
 import math
 from collections import defaultdict, deque, Counter
-
 import discord
 
+DEBUG = True
+
+def hlog(*x):
+    if not DEBUG:
+        return
+    ts = time.strftime("%H:%M:%S", time.localtime())
+    print(f"[HUMAN {ts}]", *x)
 
 IGNORE_PREFIXES = ("!", "/", ".")
 
@@ -44,7 +50,7 @@ REACTION_DIVERSITY_WINDOW = 18
 REACTION_REPEAT_PENALTY = 0.20
 
 CULTURE_MEMORY_MAX = 240
-CULTURE_HALF_LIFE_SEC = 60 * 45
+CULTURE_HALF_LIFE_SEC = 2700
 
 CONTEXT_WINDOW = 9
 CONTEXT_ACTIVE_SEC = 55.0
@@ -471,24 +477,31 @@ def _should_scroll_past(channel_id: int) -> bool:
 
 async def maybe_react(message: discord.Message, mentioned: bool = False):
     if not message.guild:
+        hlog("skip react: no guild")
         return
     if message.author.bot:
+        hlog("skip react: author is bot")
         return
     if message.content.startswith(IGNORE_PREFIXES):
+        hlog("skip react: ignored prefix")
         return
     if _cooldown(message.channel.id, message.author.id):
+        hlog("skip react: hard cooldown")
         return
 
     content = message.content.strip()
     if not content or _low_effort(content):
+        hlog("skip react: low effort")
         return
 
     _maybe_shift_mood()
 
     if _should_scroll_past(message.channel.id):
+        hlog("skip react: scroll past")
         return
 
     p = _p_react(message, mentioned)
+    hlog("react p =", round(p, 3))
 
     if random.random() > p:
         return
@@ -496,9 +509,10 @@ async def maybe_react(message: discord.Message, mentioned: bool = False):
     text = content.lower()
     bucket = _pick_bucket(text, content)
     emoji = _choose_emoji(message.channel.id, message.author.id, bucket)
-
+    
     try:
         await message.add_reaction(emoji)
+        hlog("reacting with", emoji, "bucket =", bucket)
         _mark(message.channel.id, message.author.id, emoji)
         if random.random() < REGRET_CHANCE:
             await asyncio.sleep(random.uniform(*REGRET_DELAY_RANGE))
@@ -548,8 +562,8 @@ _last_channel_embarrassment = defaultdict(float)
 SPEAK_COOLDOWN = 75.0
 EMBARRASSMENT_HALF_LIFE = 180.0
 
-BASE_INTERRUPT_PROB = 0.012
-MAX_INTERRUPT_PROB = 0.26
+BASE_INTERRUPT_PROB = 0.035
+MAX_INTERRUPT_PROB = 0.42
 
 def _decay_embarrassment(channel_id: int):
     t = _now()
@@ -602,11 +616,28 @@ def _confidence_decay(channel_id: int) -> float:
     base = _last_speak_confidence[channel_id]
     decay = 1.0 - min(_last_channel_embarrassment[channel_id], 0.85)
     return max(base * decay, 0.25)
+    
+def _silence_pressure(channel_id: int) -> float:
+    q = _channel_msgs[channel_id]
+    if not q:
+        return 0.18
+    last_ts, _ = q[-1]
+    age = _now() - last_ts
+    if age < 8:
+        return 0.0
+    if age > 45:
+        return 0.22
+    return min((age - 8) / 37, 1.0) * 0.22
 
 def should_interject(message: discord.Message) -> float:
+    hlog("interject check:", "msg =", message.content[:80])
+
     if not message.guild:
+        hlog("interject skip: no guild")
         return 0.0
+
     if message.author.bot:
+        hlog("interject skip: author bot")
         return 0.0
 
     channel_id = message.channel.id
@@ -614,14 +645,26 @@ def should_interject(message: discord.Message) -> float:
 
     last = _last_speak_time.get(channel_id, 0.0)
     if now - last < SPEAK_COOLDOWN:
+        hlog("interject skip: speak cooldown", round(now - last, 2))
         return 0.0
 
     _decay_embarrassment(channel_id)
 
-    pressure = 0.0
-    pressure += _conversation_pressure(channel_id)
-    pressure += _unanswered_question_pressure(channel_id)
-    pressure += _relevance_pressure(message)
+    cp = _conversation_pressure(channel_id)
+    qp = _unanswered_question_pressure(channel_id)
+    rp = _relevance_pressure(message)
+
+    pressure = cp + qp + rp
+    sp = _silence_pressure(channel_id)
+    pressure += sp
+    hlog("silence pressure =", round(sp, 3))
+    
+    hlog(
+        "pressure parts:",
+        "conv =", round(cp, 3),
+        "question =", round(qp, 3),
+        "relevance =", round(rp, 3),
+    )
 
     if _current_mood == "tired":
         pressure *= 0.6
@@ -630,20 +673,39 @@ def should_interject(message: discord.Message) -> float:
     elif _current_mood == "focused":
         pressure *= 0.85
 
-    pressure -= _fatigue_penalty()
-    pressure -= _circadian_penalty()
-    pressure -= _last_channel_embarrassment[channel_id] * 0.55
+    fatigue = _fatigue_penalty()
+    circ = _circadian_penalty()
+    embarrass = _last_channel_embarrassment[channel_id] * 0.55
+
+    pressure -= fatigue
+    pressure -= circ
+    pressure -= embarrass
 
     confidence = _confidence_decay(channel_id)
 
     p = BASE_INTERRUPT_PROB + pressure * confidence
     p = max(min(p, MAX_INTERRUPT_PROB), 0.0)
 
-    if random.random() < p:
+    roll = random.random()
+
+    hlog(
+        "interject math:",
+        "confidence =", round(confidence, 3),
+        "fatigue =", round(fatigue, 3),
+        "circadian =", round(circ, 3),
+        "embarrass =", round(embarrass, 3),
+        "p =", round(p, 4),
+        "roll =", round(roll, 4),
+    )
+
+    if roll < p:
         _last_speak_time[channel_id] = now
         _last_speak_confidence[channel_id] = confidence * random.uniform(0.88, 0.97)
         _last_channel_embarrassment[channel_id] += random.uniform(0.12, 0.28)
+        hlog("INTERJECT TRIGGERED")
         return p
 
+    hlog("interject skipped: roll failed")
     return 0.0
+
 
