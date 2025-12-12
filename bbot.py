@@ -9,6 +9,7 @@ import asyncio
 import aiohttp
 import re
 import time
+import human
 import datetime
 import json
 from math import sqrt
@@ -1293,6 +1294,13 @@ async def on_message(message):
     if message.author.bot:
         return
     bot_id = bot.user.id if bot.user else None
+    is_mentioned = False
+    if bot_id:
+        is_mentioned = (f"<@{bot_id}>" in message.content) or (f"<@!{bot_id}>" in message.content)
+
+    await human.maybe_react(message, mentioned=is_mentioned)
+
+    bot_id = bot.user.id if bot.user else None
     content_for_commands = message.content
     if bot_id:
         for mention in (f"<@{bot_id}>", f"<@!{bot_id}>"):
@@ -1399,6 +1407,7 @@ async def on_message(message):
             response = await bot_roast(
                 clean_text or "Roast me", uid, roast_mode.get(uid, "deep")
             )
+            await human.human_delay(message.channel)
             await message.channel.send(response)
             return
 
@@ -1411,14 +1420,17 @@ async def on_message(message):
             roast_history[uid] = history[-MAX_HISTORY:]
             save_roast_memory()
             log(f"[ROAST SENT] {response}")
+            await human.human_delay(message.channel)
             await message.channel.send(response)
         else:
             response = await bot_chat(clean_text or "hi")
+            await human.human_delay(message.channel)
             await message.channel.send(response)
         return
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
