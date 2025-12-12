@@ -758,13 +758,13 @@
   },
   "hacker_profiles": {
     "1238242784679563265": {
-      "skill": 25,
-      "xp": 14,
+      "skill": 24,
+      "xp": 75,
       "tier": 3,
-      "trace": 6,
-      "reputation": 34,
+      "trace": 12,
+      "reputation": 33,
       "streak": 0,
-      "last_hack": "2025-12-11T23:19:08.569668",
+      "last_hack": "2025-12-11T23:24:26.063988",
       "specializations": [],
       "hack_history": [
         {
@@ -820,16 +820,24 @@
           "quality": "messy",
           "chaos": 0,
           "timestamp": "2025-12-11T23:19:08.569668"
+        },
+        {
+          "target": "<@1435987186502733878>",
+          "difficulty": 5,
+          "success": false,
+          "quality": "messy",
+          "chaos": 0,
+          "timestamp": "2025-12-11T23:24:26.063988"
         }
       ],
       "style_vector": {
-        "aggressive": 9.268858524599999,
-        "stealthy": 0.3521688665999999,
-        "bruteforce": 86.66344979999995,
-        "elegant": 9.302459078999998,
-        "experimental": 9.596463929999999
+        "aggressive": 9.48820096722,
+        "stealthy": 0.27651820661999993,
+        "bruteforce": 63.664414859999965,
+        "elegant": 9.511721355299999,
+        "experimental": 9.717524751
       },
-      "chaos_affinity": 34.027300000000004,
+      "chaos_affinity": 35.531200000000005,
       "chaos_unlocks": []
     }
   },
@@ -878,10 +886,10 @@
       "id": "<@1435987186502733878>:5",
       "name": "<@1435987186502733878>",
       "difficulty": 5,
-      "security_integrity": 214.5,
-      "anomaly_detection": 121.05000000000001,
-      "bandwidth_pressure": 86.1,
-      "forensic_risk": 136.5,
+      "security_integrity": 278.85,
+      "anomaly_detection": 162.81225000000003,
+      "bandwidth_pressure": 105.90299999999999,
+      "forensic_risk": 177.45000000000002,
       "temperament": "paranoid",
       "style_bias": {
         "aggressive": 0.2045726554185709,
@@ -890,8 +898,8 @@
         "elegant": 0.301644019225305,
         "experimental": 0.29522015042233746
       },
-      "battles": 1,
-      "wins": 1,
+      "battles": 2,
+      "wins": 2,
       "losses": 0
     }
   }
