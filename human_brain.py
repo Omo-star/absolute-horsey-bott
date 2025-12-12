@@ -1144,9 +1144,13 @@ class InterjectionEngine:
         if roll > p:
             return None
         bucket = self.signals.bucket(message.content or "")
+        hlog("INTERJECT calling ai_interject_line")
         text = await ai_interject_line(bucket, message.content or "")
         if not text:
-            return None
+            hlog("INTERJECT AI returned empty, using template")
+            text = self.templates.pick(bucket, random)
+        else:
+            hlog("INTERJECT AI returned:", repr(text))
 
         await self.brain.human_delay(message.channel, text)
         try:
