@@ -1307,12 +1307,30 @@ async def on_ready():
             print(f"Synced commands for guild {guild.name}")
         except Exception as e:
             print(f"Guild sync failed for {guild.name}: {e}")
+@bot.event
+async def on_reaction_add(reaction, user):
+    if user.bot:
+        return
+    if not reaction.message.guild:
+        return
+
+    emoji = str(reaction.emoji)
+    channel_id = reaction.message.channel.id
+
+    human.observe_reaction(channel_id, user.id, emoji)
+
+    msg_author = reaction.message.author
+    if msg_author and not msg_author.bot:
+        human.observe_received_reaction(msg_author.id)
 
 @bot.event
 async def on_message(message):
     log(f"[DEBUG] RAW MESSAGE: {message.content}")
     if message.author.bot:
         return
+    if message.guild and message.content:
+        human.observe_channel_message(message.channel.id, message.content)
+
     bot_id = bot.user.id if bot.user else None
     is_mentioned = False
     if bot_id:
@@ -1450,6 +1468,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
