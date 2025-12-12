@@ -1,5 +1,7 @@
 import re
 import asyncio
+from bbot import safe_completion
+from bbot import extract_text_with_logging
 from typing import Optional
 
 MAX_WORDS = 10
