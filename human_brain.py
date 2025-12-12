@@ -1139,7 +1139,10 @@ class InterjectionEngine:
         if roll > p:
             return None
         bucket = self.signals.bucket(message.content or "")
-        text = self.templates.pick(bucket, self.brain._rng)
+        text = await ai_interject_line(bucket, message.content or "")
+        if not text:
+            return None
+
         await self.brain.human_delay(message.channel, text)
         try:
             self.brain.mark_busy(message.channel.id)
