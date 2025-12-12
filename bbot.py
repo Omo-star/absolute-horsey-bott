@@ -9,7 +9,7 @@ import asyncio
 import aiohttp
 import re
 import time
-import human
+from human_brain import BrainRuntime
 import datetime
 import json
 from math import sqrt
@@ -67,7 +67,7 @@ intents.message_content = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-
+brain_runtime = BrainRuntime(bot)
 
 def extract_text_with_logging(model_name, resp):
     try:
@@ -1270,7 +1270,7 @@ async def bot_roast(msg, uid, mode):
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-
+    brain_runtime.start()
     extensions = [
         "voidmaze",
         "arena",
@@ -1309,246 +1309,25 @@ async def on_ready():
             print(f"Guild sync failed for {guild.name}: {e}")
 @bot.event
 async def on_reaction_add(reaction, user):
-    if user.bot:
-        return
-    if not reaction.message.guild:
+    if user.bot or not reaction.message.guild:
         return
 
-    emoji = str(reaction.emoji)
-    channel_id = reaction.message.channel.id
+    brain_runtime.brain.observe_reaction(
+        reaction.message.channel.id,
+        user.id,
+        str(reaction.emoji)
+    )
 
-    human.observe_reaction(channel_id, user.id, emoji)
-
-    msg_author = reaction.message.author
-    if msg_author and not msg_author.bot:
-        human.observe_received_reaction(msg_author.id)
+    author = reaction.message.author
+    if author and not author.bot:
+        brain_runtime.brain.observe_received_reaction(author.id)
 
 @bot.event
 async def on_message(message):
-    log(f"[DEBUG] RAW MESSAGE: {message.content}")
     if message.author.bot:
         return
-    if message.guild and message.content:
-        human.observe_channel_message(message.channel.id, message.content)
 
-    bot_id = bot.user.id if bot.user else None
-    is_mentioned = False
-    if bot_id:
-        is_mentioned = (f"<@{bot_id}>" in message.content) or (f"<@!{bot_id}>" in message.content)
-
-    await human.maybe_react(message, mentioned=is_mentioned)
-    conf = human.should_interject(message)
-    if conf > 0:
-        clean = message.content.strip()
-        await human.human_delay(message.channel)
-        response = await bot_chat(clean)
-        if response:
-            await message.channel.send(response)
-            return
-
-    bot_id = bot.user.id if bot.user else None
-    content_for_commands = message.content
-    if bot_id:
-        for mention in (f"<@{bot_id}>", f"<@!{bot_id}>"):
-            if content_for_commands.startswith(mention):
-                content_for_commands = content_for_commands[len(mention) :].lstrip()
-                break
-    if content_for_commands.startswith("!"):
-        if content_for_commands != message.content:
-            fake = message
-            fake.content = content_for_commands
-            await bot.process_commands(fake)
-
-        await bot.process_commands(message)
-        return
-    clean_text = message.content
-    if bot_id:
-        for mention in (f"<@{bot_id}>", f"<@!{bot_id}>"):
-            clean_text = clean_text.replace(mention, "")
-    clean_text = clean_text.strip()
-    log(f"[DEBUG] CLEAN TEXT: {clean_text}")
-    is_mentioned = False
-    if bot_id:
-        is_mentioned = (f"<@{bot_id}>" in message.content) or (
-            f"<@!{bot_id}>" in message.content
-        )
-    log(f"[DEBUG] IS_MENTIONED: {is_mentioned}")
-    uid = message.author.id
-    if is_mentioned:
-
-        mem = get_user_memory(uid)
-        msg = clean_text
-        lower = msg.lower()
-        mem["msg_count"] += 1
-
-        mem["LF"]["msg_samples"].append(msg)
-        if len(mem["LF"]["msg_samples"]) > 50:
-            mem["LF"]["msg_samples"].pop(0)
-
-        mem["LF"]["slang"] += (
-            sum(1 for w in ["bro", "fr", "nah", " ong", "tf"] if w in lower) * 0.2
-        )
-        mem["LF"]["emoji_rate"] += sum(c in lower for c in ["😂", "😭", "💀"]) * 0.3
-        mem["LF"]["all_caps_rate"] += 1 if msg.isupper() else 0
-        mem["LF"]["punct_energy"] += msg.count("!") * 0.15
-        mem["LF"]["avg_len"] = (mem["LF"]["avg_len"] * 0.95) + (len(msg) * 0.05)
-
-        if msg.isupper():
-            mem["EB"]["anger"] += 0.3
-        if "help" in lower or "why" in lower:
-            mem["EB"]["sadness"] += 0.25
-        if "lmao" in lower or "lol" in lower:
-            mem["EB"]["hype"] += 0.3
-        if "???" in msg:
-            mem["EB"]["chaos"] += 0.4
-
-        if "mid" in lower or "trash" in lower:
-            mem["HP"]["mean"] += 0.4
-        if "kill" in lower or "die" in lower:
-            mem["HP"]["dark"] += 0.4
-        if "bro wtf" in lower:
-            mem["HP"]["petty"] += 0.3
-        if "ok?" in lower:
-            mem["HP"]["simple"] += 0.2
-        if "lmfao" in lower:
-            mem["HP"]["goofy"] += 0.4
-
-        if f"<@{bot_id}>" in message.content:
-            mem["IS"]["bot_mentions"] += 1
-        if "roast me" in lower or "roast" in lower:
-            mem["IS"]["roast_requests"] += 1
-        if "i suck" in lower or "im trash" in lower:
-            mem["IS"]["self_roasts"] += 1
-        if msg.count("!") >= 3:
-            mem["IS"]["escalation"] += 0.3
-
-        emb = await embed_text(msg)
-        if emb:
-            mem["SPM"]["embeddings"].append(emb)
-            mem["SPM"]["texts"].append(msg)
-            if len(mem["SPM"]["embeddings"]) > 30:
-                mem["SPM"]["embeddings"].pop(0)
-                mem["SPM"]["texts"].pop(0)
-
-        if mem["msg_count"] % 30 == 0:
-            combined_text = "\n".join(mem["LF"]["msg_samples"][-20:])
-            try:
-                summary = openrouter_client.chat.completions.create(
-                    model="microsoft/phi-3-mini-128k-instruct",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "Summarize user's tone, humor, language, and emotional patterns in 3 sentences.",
-                        },
-                        {"role": "user", "content": combined_text},
-                    ],
-                    max_tokens=120,
-                    temperature=0.3,
-                )
-                mem["LTS"] = summary.choices[0].message.content.strip()
-            except:
-                pass
-        save_roast_memory()
-        if uid in auto_roast:
-            response = await bot_roast(
-                clean_text or "Roast me", uid, roast_mode.get(uid, "deep")
-            )
-            await human.human_delay(message.channel)
-            await message.channel.send(response)
-            return
-
-        if uid in roast_mode:
-            mode = roast_mode[uid]
-            response = await bot_roast(clean_text or "Roast me", uid, mode)
-            history = roast_history.setdefault(uid, [])
-            history.append({"user": clean_text})
-            history.append({"bot": response})
-            roast_history[uid] = history[-MAX_HISTORY:]
-            save_roast_memory()
-            log(f"[ROAST SENT] {response}")
-            await human.human_delay(message.channel)
-            await message.channel.send(response)
-        else:
-            response = await bot_chat(clean_text or "hi")
-            await human.human_delay(message.channel)
-            await message.channel.send(response)
-        return
-        
+    await brain_runtime.on_message(message)
+    await bot.process_commands(message)
 
 bot.run(os.getenv("DISCORDKEY"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
