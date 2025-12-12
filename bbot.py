@@ -1337,6 +1337,14 @@ async def on_message(message):
         is_mentioned = (f"<@{bot_id}>" in message.content) or (f"<@!{bot_id}>" in message.content)
 
     await human.maybe_react(message, mentioned=is_mentioned)
+    conf = human.should_interject(message)
+    if conf > 0:
+        clean = message.content.strip()
+        await human.human_delay(message.channel)
+        response = await bot_chat(clean)
+        if response:
+            await message.channel.send(response)
+            return
 
     bot_id = bot.user.id if bot.user else None
     content_for_commands = message.content
@@ -1468,6 +1476,7 @@ async def on_message(message):
         
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
