@@ -1332,6 +1332,17 @@ async def on_reaction_add(reaction, user):
     author = reaction.message.author
     if author and not author.bot:
         brain_runtime.brain.observe_received_reaction(author.id)
+    if (
+        reaction.message.author
+        and reaction.message.author.id == bot.user.id
+    ):
+        brain_runtime.brain.maybe_ack_reaction_on_self(
+            channel_id=reaction.message.channel.id,
+            reactor_id=user.id,
+            emoji=str(reaction.emoji),
+            message_id=reaction.message.id,
+        )
+
 
 @bot.event
 async def on_message(message):
@@ -1343,6 +1354,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
