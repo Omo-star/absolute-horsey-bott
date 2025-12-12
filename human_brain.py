@@ -249,6 +249,8 @@ class HumanBrain:
         self._last_reflect = _now()
         self._last_persist = _now()
         self._load()
+    def mark_busy(self, channel_id):
+        self._last_speak_time[channel_id] = now()
 
     def _load(self) -> None:
         data = self.store.load()
