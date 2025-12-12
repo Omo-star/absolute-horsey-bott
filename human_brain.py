@@ -236,6 +236,8 @@ class HumanBrain:
         self._user_received_reacts: Dict[int, int] = defaultdict(int)
         self._user_given_reacts: Dict[int, int] = defaultdict(int)
         self._moods = ["neutral", "warm", "tired", "silly", "focused"]
+        self._self_react_memory: Dict[int, float] = {} 
+        self._pending_self_reacts: Deque[Tuple[float, int, int, int, str]] = deque()
         self._current_mood = self._rng.choice(self._moods)
         self._channel_state: Dict[int, str] = defaultdict(lambda: STATE_LURKING)
         self._last_speak_time: Dict[int, float] = {}
@@ -361,6 +363,79 @@ class HumanBrain:
         if t - self._last_user_time.get(user_id, 0.0) < HARD_MIN_GAP_USER:
             return True
         return False
+    async def process_self_reacts(self, bot: discord.Client) -> None:
+        if not self._pending_self_reacts:
+            return
+
+        now = _now()
+        keep = deque()
+
+        while self._pending_self_reacts:
+            when, cid, uid, mid, emoji = self._pending_self_reacts.popleft()
+            if when > now:
+                keep.append((when, cid, uid, mid, emoji))
+                continue
+
+            try:
+                for guild in bot.guilds:
+                    ch = guild.get_channel(cid)
+                    if not ch:
+                        continue
+
+                    try:
+                        msg = await ch.fetch_message(mid)
+                    except Exception:
+                        continue
+
+                    await msg.add_reaction(emoji)
+                    self._mark_react(cid, uid, emoji)
+                    break
+
+            except Exception:
+                pass
+
+        self._pending_self_reacts = keep
+
+    def maybe_ack_reaction_on_self(
+        self,
+        channel_id: int,
+        reactor_id: int,
+        emoji: str,
+        message_id: int,
+    ) -> None:
+        now = _now()
+
+        if message_id in self._self_react_memory:
+            return
+
+        conf = self._last_speak_confidence[channel_id]
+        emb = self._last_channel_embarrassment[channel_id]
+        fam = self._user_familiarity[reactor_id]
+        st = self._channel_state[channel_id]
+    
+        p = 0.025 
+
+        if fam > 6:
+            p += 0.04
+
+        if emoji in ("😂", "😭", "💀", "🤣"):
+            p += 0.04
+
+        if conf > 0.60:
+            p += 0.03
+
+        if emb > 0.5 or st == STATE_WITHDRAWING:
+            return
+
+        if self._rng.random() > min(p, 0.12):
+            return
+
+        delay = self._rng.uniform(3.0, 10.0)
+
+        self._self_react_memory[message_id] = now
+        self._pending_self_reacts.append(
+            (now + delay, channel_id, reactor_id, message_id, emoji)
+        )
 
     def observe_channel_message(self, channel_id: int, content: str) -> None:
         if not content:
@@ -1222,6 +1297,7 @@ class BrainRuntime:
         while not self.bot.is_closed():
             try:
                 await self.brain.process_delayed_reacts(self.bot)
+                await self.brain.process_self_reacts(self.bot)
                 self.brain.self_reflect()
                 self.brain.maybe_persist()
             except Exception:
