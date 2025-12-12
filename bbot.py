@@ -158,7 +158,8 @@ class SlashCommands(commands.Cog):
             final = "\n".join(x for x in out if x and x.strip())
             if not final:
                 final = "Even all the models refused to roast 💀."
-
+                
+            brain_runtime.brain.mark_busy(interaction.channel.id)
             await interaction.followup.send(final)
             return
 
@@ -168,6 +169,7 @@ class SlashCommands(commands.Cog):
             if not resp or not resp.strip():
                 resp = "Even the AI models looked at you and said 'nah bro I'm good' 💀."
 
+            brain_runtime.brain.mark_busy(interaction.channel.id)
             await interaction.followup.send(resp)
             return
 
@@ -219,6 +221,7 @@ class SlashCommands(commands.Cog):
             f"- Embedding Count: `{len(spm['embeddings'])}`\n"
         )
 
+        brain_runtime.brain.mark_busy(interaction.channel.id)
         await interaction.response.send_message(text)
 
     # /autor
@@ -228,12 +231,15 @@ class SlashCommands(commands.Cog):
         if mode == "on":
             auto_roast[interaction.user.id] = True
             save_roast_memory()
+            brain_runtime.brain.mark_busy(interaction.channel.id)
             await interaction.response.send_message("Auto-roast enabled.")
         elif mode == "off":
             auto_roast.pop(interaction.user.id, None)
             save_roast_memory()
+            brain_runtime.brain.mark_busy(interaction.channel.id)
             await interaction.response.send_message("Auto-roast disabled.")
         else:
+            brain_runtime.brain.mark_busy(interaction.channel.id)
             await interaction.response.send_message("Use `/autor on` or `/autor off`.")
 
     # /roastmode
@@ -241,13 +247,14 @@ class SlashCommands(commands.Cog):
     async def roastmode(self, interaction: discord.Interaction, mode: str):
         mode = mode.lower()
         if mode not in ["fast", "deep", "adjustable"]:
+            brain_runtime.brain.mark_busy(interaction.channel.id)
             await interaction.response.send_message("Modes: fast, deep, adjustable")
             return
 
         roast_mode[interaction.user.id] = mode
         roast_history[interaction.user.id] = []
         save_roast_memory()
-
+        brain_runtime.brain.mark_busy(interaction.channel.id)
         await interaction.response.send_message(
             f"🔥 Roast Mode: **{mode.upper()}**. Use /stoproast to stop."
         )
@@ -260,8 +267,10 @@ class SlashCommands(commands.Cog):
             del roast_mode[uid]
             roast_history.pop(uid, None)
             save_roast_memory()
+            brain_runtime.brain.mark_busy(interaction.channel.id)
             await interaction.response.send_message("🏳️ Roast Mode Turned Off.")
         else:
+            brain_runtime.brain.mark_busy(interaction.channel.id)
             await interaction.response.send_message("You were not in roast mode.")
 
 failed_models = {}
@@ -1331,3 +1340,4 @@ async def on_message(message):
     await bot.process_commands(message)
 
 bot.run(os.getenv("DISCORDKEY"))
+
