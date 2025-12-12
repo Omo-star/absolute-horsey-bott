@@ -1,13 +1,12 @@
 import re
 import asyncio
-from bbot import safe_completion
-from bbot import extract_text_with_logging
 from typing import Optional
 
 MAX_WORDS = 10
 MAX_CHARS = 80
-
 async def ai_interject_line(bucket: str, content: str) -> str:
+    from bbot import safe_completion, extract_text_with_logging
+
     system = (
         "you are a real discord user reacting naturally\n"
         "write one short casual response\n"
@@ -44,18 +43,10 @@ async def ai_interject_line(bucket: str, content: str) -> str:
     except Exception:
         return ""
 
-    text = text.strip()
-    text = re.sub(r"\s+", " ", text)
-    text = text.split("\n")[0]
-    text = text[:MAX_CHARS]
-
+    text = re.sub(r"\s+", " ", text.strip()).split("\n")[0][:80]
     words = text.split()
-    if len(words) > MAX_WORDS:
-        text = " ".join(words[:MAX_WORDS])
+    if len(words) > 10:
+        text = " ".join(words[:10])
 
     text = text.strip(" .,!?:;")
-
-    if len(text) < 2:
-        return ""
-
-    return text
+    return text if len(text) >= 2 else ""
