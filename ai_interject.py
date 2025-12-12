@@ -57,7 +57,7 @@ async def ai_interject_line(bucket: str, content: str) -> str:
             if len(words) > MAX_WORDS:
                 text = " ".join(words[:MAX_WORDS])
 
-            text = text.strip(" .,!?:;")
+            text = text.strip()
 
             if len(text) >= 2:
                 return text
