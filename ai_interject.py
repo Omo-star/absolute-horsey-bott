@@ -1,12 +1,17 @@
 import re
-import asyncio
-from typing import Optional
+from typing import List
 
 MAX_WORDS = 10
 MAX_CHARS = 80
-async def ai_interject_line(bucket: str, content: str) -> str:
-    from bbot import safe_completion, extract_text_with_logging
 
+INTERJECT_MODELS: List[str] = [
+    "groq:llama-3.1-8b-instant",
+    "github:gpt-4o-mini",
+    "gemini-2.0-flash",
+    "openai:gpt-4o-mini",
+]
+
+async def ai_interject_line(bucket: str, content: str) -> str:
     system = (
         "you are a real discord user reacting naturally\n"
         "write one short casual response\n"
@@ -16,6 +21,7 @@ async def ai_interject_line(bucket: str, content: str) -> str:
         "no explanations\n"
         "no analysis\n"
         "never sound formal\n"
+        "use slang too\n"
         "if the message is a greeting respond with a greeting\n"
         "if the message is a question respond with curiosity or confusion\n"
         "if the message is emotional respond with empathy\n"
@@ -24,29 +30,39 @@ async def ai_interject_line(bucket: str, content: str) -> str:
 
     user = (
         f"message type: {bucket}\n"
-        f"message content: \"{content}\"\n\n"
-        "reply naturally like a human would in chat"
+        f"message content: \"{content}\""
     )
 
     messages = [
         {"role": "system", "content": system},
-        {"role": "user", "content": user}
+        {"role": "user", "content": user},
     ]
 
-    try:
-        resp = await safe_completion("gemini-2.0-flash", messages)
-        if not resp:
-            return ""
-        text = extract_text_with_logging("INTERJECT_AI", resp)
-        if not text:
-            return ""
-    except Exception:
-        return ""
+    for model in INTERJECT_MODELS:
+        try:
+            resp = await safe_completion(model, messages)
+            if not resp:
+                continue
 
-    text = re.sub(r"\s+", " ", text.strip()).split("\n")[0][:80]
-    words = text.split()
-    if len(words) > 10:
-        text = " ".join(words[:10])
+            text = extract_text_with_logging(f"INTERJECT:{model}", resp)
+            if not text:
+                continue
 
-    text = text.strip(" .,!?:;")
-    return text if len(text) >= 2 else ""
+            text = text.strip()
+            text = re.sub(r"\s+", " ", text)
+            text = text.split("\n")[0]
+            text = text[:MAX_CHARS]
+
+            words = text.split()
+            if len(words) > MAX_WORDS:
+                text = " ".join(words[:MAX_WORDS])
+
+            text = text.strip(" .,!?:;")
+
+            if len(text) >= 2:
+                return text
+
+        except Exception:
+            continue
+
+    return ""
