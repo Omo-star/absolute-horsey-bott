@@ -5,7 +5,7 @@ import math
 import json
 import os
 import re
-import ai_interject
+from ai_interject import ai_interject_line
 from collections import defaultdict, deque, Counter
 from typing import Any, Dict, Deque, List, Tuple, Optional, Callable
 import discord
