@@ -1196,6 +1196,13 @@ class BrainRuntime:
         self._task_started = False
 
     async def on_message(self, message: discord.Message):
+        if self.bot.user in message.mentions:
+            reply = await bot_chat(message.content)
+            if reply:
+                await self.brain.human_delay(message.channel, reply)
+                await message.channel.send(reply)
+                self.brain.mark_busy(message.channel.id)
+            return
         if message.author.bot:
             return
         mentioned = self.bot.user in message.mentions if self.bot.user else False
