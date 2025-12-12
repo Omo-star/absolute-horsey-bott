@@ -249,8 +249,8 @@ class HumanBrain:
         self._last_reflect = _now()
         self._last_persist = _now()
         self._load()
-    def mark_busy(self, channel_id):
-        self._last_speak_time[channel_id] = now()
+    def mark_busy(self, channel_id: int) -> None:
+        self._last_speak_time[channel_id] = _now()
 
     def _load(self) -> None:
         data = self.store.load()
@@ -1142,9 +1142,11 @@ class InterjectionEngine:
         text = self.templates.pick(bucket, self.brain._rng)
         await self.brain.human_delay(message.channel, text)
         try:
+            self.brain.mark_busy(message.channel.id)
             await message.channel.send(text)
             self.brain.mark_interjected(message.channel.id, success_hint=None)
             return text
+
         except Exception:
             self.brain.mark_interjected(message.channel.id, success_hint=False)
             return None
