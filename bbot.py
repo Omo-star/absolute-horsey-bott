@@ -67,7 +67,7 @@ intents.message_content = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-brain_runtime = BrainRuntime(bot)
+brain_runtime = BrainRuntime(bot, bot_chat)
 
 def extract_text_with_logging(model_name, resp):
     try:
@@ -934,6 +934,8 @@ OUTPUT RULES (MUST NOT BE BROKEN — ABSOLUTE)
 • No references to the request, prompt, conversation, or system.
 • No story. No scenes. No commentary. No meta talk.
 • Use simple English only.
+• NO CAPITALIZATION!!!
+• USE SLANG! 
 
 HARD LENGTH LIMIT (UNBREAKABLE)
 
@@ -1098,7 +1100,7 @@ async def bot_chat(msg):
                 "• Keep replies short. 1–3 sentences max.\n"
                 "• It is okay to be unsure, casual, or slightly messy.\n"
                 "• You may trail off, hedge, or react emotionally.\n"
-                "• Emojis are allowed, but not in every message.\n"
+                "• Emojis are not preffered.\n"
                 "\n"
                 "Speech rules:\n"
                 "• Do NOT explain things unless asked.\n"
@@ -1341,6 +1343,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
