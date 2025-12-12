@@ -1,9 +1,16 @@
 import re
-from human_brain import hlog
+import time
 from typing import List
 
 MAX_WORDS = 10
 MAX_CHARS = 80
+DEBUG = True
+
+def hlog(*x):
+    if not DEBUG:
+        return
+    ts = time.strftime("%H:%M:%S", time.localtime())
+    print(f"[AI_INTERJECT {ts}]", *x)
 
 INTERJECT_MODELS: List[str] = [
     "groq:llama-3.1-8b-instant",
