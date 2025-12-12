@@ -1,6 +1,92 @@
 import re
 import time
 from typing import List
+import asyncio
+import re
+import os
+import google.generativeai as genai
+from groq import Groq
+from openai import OpenAI
+
+groq_client = Groq(api_key=os.getenv("GROQ"))
+openrouter_client = OpenAI(
+    api_key=os.getenv("OPENROUTER_KEY"),
+    base_url="https://openrouter.ai/api/v1",
+)
+
+def extract_text_with_logging(model_name, resp):
+    try:
+        c = resp.choices[0]
+        if hasattr(c, "message") and hasattr(c.message, "content"):
+            return c.message.content or ""
+    except:
+        pass
+    return ""
+
+def strip_reasoning(text):
+    if not text:
+        return ""
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+    text = re.sub(r"<reasoning>.*?</reasoning>", "", text, flags=re.DOTALL)
+    return text.strip()
+async def safe_completion(model: str, messages):
+    loop = asyncio.get_event_loop()
+
+    def wrap(text):
+        class Msg: pass
+        class Ch: pass
+        class Resp: pass
+        m = Msg()
+        c = Ch()
+        r = Resp()
+        m.content = text
+        c.message = m
+        r.choices = [c]
+        return r
+
+    if model.startswith("groq:"):
+        actual = model.split(":", 1)[1]
+        def call():
+            resp = groq_client.chat.completions.create(
+                model=actual,
+                messages=messages,
+                max_tokens=40,
+                temperature=1.0,
+            )
+            return wrap(resp.choices[0].message.content)
+        return await loop.run_in_executor(None, call)
+
+    if model.startswith("github:") and github_client:
+        actual = model.split(":", 1)[1]
+        def call():
+            resp = github_client.chat.completions.create(
+                model=actual,
+                messages=messages,
+                max_tokens=40,
+                temperature=1.0,
+            )
+            return wrap(resp.choices[0].message.content)
+        return await loop.run_in_executor(None, call)
+
+    if model.startswith("gemini"):
+        def call():
+            user_text = "\n".join(
+                m["content"] for m in messages if m["role"] == "user"
+            )
+            resp = genai.GenerativeModel(model).generate_content(user_text)
+            return wrap(resp.text if hasattr(resp, "text") else "")
+        return await loop.run_in_executor(None, call)
+    def call():
+        resp = openrouter_client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=40,
+            temperature=1.0,
+        )
+        return wrap(resp.choices[0].message.content)
+
+    return await loop.run_in_executor(None, call)
+
 
 MAX_WORDS = 10
 MAX_CHARS = 80
