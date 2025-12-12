@@ -172,7 +172,7 @@ class SlashCommands(commands.Cog):
             brain_runtime.brain.mark_busy(interaction.channel.id)
             await interaction.followup.send(resp)
             return
-
+        brain_runtime.brain.mark_busy(interaction.channel.id)
         await interaction.followup.send(
             "Use `/roast @User`, `/roast @User @Other`, or `/roast your text here`"
         )
@@ -1340,4 +1340,5 @@ async def on_message(message):
     await bot.process_commands(message)
 
 bot.run(os.getenv("DISCORDKEY"))
+
 
