@@ -931,7 +931,7 @@ class HumanBrain:
         sp = self._silence_pressure(cid)
         pressure = cp + qp + rp + sp
         if _is_question(content):
-            pressure += 0.20
+            pressure += 0.38
         prof = self._channel_profile[cid]
         chaos = _clamp(prof.get("chaos", 0.45), 0.0, 1.0)
         emoji_tol = _clamp(prof.get("emoji_tolerance", 0.55), 0.0, 1.0)
