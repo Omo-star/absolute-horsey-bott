@@ -5,6 +5,7 @@ import math
 import json
 import os
 import re
+from ai_interject
 from collections import defaultdict, deque, Counter
 from typing import Any, Dict, Deque, List, Tuple, Optional, Callable
 import discord
@@ -155,9 +156,12 @@ def _low_effort(text: str) -> bool:
     t = _norm(text)
     if not t:
         return True
+    if t in {"hi","hey","hello","yo","sup"}:
+        return False
     if len(t) <= 3:
         return True
     return t in LOW_EFFORT
+
 
 def _circadian_penalty() -> float:
     lt = time.localtime()
@@ -1136,6 +1140,7 @@ class InterjectionEngine:
     async def maybe_interject(self, message: discord.Message) -> Optional[str]:
         p = self.brain.should_interject_probability(message)
         roll = random.random()
+        hlog("INTERJECT check", "p=", round(p,3), "roll=", round(roll,3), "msg=", message.content)
         if roll > p:
             return None
         bucket = self.signals.bucket(message.content or "")
