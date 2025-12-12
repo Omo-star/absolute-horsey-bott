@@ -217,6 +217,9 @@ class BrainStore:
 
 class HumanBrain:
     def __init__(self, persist_path: str = "human_brain_state.json"):
+        self.bot = bot
+        self.chat_fn = chat_fn
+        self.brain = HumanBrain()
         self.store = BrainStore(persist_path)
         self._rng = random.Random()
         self._last_channel_time: Dict[int, float] = {}
@@ -1197,7 +1200,7 @@ class BrainRuntime:
 
     async def on_message(self, message: discord.Message):
         if self.bot.user in message.mentions:
-            reply = await bot_chat(message.content)
+            reply = await self.chat_fn(message.content)
             if reply:
                 await self.brain.human_delay(message.channel, reply)
                 await message.channel.send(reply)
