@@ -12,6 +12,8 @@ INTERJECT_MODELS: List[str] = [
 ]
 
 async def ai_interject_line(bucket: str, content: str) -> str:
+    hlog("AI_INTERJECT start bucket=", bucket, "content=", repr(content))
+
     system = (
         "you are a real discord user reacting naturally\n"
         "write one short casual response\n"
@@ -39,15 +41,22 @@ async def ai_interject_line(bucket: str, content: str) -> str:
     ]
 
     for model in INTERJECT_MODELS:
+        hlog("AI_INTERJECT trying model:", model)
+
         try:
             resp = await safe_completion(model, messages)
+
             if not resp:
+                hlog("AI_INTERJECT model", model, "returned no resp")
                 continue
 
             text = extract_text_with_logging(f"INTERJECT:{model}", resp)
+
             if not text:
+                hlog("AI_INTERJECT model", model, "returned empty text")
                 continue
 
+            raw = text
             text = text.strip()
             text = re.sub(r"\s+", " ", text)
             text = text.split("\n")[0]
@@ -55,14 +64,26 @@ async def ai_interject_line(bucket: str, content: str) -> str:
 
             words = text.split()
             if len(words) > MAX_WORDS:
+                hlog("AI_INTERJECT model", model, "too many words:", len(words))
                 text = " ".join(words[:MAX_WORDS])
 
             text = text.strip()
 
-            if len(text) >= 2:
-                return text
+            if len(text) < 2:
+                hlog(
+                    "AI_INTERJECT model",
+                    model,
+                    "rejected after cleanup, raw=",
+                    repr(raw),
+                )
+                continue
 
-        except Exception:
+            hlog("AI_INTERJECT success model=", model, "text=", repr(text))
+            return text
+
+        except Exception as e:
+            hlog("AI_INTERJECT exception model=", model, "err=", e)
             continue
 
+    hlog("AI_INTERJECT failed all models, returning empty")
     return ""
