@@ -423,7 +423,6 @@ async def maybe_react(message: discord.Message, mentioned: bool = False):
     except:
         return
 
-
 async def human_delay(channel: discord.abc.Messageable, reply_text: str = ""):
     txt = reply_text or ""
     w = max(len(_words(txt)), 1)
@@ -455,3 +454,73 @@ def observe_channel_message(channel_id: int, content: str):
     if not content:
         return
     _channel_msgs[channel_id].append((_now(), content))
+
+_last_speak_time = {}
+SPEAK_COOLDOWN = 75.0
+MAX_INTERRUPT_PROB = 0.22
+BASE_INTERRUPT_PROB = 0.015
+
+def _conversation_pressure(channel_id: int) -> float:
+    q = _channel_msgs[channel_id]
+    if len(q) < 3:
+        return 0.0
+    t = _now()
+    recent = [(ts, msg) for ts, msg in q if t - ts < 45.0]
+    if len(recent) < 3:
+        return 0.0
+    lengths = [len(m) for _, m in recent]
+    avg_len = sum(lengths) / len(lengths)
+    density = min(len(recent) / 6.0, 1.0)
+    emotional = sum(1 for _, m in recent if any(x in m.lower() for x in ("??", "wtf", "bro", "nah", "crazy"))) * 0.08
+    return min(density * 0.25 + min(avg_len / 160.0, 0.15) + emotional, 0.55)
+
+def _question_pressure(channel_id: int) -> float:
+    q = _channel_msgs[channel_id]
+    if not q:
+        return 0.0
+    ts, msg = q[-1]
+    if _is_question(msg):
+        age = _now() - ts
+        if age > 6.0 and age < 28.0:
+            return min(age / 28.0, 0.35)
+    return 0.0
+
+def _relevance_pressure(message: discord.Message) -> float:
+    uid = message.author.id
+    score = 0.0
+    score += min(_user_channel_affinity[(uid, message.channel.id)] * 0.02, 0.12)
+    score += min(_user_familiarity[uid] * 0.015, 0.10)
+    return score
+
+def should_interject(message: discord.Message) -> float:
+    if not message.guild:
+        return 0.0
+    if message.author.bot:
+        return 0.0
+
+    now = _now()
+    last = _last_speak_time.get(message.channel.id, 0.0)
+    if now - last < SPEAK_COOLDOWN:
+        return 0.0
+
+    pressure = 0.0
+    pressure += _conversation_pressure(message.channel.id)
+    pressure += _question_pressure(message.channel.id)
+    pressure += _relevance_pressure(message)
+
+    if _current_mood == "tired":
+        pressure *= 0.65
+    elif _current_mood == "silly":
+        pressure *= 1.15
+
+    pressure -= _fatigue_penalty()
+    pressure -= _circadian_penalty()
+
+    p = BASE_INTERRUPT_PROB + pressure
+    p = max(min(p, MAX_INTERRUPT_PROB), 0.0)
+
+    if random.random() < p:
+        _last_speak_time[message.channel.id] = now
+        return p
+
+    return 0.0
