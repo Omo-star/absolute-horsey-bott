@@ -63,23 +63,109 @@ LOW_EFFORT = {
     "hi", "hey", "hello", "yo", "sup", "ok", "okay", "k", "kk", "lol", "lmao", "nah", "bruh", "yup", "nope", "bet"
 }
 
-FUNNY_KEYS = ["lol", "lmao", "lmfao", "😭", "😂", "💀", "wtf", "bro", "bruh", "dead", "im crying", "i'm crying"]
-HYPE_KEYS = ["lets go", "let's go", "fire", "goat", "insane", "crazy", "holy", "W", "huge", "cook", "cooked"]
-SAD_KEYS = ["sad", "tired", "upset", "cry", "depressed", "pain", "lonely", "anxious", "stressed", "miserable"]
-ACK_KEYS = ["thanks", "thx", "got it", "ok cool", "ty", "thank you", "appreciate"]
-AGREE_KEYS = ["true", "facts", "real", "fr", "same", "exactly", "100%", "yep", "yup"]
-DISBELIEF_KEYS = ["no way", "cap", "bs", "bull", "fake", "sure buddy", "nahh", "aint no", "ain't no"]
-QUESTION_KEYS = ["?", "why", "how", "what", "when", "where", "who", "which"]
+FUNNY_KEYS = [
+    "lol","lmao","lmfao","rofl","😂","😭","💀","🤣","😭😭","😂😂","💀💀",
+    "dead","im dead","i'm dead","im crying","i'm crying","crying",
+    "im weak","i'm weak","im losing it","i’m losing it",
+    "im screaming","i'm screaming","screaming",
+    "help","HELP","pls","please","nahhh","nahh","nahhhhh",
+    "bro","bruh","bro 😭","bro 💀","bro 😂",
+    "wtf","what the hell","what is this","why is this funny",
+    "this killed me","this is killing me","this shouldnt be funny",
+    "this shouldn’t be funny","i cant","i can’t","cant stop laughing",
+    "im wheezing","i'm wheezing","wheezing",
+    "im done","i'm done","im gone","i'm gone",
+    "who let him cook","who let her cook",
+    "why did this work","how is this funny",
+    "nah this crazy","nah this wild","this is insane 😭",
+    "i’m actually crying","im actually crying"
+]
+
+HYPE_KEYS = [
+    "lets go","let's go","lfg","LFG","fire","so fire","this fire",
+    "goat","the goat","crazy","insane","actually insane",
+    "holy","holy shit","holy crap",
+    "W","big W","huge W","massive",
+    "clean","smooth","perfect","elite","top tier",
+    "cook","cooked","he cooked","she cooked","they cooked",
+    "let him cook","let her cook","nah he cooked",
+    "this goes hard","this hard","hard af","hard asf",
+    "this slaps","goes insane","this insane",
+    "no shot","cant believe this","how is this real",
+    "this is fire","this heat","this gas",
+    "so good","so clean","played perfectly",
+    "nah this different","this different","built different"
+]
+
+SAD_KEYS = [
+    "sad","im sad","i'm sad","lowkey sad","kinda sad",
+    "tired","im tired","i'm tired","so tired",
+    "exhausted","burnt out","drained",
+    "upset","cry","crying","tearing up",
+    "depressed","pain","lonely","alone",
+    "anxious","stressed","overwhelmed",
+    "miserable","im miserable","i'm miserable",
+    "this sucks","everything sucks","life sucks",
+    "im done","i'm done","cant do this","i can’t do this",
+    "im exhausted","i'm exhausted",
+    "rough day","bad day","long day",
+    "im not okay","i'm not okay","not okay",
+    "just tired","just tired of everything"
+]
+
+ACK_KEYS = [
+    "thanks","thx","ty","thank you","appreciate","appreciate it",
+    "got it","gotcha","ok","okay","ok cool","cool",
+    "sounds good","makes sense","fair","bet","noted",
+    "all good","alright","for sure","fs",
+    "yea","yeah","yep","yup","mm","mhm",
+    "i see","see","copy","copy that", "k", "kk"
+]
+
+AGREE_KEYS = [
+    "true","facts","real","fr", "frfr", "same","exactly","100%",
+    "yep","yup","yeah","so real","real af",
+    "literally","on god","ong",
+    "thats right","that's right",
+    "you right","u right","correct",
+    "absolutely","definitely",
+    "couldnt agree more","couldn’t agree more",
+    "this","this exactly","that part"
+]
+
+DISBELIEF_KEYS = [
+    "no way","no shot","cap","bs","bull","bullshit",
+    "fake","sure buddy","nah","nahh","nahhh",
+    "aint no","ain't no","be fr","be serious",
+    "you lying","ur lying","you’re lying",
+    "theres no way","there's no way",
+    "calling cap","stop the cap",
+    "not a chance","no chance",
+    "im not buying this","i'm not buying this",
+    "this fake","yeah right"
+]
+
+QUESTION_KEYS = [
+    "?","??","???",
+    "why","how","what","when","where","who","which",
+    "why is","how does","what is","what are",
+    "anyone know","does anyone","can someone",
+    "wtf is","what the hell is",
+    "how did","why did",
+    "is this","are we","did this",
+    "am i","should i","can i",
+    "wait what","hold up what","huh"
+]
 
 DEFAULT_BUCKETS = {
-    "ack": ["👍", "👌", "✅"],
-    "see": ["👀"],
-    "funny": ["😂", "😭", "💀", "🤣"],
-    "hype": ["🔥", "💯", "🚀", "🙌"],
-    "sad": ["😔", "🫂", "❤️"],
-    "question": ["❓", "🤔"],
-    "agree": ["✅", "💯", "🤝"],
-    "disbelief": ["🧢", "😳", "🤨"],
+    "ack": ["👍","👌","✅","☑️"],
+    "see": ["👀","👁️","🫣"],
+    "funny": ["😂","😭","💀","🤣","😹"],
+    "hype": ["🔥","💯","🚀","🙌","✨"],
+    "sad": ["😔","🫂","❤️","😞","🥲"],
+    "question": ["❓","🤔","🧐"],
+    "agree": ["✅","💯","🤝","👍"],
+    "disbelief": ["🧢","😳","🤨","😐"]
 }
 
 
@@ -456,9 +542,25 @@ def observe_channel_message(channel_id: int, content: str):
     _channel_msgs[channel_id].append((_now(), content))
 
 _last_speak_time = {}
+_last_speak_confidence = defaultdict(lambda: 0.5)
+_last_channel_embarrassment = defaultdict(float)
+
 SPEAK_COOLDOWN = 75.0
-MAX_INTERRUPT_PROB = 0.22
-BASE_INTERRUPT_PROB = 0.015
+EMBARRASSMENT_HALF_LIFE = 180.0
+
+BASE_INTERRUPT_PROB = 0.012
+MAX_INTERRUPT_PROB = 0.26
+
+def _decay_embarrassment(channel_id: int):
+    t = _now()
+    last = _last_speak_time.get(channel_id)
+    if not last:
+        return
+    age = t - last
+    if age <= 0:
+        return
+    decay = math.exp(-age / EMBARRASSMENT_HALF_LIFE)
+    _last_channel_embarrassment[channel_id] *= decay
 
 def _conversation_pressure(channel_id: int) -> float:
     q = _channel_msgs[channel_id]
@@ -471,26 +573,35 @@ def _conversation_pressure(channel_id: int) -> float:
     lengths = [len(m) for _, m in recent]
     avg_len = sum(lengths) / len(lengths)
     density = min(len(recent) / 6.0, 1.0)
-    emotional = sum(1 for _, m in recent if any(x in m.lower() for x in ("??", "wtf", "bro", "nah", "crazy"))) * 0.08
-    return min(density * 0.25 + min(avg_len / 160.0, 0.15) + emotional, 0.55)
+    emotional = sum(
+        1 for _, m in recent
+        if any(x in m.lower() for x in ("??", "wtf", "bro", "nah", "crazy"))
+    ) * 0.08
+    return min(density * 0.28 + min(avg_len / 150.0, 0.18) + emotional, 0.62)
 
-def _question_pressure(channel_id: int) -> float:
+def _unanswered_question_pressure(channel_id: int) -> float:
     q = _channel_msgs[channel_id]
     if not q:
         return 0.0
     ts, msg = q[-1]
-    if _is_question(msg):
-        age = _now() - ts
-        if age > 6.0 and age < 28.0:
-            return min(age / 28.0, 0.35)
-    return 0.0
+    if not _is_question(msg):
+        return 0.0
+    age = _now() - ts
+    if age < 4.0 or age > 32.0:
+        return 0.0
+    return min((age - 4.0) / 28.0, 1.0) * 0.48
 
 def _relevance_pressure(message: discord.Message) -> float:
     uid = message.author.id
     score = 0.0
-    score += min(_user_channel_affinity[(uid, message.channel.id)] * 0.02, 0.12)
-    score += min(_user_familiarity[uid] * 0.015, 0.10)
+    score += min(_user_channel_affinity[(uid, message.channel.id)] * 0.022, 0.14)
+    score += min(_user_familiarity[uid] * 0.017, 0.12)
     return score
+
+def _confidence_decay(channel_id: int) -> float:
+    base = _last_speak_confidence[channel_id]
+    decay = 1.0 - min(_last_channel_embarrassment[channel_id], 0.85)
+    return max(base * decay, 0.25)
 
 def should_interject(message: discord.Message) -> float:
     if not message.guild:
@@ -498,29 +609,41 @@ def should_interject(message: discord.Message) -> float:
     if message.author.bot:
         return 0.0
 
+    channel_id = message.channel.id
     now = _now()
-    last = _last_speak_time.get(message.channel.id, 0.0)
+
+    last = _last_speak_time.get(channel_id, 0.0)
     if now - last < SPEAK_COOLDOWN:
         return 0.0
 
+    _decay_embarrassment(channel_id)
+
     pressure = 0.0
-    pressure += _conversation_pressure(message.channel.id)
-    pressure += _question_pressure(message.channel.id)
+    pressure += _conversation_pressure(channel_id)
+    pressure += _unanswered_question_pressure(channel_id)
     pressure += _relevance_pressure(message)
 
     if _current_mood == "tired":
-        pressure *= 0.65
+        pressure *= 0.6
     elif _current_mood == "silly":
-        pressure *= 1.15
+        pressure *= 1.18
+    elif _current_mood == "focused":
+        pressure *= 0.85
 
     pressure -= _fatigue_penalty()
     pressure -= _circadian_penalty()
+    pressure -= _last_channel_embarrassment[channel_id] * 0.55
 
-    p = BASE_INTERRUPT_PROB + pressure
+    confidence = _confidence_decay(channel_id)
+
+    p = BASE_INTERRUPT_PROB + pressure * confidence
     p = max(min(p, MAX_INTERRUPT_PROB), 0.0)
 
     if random.random() < p:
-        _last_speak_time[message.channel.id] = now
+        _last_speak_time[channel_id] = now
+        _last_speak_confidence[channel_id] = confidence * random.uniform(0.88, 0.97)
+        _last_channel_embarrassment[channel_id] += random.uniform(0.12, 0.28)
         return p
 
     return 0.0
+
