@@ -1,4 +1,5 @@
 import re
+from human_brain import hlog
 from typing import List
 
 MAX_WORDS = 10
