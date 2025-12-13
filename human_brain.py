@@ -425,7 +425,7 @@ class HumanBrain:
                         continue
                     await msg.add_reaction(emoji)
                     self._mark_react(cid, msg.author.id, emoji, guild.id)
-                    self._pending_react_back[(msg.author.id, msg.id)] = (_now(), emoji)
+                    self._pending_react_back[(reactor_id, message_id)] = (_now(), emoji)
 
                     break
             except Exception:
@@ -1048,7 +1048,7 @@ class HumanBrain:
         try:
             await message.add_reaction(emoji)
             self._mark_react(message.channel.id, message.author.id, emoji, message.guild.id)
-            self._pending_react_back[(message.author.id, message.id)] = (_now(), emoji)
+            self._pending_react_back[(reactor_id, message_id)] = (_now(), emoji)
             if self._rng.random() < REGRET_CHANCE and self._social_risk(message.channel.id) > 0.58:
                 delay = self._rng.uniform(*REGRET_DELAY_RANGE)
                 return {
@@ -1391,12 +1391,16 @@ class BrainRuntime:
         self,
         bot: discord.Client,
         chat_fn: Callable[[str], Awaitable[Optional[str]]],
+        roast_fn: Callable[[str, int, str], Awaitable[Optional[str]]],
+        get_roast_mode: Callable[[int], Optional[str]],
         persist_path: str = "human_brain_state.json",
         is_roast_mode=None,
     ):
         self._pending_regrets: Deque[Tuple[float, int, int, int, str]] = deque()
         self.bot = bot
         self.chat_fn = chat_fn
+        self.roast_fn = roast_fn
+        self.get_roast_mode = get_roast_mode
         self.brain = HumanBrain(
             persist_path=persist_path,
             is_roast_mode=is_roast_mode
@@ -1440,11 +1444,20 @@ class BrainRuntime:
             )
 
         if mentioned:
-            reply = await self.chat_fn(message.content)
+            uid = message.author.id
+
+            mode = self.get_roast_mode(uid)
+
+            if mode:
+                reply = await self.roast_fn(message.content, uid, mode)
+            else:
+                reply = await self.chat_fn(message.content)
+
             if reply:
                 await self.brain.human_delay(message.channel, reply)
                 await message.channel.send(reply)
                 self.brain.mark_busy(message.channel.id)
+            return
         reply = await self.interjector.maybe_interject(message)
         if reply is not None:
             self.outcomes.note_interject(message.channel.id)
