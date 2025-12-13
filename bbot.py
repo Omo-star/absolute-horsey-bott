@@ -1121,15 +1121,6 @@ async def bot_chat(msg):
         "My brain is buffering. I couldn't get a response from any of my chat partners."
     )
 
-brain_runtime = BrainRuntime(
-    bot=bot,
-    chat_fn=bot_chat,
-    roast_fn=bot_roast,
-    get_roast_mode=lambda uid: roast_mode.get(uid),
-    is_roast_mode=lambda uid: uid in roast_mode,
-)
-
-
 async def embed_text(text):
     loop = asyncio.get_event_loop()
 
@@ -1266,6 +1257,14 @@ async def bot_roast(msg, uid, mode):
         log(f"[ERROR] Unhandled exception in bot_roast: {e}")
         return "My brain just lagged mid-roast. Try again."
 
+brain_runtime = BrainRuntime(
+    bot=bot,
+    chat_fn=bot_chat,
+    roast_fn=bot_roast,
+    get_roast_mode=lambda uid: roast_mode.get(uid),
+    is_roast_mode=lambda uid: uid in roast_mode,
+)
+
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
@@ -1330,6 +1329,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
