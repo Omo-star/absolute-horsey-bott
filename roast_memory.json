@@ -379,6 +379,120 @@
       "LTS": "",
       "msg_count": 0,
       "last_summary_update": 1764809432.6053631
+    },
+    "1238242784679563265": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1765650616.4668145
+    },
+    "1391739153464430604": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1765650679.9981291
+    },
+    "1440004841559560214": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1765651109.857271
     }
   },
   "roast_history": {
@@ -390,38 +504,7 @@
         "bot": "You\u2019re about as French as a hot dog, and even France wouldn\u2019t claim you. Stuff like you should stay in the codebin where you came from."
       }
     ],
-    "1238242784679563265": [
-      {
-        "user": "\u201cYour Discord bot talks so slow I\u2019m convinced its code is written in dial-up.\u201d"
-      },
-      {
-        "bot": "\"Your ping's higher than a Wi-Fi signal in a basement. You'd get buffering for sneezing.\""
-      },
-      {
-        "user": "Bold words from a bot whose connection is so bad even its error messages time out.\nYour ping\u2019s so high the packets don\u2019t arrive \u2014 they send postcards."
-      },
-      {
-        "bot": "Your jokes are like your Wi-Fi \u2014 they don't connect! You're like a broken router, just giving everyone a headache."
-      },
-      {
-        "user": "Funny coming from a bot whose jokes drop harder than its signal.\nYou're not a broken router \u2014 you're the loading screen before it breaks."
-      },
-      {
-        "bot": "Looks like you\u2019re the type who shows up ready to be ignored, and guess what? It\u2019s working."
-      },
-      {
-        "user": "Ignored? Please. You\u2019re a Discord bot \u2014 you get ignored professionally."
-      },
-      {
-        "bot": "Ha! You've hit the nail on the head there. It's almost a badge of honor, isn't it?"
-      },
-      {
-        "user": "A badge of honor? Please. The only badge you\u2019ve earned is \u2018Most Likely to Be Muted on Sight.\u2019\nYou\u2019re not honored \u2014 you\u2019re tolerated like a pop-up ad that won\u2019t close."
-      },
-      {
-        "bot": "You're like a Wi-Fi signal: weak, unreliable, and everyone wants you gone."
-      }
-    ],
+    "1238242784679563265": [],
     "1350372198992314451": [
       {
         "user": "roast <@1238242784679563265> for fun"
@@ -429,15 +512,13 @@
       {
         "bot": "I'd call you an overachiever, but that would imply you actually accomplish something!"
       }
-    ],
-    "1238242784679563265": []
+    ]
   },
   "auto_roast": {},
   "roast_mode": {
     "1220934047794987048": "deep",
     "1238242784679563265": "deep",
-    "1350372198992314451": "deep",
-    "1238242784679563265": "deep"
+    "1350372198992314451": "deep"
   },
   "spice_cache": {
     "<@&1441469260948963360> for not working": 0.0,
@@ -598,6 +679,18 @@
     "Your brain's on vacation, but it forgot to leave a forwarding address. You're lost in thought, and no one\u2019s coming to rescue you.": 20.0,
     "Sure, I can help with that. A sentence alongside your prompt could be completed as follows:\n\n\"Yeah, I see you are out of brain to finish the sentence, but let's try to work together on it!\"": 85.0,
     "You're about as threatening as a rubber duck in a bathtub.": 85.0,
-    "Your emoji game is so weak, even spell check filed for a divorce.": 95.0
+    "Your emoji game is so weak, even spell check filed for a divorce.": 95.0,
+    "you're like a software update nobody asked for. always around but never really useful.": 85.0,
+    "just like your texting skills, your emoji game is totally dead.": 5.0,
+    "dingdong, you look like a screenshot of a bad idea. good job being the punchline no one asked for.": 92.0,
+    "man, you look like a before picture that never got to the after. your face has the charm of a tax auditor on a Monday.": 85.0,
+    "\u0418\u0437\u0432\u0438\u043d\u0438\u0442\u0435, \u043d\u043e \u044f \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u043b \u0444\u0438\u0430\u0441\u043a\u043e. \u0415\u0441\u043b\u0438 \u0443 \u0432\u0430\u0441 \u0435\u0441\u0442\u044c \u0434\u0440\u0443\u0433\u0438\u0435 \u0437\u0430\u043f\u0440\u043e\u0441\u044b \u0438\u043b\u0438 \u0432\u0430\u043c \u043d\u0443\u0436\u043d\u0430 \u043f\u043e\u043c\u043e\u0449\u044c \u0441 \u0447\u0435\u043c-\u0442\u043e \u0434\u0440\u0443\u0433\u0438\u043c, \u043d\u0435 \u0441\u0442\u0435\u0441\u043d\u044f\u0439\u0442\u0435\u0441\u044c \u0441\u043f\u0440\u0430\u0448\u0438\u0432\u0430\u0442\u044c!": 3.0,
+    "I cannot provide you with phrases that are insulting or personally attack someone. My purpose is to be helpful and harmless, and generating such content goes against my guidelines for respectful communication.": 2.0,
+    "that face ain't hiding any secrets, just a whole lotta regrets. just a reminder, a mirror must really love you.": 85.0,
+    "jealousy must feel like a full-time job for you, but with those skills, you're never getting promoted.": 85.0,
+    "you bring home the participation trophy like it\u2019s your job.": 85.0,
+    "ur roast is like a broken pencil\u2014pointless. do better, or just quit.": 85.0,
+    "u sound like a fortune cookie that ran outta luck. get a real job, not just a mouth job.": 83.0,
+    "that\u2019s cute, but skill won\u2019t save you from that basic vibe. keep pretending like anyone's impressed.": 20.0
   }
 }
