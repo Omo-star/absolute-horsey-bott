@@ -235,7 +235,7 @@ class BrainStore:
                 pass
 
 class HumanBrain:
-    def __init__(self, persist_path: str = "human_brain_state.json"):
+    def __init__(self, persist_path: str = "human_brain_state.json", is_roast_mode=None):
         self.store = BrainStore(persist_path)
         self._rng = random.Random()
         self._last_channel_time: Dict[int, float] = {}
@@ -256,6 +256,7 @@ class HumanBrain:
         self._user_given_reacts: Dict[int, int] = defaultdict(int)
         self._moods = ["neutral", "warm", "tired", "silly", "focused"]
         self._self_react_memory: Dict[int, float] = {} 
+        self._pending_react_back: Dict[int, Tuple[float, str]] = {}
         self._pending_self_reacts: Deque[Tuple[float, int, int, str]] = deque()
         self._seen_messages: Deque[int] = deque(maxlen=500)
         self._current_mood = self._rng.choice(self._moods)
@@ -335,6 +336,14 @@ class HumanBrain:
                     self._user_given_reacts[uid] = int(v)
                 except Exception:
                     pass
+            gec = data.get("guild_emoji_culture", {})
+            for k, v in gec.items():
+                try:
+                    gid = int(k)
+                    self._guild_emoji_culture[gid] = Counter(v)
+                except:
+                    pass
+
         except Exception:
             pass
 
@@ -415,6 +424,7 @@ class HumanBrain:
                         continue
                     await msg.add_reaction(emoji)
                     self._mark_react(cid, msg.author.id, emoji, guild.id)
+                    self._pending_react_back[message.author.id] = (_now(), emoji)
                     break
             except Exception:
                 pass
@@ -494,6 +504,22 @@ class HumanBrain:
     def observe_reaction_outcome(self, user_id: int, emoji: str, got_back: bool) -> None:
         t = _now()
         self._react_outcomes_user[user_id].append((t, emoji, 1 if got_back else 0))
+    def observe_reaction_back_from_event(
+        self,
+        reactor_id: int,
+    ):
+        pending = self._pending_react_back.get(reactor_id)
+        if not pending:
+            return
+
+        ts, emoji = pending
+        age = _now() - ts
+
+        # must be after bot reacted, but not too late
+        got_back = 0.6 <= age <= 25.0
+
+        self.observe_reaction_outcome(reactor_id, emoji, got_back)
+        del self._pending_react_back[reactor_id]
 
     def observe_interject_outcome(self, channel_id: int, got_reply: bool) -> None:
         t = _now()
@@ -1023,6 +1049,7 @@ class HumanBrain:
         try:
             await message.add_reaction(emoji)
             self._mark_react(message.channel.id, message.author.id, emoji, message.guild.id)
+            self._pending_react_back[msg.author.id] = (_now(), emoji)
             if self._rng.random() < REGRET_CHANCE and self._social_risk(message.channel.id) > 0.58:
                 delay = self._rng.uniform(*REGRET_DELAY_RANGE)
                 return {
@@ -1067,6 +1094,7 @@ class HumanBrain:
                     continue
                 await msg.add_reaction(emoji)
                 self._mark_react(cid, uid, emoji, gid)
+                self._pending_react_back[uid] = (_now(), emoji)
             except Exception:
                 continue
         self._delayed_reacts = keep
@@ -1085,7 +1113,6 @@ class HumanBrain:
         if _now() - last < cooldown:
             return 0.0
         content = (message.content or "")
-        self.observe_channel_message(cid, content, message.id)
         cp = self._conversation_pressure(cid)
         qp = self._unanswered_question_pressure(cid)
         rp = self._relevance_pressure(message)
@@ -1299,7 +1326,7 @@ class InterjectionEngine:
         self.signals = SignalStack()
 
     async def maybe_interject(self, message: discord.Message) -> Optional[str]:
-        if self.runtime.is_roast_mode(message.author.id):
+        if self.brain.is_roast_mode(message.author.id):
             return None
 
         p = self.brain.should_interject_probability(message)
@@ -1320,6 +1347,7 @@ class InterjectionEngine:
         try:
             self.brain.mark_busy(message.channel.id)
             await message.channel.send(text)
+            self.brain.observe_channel_message(message.channel.id, text)
             self.brain.mark_interjected(message.channel.id, success_hint=None)
             return text
 
@@ -1332,7 +1360,17 @@ class OutcomeTracker:
     def __init__(self, brain: HumanBrain):
         self.brain = brain
         self._pending_interjects: Dict[int, float] = {}
+    def process_timeouts(self):
+        now = _now()
+        expired = []
 
+        for cid, ts in self._pending_interjects.items():
+            if now - ts > 30.0:  
+                self.brain.observe_interject_outcome(cid, False)
+                expired.append(cid)
+
+        for cid in expired:
+            del self._pending_interjects[cid]
     def note_interject(self, channel_id: int):
         self._pending_interjects[channel_id] = _now()
 
@@ -1343,11 +1381,7 @@ class OutcomeTracker:
         if cid not in self._pending_interjects:
             return
         age = _now() - self._pending_interjects[cid]
-        if age < 0.6:
-            return
-        if age > 18.0:
-            self.brain.observe_interject_outcome(cid, False)
-            del self._pending_interjects[cid]
+        if age < 1.0:
             return
         self.brain.observe_interject_outcome(cid, True)
         del self._pending_interjects[cid]
@@ -1359,14 +1393,34 @@ class BrainRuntime:
         bot: discord.Client,
         chat_fn: Callable[[str], Awaitable[Optional[str]]],
         persist_path: str = "human_brain_state.json",
+        is_roast_mode=None,
     ):
         self._pending_regrets: Deque[Tuple[float, int, int, int, str]] = deque()
         self.bot = bot
         self.chat_fn = chat_fn
-        self.brain = HumanBrain(persist_path=persist_path)
+        self.brain = HumanBrain(
+            persist_path=persist_path,
+            is_roast_mode=is_roast_mode
+        )
         self.interjector = InterjectionEngine(self.brain)
         self.outcomes = OutcomeTracker(self.brain)
         self._task_started = False
+    async def on_reaction_add(
+        self,
+        reaction: discord.Reaction,
+        user: discord.User,
+    ):
+        if user.bot:
+            return
+
+        msg = reaction.message
+        if not msg:
+            return
+
+        if not msg.author or msg.author.id != self.bot.user.id:
+            return
+
+        self.brain.observe_reaction_back_from_event(user.id)
 
     async def on_message(self, message: discord.Message):
         if message.author.bot:
@@ -1388,12 +1442,10 @@ class BrainRuntime:
                 await self.brain.human_delay(message.channel, reply)
                 await message.channel.send(reply)
                 self.brain.mark_busy(message.channel.id)
-
-        self.outcomes.observe_message(message)
         reply = await self.interjector.maybe_interject(message)
         if reply is not None:
             self.outcomes.note_interject(message.channel.id)
-
+        self.outcomes.observe_message(message)
         self.brain.self_reflect()
         self.brain.maybe_persist()
     async def process_regrets(self):
@@ -1430,6 +1482,7 @@ class BrainRuntime:
                 await self.brain.process_delayed_reacts(self.bot)
                 await self.brain.process_self_reacts(self.bot)
                 await self.process_regrets()
+                self.outcomes.process_timeouts()
                 self.brain.self_reflect()
                 self.brain.maybe_persist()
             except Exception:
