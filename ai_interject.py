@@ -107,7 +107,7 @@ INTERJECT_MODELS: List[str] = [
 
 async def ai_interject_line(bucket: str, content: str, user_memory: List[str] = None) -> str:
     hlog("AI_INTERJECT start bucket=", bucket, "content=", repr(content))
-
+    
     system = (
         "your name is fusbot\n"
         "you are a real discord user reacting naturally\n"
@@ -123,16 +123,12 @@ async def ai_interject_line(bucket: str, content: str, user_memory: List[str] = 
         "if the message is a question respond with curiosity or confusion\n"
         "if the message is emotional respond with empathy\n"
         "output only the message\n"
+        "\n"
+        f"{memory_hint}"
     )
-
-    mem_block = ""
-    if user_memory:
-        mem_block = "recent messages from this user that you reacted to:\n" + "\n".join(user_memory[-15:]) + "\n"
-
     
     user = (
         f"message type: {bucket}\n"
-        f"{mem_block}"
         f"message content: \"{content}\""
     )
 
