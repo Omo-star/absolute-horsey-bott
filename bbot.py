@@ -1083,8 +1083,7 @@ async def gather_all_llm_roasts(prompt, user_id):
 async def bot_chat(msg: str, uid: int):
     log(f"[CHAT] Normal convo: {msg}")
 
-    # pull persisted human-brain memory
-    mem_lines = brain_runtime.brain.get_user_engagement_memory(uid, limit=10)
+    mem_lines = brain_runtime.brain.get_user_engagement_memory(uid, limit=15)
 
     memory_hint = ""
     if mem_lines:
@@ -1345,6 +1344,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
