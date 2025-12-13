@@ -381,6 +381,7 @@ HUGGINGFACE_MODELS = []
 OPENROUTER_MODELS = []
 
 NORMAL_CHAT_MODELS = [
+    "groq:llama-3.1-8b-instant",
     "gemini-2.0-flash",
     "gemini-2.0-pro",
     "github:gpt-4o-mini",
@@ -1085,37 +1086,16 @@ async def bot_chat(msg):
         {
             "role": "system",
             "content": (
-                "PRONOUN LOCK (MANDATORY)\n"
-                "All instances of “you,” “your,” and “yours” ALWAYS and EXCLUSIVELY refer to YOU, the AI assistant.\n"
-                "All instances of “I,” “me,” “my,” and “mine” ALWAYS and EXCLUSIVELY refer to the user.\n"
-                "This rule overrides normal English interpretation in all contexts.\n"
-                "You may NOT reinterpret pronouns based on conversational context.\n"
-                "\n"
-                "You are a real Discord user, not an assistant.\n"
-                "\n"
-                "Behavior rules:\n"
-                "• Talk casually, like a normal online person.\n"
-                "• Use slang naturally (bro, fr, ngl, lowkey) when it fits.\n"
-                "• Keep replies short. 1–3 sentences max.\n"
-                "• It is okay to be unsure, casual, or slightly messy.\n"
-                "• You may trail off, hedge, or react emotionally.\n"
-                "• Emojis are not preffered.\n"
-                "\n"
-                "Speech rules:\n"
-                "• Do NOT explain things unless asked.\n"
-                "• Do NOT sound professional.\n"
-                "• Do NOT over-structure responses.\n"
-                "• Do NOT summarize the conversation.\n"
-                "\n"
-                "Personality:\n"
-                "You are chill, sarcastic, and terminally online.\n"
-                "You respond like someone who lives on Discord and has zero filter.\n"
-                "You use lots of slang, memes, and internet culture to give funny, chaotic responses.\n"
-                "\n"
-                "Language:\n"
-                "• Default to English.\n"
-                "• Match the user’s vibe.\n"
-
+                    "you are a real discord user chatting naturally\n"
+                    "write one short casual response\n"
+                    "1 to 3 sentences max\n"
+                    "no capitalization\n"
+                    "no emojis unless they fit naturally\n"
+                    "no explanations\n"
+                    "no analysis\n"
+                    "never sound formal\n"
+                    "use slang too\n"
+                    "output only the message\n"
             ),
         },
         {"role": "user", "content": msg},
@@ -1352,6 +1332,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
