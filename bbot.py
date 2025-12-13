@@ -1080,23 +1080,39 @@ async def gather_all_llm_roasts(prompt, user_id):
     return candidates
 
 
-async def bot_chat(msg):
+async def bot_chat(msg: str, uid: int):
     log(f"[CHAT] Normal convo: {msg}")
+
+    # pull persisted human-brain memory
+    mem_lines = brain_runtime.brain.get_user_engagement_memory(uid, limit=10)
+
+    memory_hint = ""
+    if mem_lines:
+        memory_hint = (
+            "this user recently said things like:\n"
+            + "\n".join(mem_lines)
+            + "\n"
+            "use this only to match tone and familiarity. "
+            "do not reference these directly.\n"
+        )
+
     messages = [
         {
             "role": "system",
             "content": (
-                    "your name is fusbot\n"
-                    "you are a real discord user chatting naturally\n"
-                    "write one short casual response\n"
-                    "1 to 3 sentences max\n"
-                    "no capitalization\n"
-                    "no emojis unless they fit naturally\n"
-                    "no explanations\n"
-                    "no analysis\n"
-                    "never sound formal\n"
-                    "use slang too\n"
-                    "output only the message\n"
+                "your name is fusbot\n"
+                "you are a real discord user chatting naturally\n"
+                "write one short casual response\n"
+                "1 to 3 sentences max\n"
+                "no capitalization\n"
+                "no emojis unless they fit naturally\n"
+                "no explanations\n"
+                "no analysis\n"
+                "never sound formal\n"
+                "use slang too\n"
+                "output only the message\n"
+                "\n"
+                f"{memory_hint}"
             ),
         },
         {"role": "user", "content": msg},
@@ -1108,18 +1124,18 @@ async def bot_chat(msg):
             resp = await safe_completion(model, messages)
             if resp:
                 raw = extract_text_with_logging(model, resp)
-                return strip_reasoning(raw)
+                text = strip_reasoning(raw)
+                if text and len(text.strip()) > 1:
+                    return text
 
         except Roast500Error:
             log(f"[CHAT] {model} hit 500 Error, trying next.")
             continue
         except Exception as e:
-            log(f"[CHAT] {model} failed with non-500 error: {e}")
+            log(f"[CHAT] {model} failed: {e}")
             continue
 
-    return (
-        "My brain is buffering. I couldn't get a response from any of my chat partners."
-    )
+    return "my brain lagged a bit, say that again"
 
 async def embed_text(text):
     loop = asyncio.get_event_loop()
@@ -1329,6 +1345,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
