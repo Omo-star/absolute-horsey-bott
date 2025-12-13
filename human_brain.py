@@ -66,6 +66,8 @@ HARD_MIN_GAP_USER = 10.5
 SOFT_COOLDOWN_CHANNEL = 18.0
 SOFT_COOLDOWN_USER = 24.0
 
+GUILD_EMOJI_HALF_LIFE = 24 * 3600 
+
 FATIGUE_WINDOW_SEC = 240.0
 FATIGUE_STEP = 0.045
 MAX_FATIGUE_PENALTY = 0.34
@@ -507,8 +509,7 @@ class HumanBrain:
             if self._channel_emoji_counts[channel_id][emoji] > 0:
                 self._channel_emoji_counts[channel_id][emoji] -= 1
                 if self._channel_emoji_counts[channel_id][emoji] <= 0:
-                    del self._channel_emoji_counts[channel_id][emoji]
-    GUILD_EMOJI_HALF_LIFE = 24 * 3600  
+                    del self._channel_emoji_counts[channel_id][emoji] 
 
     def _guild_culture_decay(self, guild_id: int) -> None:
         now = _now()
