@@ -1086,6 +1086,7 @@ async def bot_chat(msg):
         {
             "role": "system",
             "content": (
+                    "your name is fusbot\n"
                     "you are a real discord user chatting naturally\n"
                     "write one short casual response\n"
                     "1 to 3 sentences max\n"
@@ -1322,6 +1323,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
