@@ -1330,8 +1330,6 @@ async def on_reaction_add(reaction, user):
     )
 
     author = reaction.message.author
-    if author and not author.bot:
-        brain_runtime.brain.observe_received_reaction(author.id)
     if (
         reaction.message.author
         and reaction.message.author.id == bot.user.id
@@ -1354,6 +1352,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
