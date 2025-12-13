@@ -9,6 +9,31 @@ from ai_interject import ai_interject_line
 from collections import defaultdict, deque, Counter
 from typing import Any, Awaitable, Dict, Deque, List, Tuple, Optional, Callable
 import discord
+import re
+
+FUSBOT_ALIASES = {
+    "fusbot",
+    "fus bot",
+    "@fusbot",
+    "fus-bot",
+    "fus_bot",
+    "fusboi",
+    "fusb0t",
+    "fus-b0t",
+    "FUSBOT",
+    "FuSBot",
+}
+
+_ALIAS_PATTERNS = [
+    re.compile(rf"\b{re.escape(a)}\b", re.IGNORECASE)
+    for a in FUSBOT_ALIASES
+]
+
+def mentions_fusbot(text: str) -> bool:
+    if not text:
+        return False
+    return any(p.search(text) for p in _ALIAS_PATTERNS)
+
 
 _EMOJI_RE = re.compile(
     "["
@@ -1424,7 +1449,11 @@ class BrainRuntime:
         if message.author.bot:
             return
 
-        mentioned = self.bot.user in message.mentions if self.bot.user else False
+        explicit = self.bot.user in message.mentions if self.bot.user else False
+        alias = mentions_fusbot(message.content)
+
+        mentioned = explicit or alias
+
 
         result = await self.brain.maybe_react(message, mentioned=mentioned)
 
