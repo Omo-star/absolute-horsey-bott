@@ -10,6 +10,23 @@ from collections import defaultdict, deque, Counter
 from typing import Any, Awaitable, Dict, Deque, List, Tuple, Optional, Callable
 import discord
 
+_EMOJI_RE = re.compile(
+    "["
+    "\U0001F300-\U0001F5FF"  
+    "\U0001F600-\U0001F64F"  
+    "\U0001F680-\U0001F6FF"  
+    "\U0001F700-\U0001F77F"
+    "\U0001F780-\U0001F7FF"
+    "\U0001F800-\U0001F8FF"
+    "\U0001F900-\U0001F9FF"
+    "\U0001FA00-\U0001FAFF"
+    "\u2600-\u26FF"        
+    "\u2700-\u27BF"
+    "]",
+    flags=re.UNICODE,
+)
+
+
 DEBUG = True
 
 def hlog(*x: Any) -> None:
@@ -226,6 +243,8 @@ class HumanBrain:
         self._channel_msgs: Dict[int, Deque[Tuple[float, str]]] = defaultdict(lambda: deque(maxlen=CONTEXT_WINDOW))
         self._channel_culture: Dict[int, Deque[Tuple[float, str]]] = defaultdict(lambda: deque(maxlen=CULTURE_MEMORY_MAX))
         self._channel_emoji_counts: Dict[int, Counter] = defaultdict(Counter)
+        self._guild_emoji_culture: Dict[int, Counter] = defaultdict(Counter)
+        self._guild_emoji_timestamps: Dict[int, Deque[Tuple[float, str]]] = defaultdict(lambda: deque(maxlen=2000))
         self._user_familiarity: Dict[int, int] = defaultdict(int)
         self._user_channel_affinity: Dict[Tuple[int, int], int] = defaultdict(int)
         self._user_recent_emoji: Dict[int, Deque[str]] = defaultdict(lambda: deque(maxlen=10))
@@ -235,6 +254,7 @@ class HumanBrain:
         self._moods = ["neutral", "warm", "tired", "silly", "focused"]
         self._self_react_memory: Dict[int, float] = {} 
         self._pending_self_reacts: Deque[Tuple[float, int, int, str]] = deque()
+        self._seen_messages: Deque[int] = deque(maxlen=500)
         self._current_mood = self._rng.choice(self._moods)
         self._channel_state: Dict[int, str] = defaultdict(lambda: STATE_LURKING)
         self._last_speak_time: Dict[int, float] = {}
@@ -329,7 +349,10 @@ class HumanBrain:
             "user_emoji_pref": up,
             "user_familiarity": uf,
             "user_received_reacts": ucr,
-            "user_given_reacts": ucg
+            "user_given_reacts": ucg,
+            "guild_emoji_culture": {
+                str(gid): dict(c) for gid, c in self._guild_emoji_culture.items()
+            }
         }
 
     def maybe_persist(self) -> None:
@@ -388,7 +411,7 @@ class HumanBrain:
                     except Exception:
                         continue
                     await msg.add_reaction(emoji)
-                    self._mark_react(cid, msg.author.id, emoji)
+                    self._mark_react(cid, msg.author.id, emoji, guild.id)
                     break
             except Exception:
                 pass
@@ -437,13 +460,18 @@ class HumanBrain:
             (now + delay, channel_id, message_id, emoji)
         )
 
-    def observe_channel_message(self, channel_id: int, content: str) -> None:
+    def observe_channel_message(self, channel_id: int, content: str, msg_id: Optional[int] = None) -> None:
+        if msg_id is not None:
+            if msg_id in self._seen_messages:
+                return
+            self._seen_messages.append(msg_id)
+
         if not content:
             return
         self._channel_msgs[channel_id].append((_now(), content))
         self._update_channel_profile_from_text(channel_id, content)
 
-    def observe_reaction(self, channel_id: int, user_id: int, emoji: str) -> None:
+    def observe_reaction(self, channel_id: int, user_id: int, emoji: str, guild_id: Optional[int] = None) -> None:
         if not emoji:
             return
         self._culture_decay(channel_id)
@@ -452,6 +480,10 @@ class HumanBrain:
         self._channel_emoji_counts[channel_id][emoji] += 1
         self._user_emoji_pref[user_id][emoji] += 1
         self._user_given_reacts[user_id] += 1
+        if guild_id:
+            self._guild_emoji_culture[guild_id][emoji] += 1
+            self._guild_emoji_timestamps[guild_id].append((_now(), emoji))
+
 
     def observe_received_reaction(self, user_id: int) -> None:
         self._user_received_reacts[user_id] += 1
@@ -476,6 +508,29 @@ class HumanBrain:
                 self._channel_emoji_counts[channel_id][emoji] -= 1
                 if self._channel_emoji_counts[channel_id][emoji] <= 0:
                     del self._channel_emoji_counts[channel_id][emoji]
+    GUILD_EMOJI_HALF_LIFE = 24 * 3600  
+
+    def _guild_culture_decay(self, guild_id: int) -> None:
+        now = _now()
+        dq = self._guild_emoji_timestamps[guild_id]
+        counts = self._guild_emoji_culture[guild_id]
+
+        while dq:
+            ts, emoji = dq[0]
+            if now - ts <= GUILD_EMOJI_HALF_LIFE:
+                break
+            dq.popleft()
+            if counts[emoji] > 0:
+                counts[emoji] -= 1
+                if counts[emoji] <= 0:
+                    del counts[emoji]
+
+    def _guild_top_emojis(self, guild_id: int, k: int = 8) -> List[str]:
+        self._guild_culture_decay(guild_id)
+        counts = self._guild_emoji_culture[guild_id]
+        if not counts:
+            return []
+        return [e for e, _ in counts.most_common(k)]
 
     def _culture_top_emojis(self, channel_id: int, k: int = 8) -> List[str]:
         counts = self._channel_emoji_counts[channel_id]
@@ -580,14 +635,16 @@ class HumanBrain:
             return bucket
         return bucket
 
-    def _candidate_emojis(self, channel_id: int, user_id: int, bucket: str) -> List[str]:
+    def _candidate_emojis(self, channel_id: int, user_id: int, bucket: str, guild_id: Optional[int] = None) -> List[str]:
         base = list(DEFAULT_BUCKETS.get(bucket, DEFAULT_BUCKETS["ack"]))
         self._culture_decay(channel_id)
         culture = self._culture_top_emojis(channel_id, k=10)
+        guild_emojis = self._guild_top_emojis(guild_id, k=6) if guild_id else []
         prefs = [e for e, _ in self._user_emoji_pref[user_id].most_common(7)]
         pool = []
         pool.extend(base)
-        pool.extend(culture)
+        pool.extend(culture * 2)   
+        pool.extend(guild_emojis)   
         pool.extend(prefs)
         seen = set()
         uniq = []
@@ -597,9 +654,9 @@ class HumanBrain:
                 uniq.append(e)
         return uniq[:18] if uniq else base
 
-    def _choose_emoji(self, channel_id: int, user_id: int, bucket: str) -> str:
+    def _choose_emoji(self, channel_id: int, user_id: int, bucket: str, guild_id: Optional[int] = None) -> str:
         bucket = self._mood_tweak_bucket(bucket)
-        cand = self._candidate_emojis(channel_id, user_id, bucket)
+        cand = self._candidate_emojis(channel_id, user_id, bucket, guild_id)
         weights = []
         prof = self._channel_profile[channel_id]
         emoji_tol = _clamp(prof.get("emoji_tolerance", 0.55), 0.0, 1.0)
@@ -624,7 +681,7 @@ class HumanBrain:
                 return e
         return self._rng.choice(cand) if cand else "👍"
 
-    def _mark_react(self, channel_id: int, user_id: int, emoji: str) -> None:
+    def _mark_react(self, channel_id: int, user_id: int, emoji: str, guild_id: Optional[int] = None) -> None:
         t = _now()
         self._last_channel_time[channel_id] = t
         self._last_user_time[user_id] = t
@@ -633,6 +690,10 @@ class HumanBrain:
         self._user_recent_emoji[user_id].append(emoji)
         self._user_familiarity[user_id] += 1
         self._user_channel_affinity[(user_id, channel_id)] += 1
+        if guild_id:
+            self._guild_emoji_culture[guild_id][emoji] += 1
+            self._guild_emoji_timestamps[guild_id].append((_now(), emoji))
+
 
     def _len_bonus(self, content: str) -> float:
         L = len(content)
@@ -846,7 +907,7 @@ class HumanBrain:
         t = content or ""
         L = len(t)
         tl = t.lower()
-        emoji_count = sum(1 for ch in t if ord(ch) > 10000)
+        emoji_count = len(_EMOJI_RE.findall(t))
         punct = t.count("!") + t.count("?")
         caps = 1 if (L > 6 and t.isupper()) else 0
         shorty = 1 if L <= 20 else 0
@@ -920,7 +981,7 @@ class HumanBrain:
         if not content or _low_effort(content):
             return
         self._maybe_shift_mood()
-        self.observe_channel_message(message.channel.id, content)
+        self.observe_channel_message(message.channel.id, content, message.id)
         self._update_channel_state(message.channel.id)
         if self._should_scroll_past(message.channel.id):
             return
@@ -928,21 +989,38 @@ class HumanBrain:
         if self._rng.random() > p:
             bucket = self._pick_bucket(content.lower(), content)
             if self._should_queue_late_react(message.channel.id, bucket, content):
-                emoji = self._choose_emoji(message.channel.id, message.author.id, bucket)
+                emoji = self._choose_emoji(
+                    message.channel.id,
+                    message.author.id,
+                    bucket,
+                    message.guild.id
+                )
                 delay = self._rng.uniform(1.6, 9.0) * (0.9 + 0.4 * self._channel_profile[message.channel.id].get("chaos", 0.45))
                 self.queue_delayed_react(_now() + delay, message.guild.id, message.channel.id, message.author.id, message.id, emoji)
             return
         bucket = self._pick_bucket(content.lower(), content)
-        emoji = self._choose_emoji(message.channel.id, message.author.id, bucket)
+        emoji = self._choose_emoji(
+            message.channel.id,
+            message.author.id,
+            bucket,
+            message.guild.id
+        )
+
         prof = self._channel_profile[message.channel.id]
         formality = _clamp(prof.get("formality", 0.45), 0.0, 1.0)
         if formality > 0.68 and bucket in ("funny","hype","disbelief"):
             if self._rng.random() < 0.55:
                 bucket = "ack"
-                emoji = self._choose_emoji(message.channel.id, message.author.id, bucket)
+                emoji = self._choose_emoji(
+                    message.channel.id,
+                    message.author.id,
+                    bucket,
+                    message.guild.id
+                )
+
         try:
             await message.add_reaction(emoji)
-            self._mark_react(message.channel.id, message.author.id, emoji)
+            self._mark_react(message.channel.id, message.author.id, emoji, message.guild.id)
             if self._rng.random() < REGRET_CHANCE and self._social_risk(message.channel.id) > 0.58:
                 delay = self._rng.uniform(*REGRET_DELAY_RANGE)
                 return {
@@ -986,7 +1064,7 @@ class HumanBrain:
                 if self._social_risk(cid) > 0.70 and prof.get("formality", 0.45) > 0.65:
                     continue
                 await msg.add_reaction(emoji)
-                self._mark_react(cid, uid, emoji)
+                self._mark_react(cid, uid, emoji, gid)
             except Exception:
                 continue
         self._delayed_reacts = keep
@@ -1005,7 +1083,7 @@ class HumanBrain:
         if _now() - last < cooldown:
             return 0.0
         content = (message.content or "")
-        self.observe_channel_message(cid, content)
+        self.observe_channel_message(cid, content, message.id)
         cp = self._conversation_pressure(cid)
         qp = self._unanswered_question_pressure(cid)
         rp = self._relevance_pressure(message)
