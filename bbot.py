@@ -1121,7 +1121,14 @@ async def bot_chat(msg):
         "My brain is buffering. I couldn't get a response from any of my chat partners."
     )
 
-brain_runtime = BrainRuntime(bot, bot_chat, is_roast_mode=lambda uid: uid in roast_mode)
+brain_runtime = BrainRuntime(
+    bot=bot,
+    chat_fn=bot_chat,
+    roast_fn=bot_roast,
+    get_roast_mode=lambda uid: roast_mode.get(uid),
+    is_roast_mode=lambda uid: uid in roast_mode,
+)
+
 
 async def embed_text(text):
     loop = asyncio.get_event_loop()
@@ -1323,6 +1330,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
