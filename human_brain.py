@@ -425,8 +425,7 @@ class HumanBrain:
                         continue
                     await msg.add_reaction(emoji)
                     self._mark_react(cid, msg.author.id, emoji, guild.id)
-                    self._pending_react_back[(reactor_id, message_id)] = (_now(), emoji)
-
+                    self._pending_react_back[(message.author.id, message.id)] = (_now(), emoji)
                     break
             except Exception:
                 pass
@@ -1048,7 +1047,6 @@ class HumanBrain:
         try:
             await message.add_reaction(emoji)
             self._mark_react(message.channel.id, message.author.id, emoji, message.guild.id)
-            self._pending_react_back[(reactor_id, message_id)] = (_now(), emoji)
             if self._rng.random() < REGRET_CHANCE and self._social_risk(message.channel.id) > 0.58:
                 delay = self._rng.uniform(*REGRET_DELAY_RANGE)
                 return {
