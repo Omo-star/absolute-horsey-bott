@@ -429,13 +429,15 @@
       {
         "bot": "I'd call you an overachiever, but that would imply you actually accomplish something!"
       }
-    ]
+    ],
+    "1238242784679563265": []
   },
   "auto_roast": {},
   "roast_mode": {
     "1220934047794987048": "deep",
     "1238242784679563265": "deep",
-    "1350372198992314451": "deep"
+    "1350372198992314451": "deep",
+    "1238242784679563265": "deep"
   },
   "spice_cache": {
     "<@&1441469260948963360> for not working": 0.0,
