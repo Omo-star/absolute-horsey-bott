@@ -245,6 +245,7 @@ class HumanBrain:
         self._channel_msgs: Dict[int, Deque[Tuple[float, str]]] = defaultdict(lambda: deque(maxlen=CONTEXT_WINDOW))
         self._channel_culture: Dict[int, Deque[Tuple[float, str]]] = defaultdict(lambda: deque(maxlen=CULTURE_MEMORY_MAX))
         self._channel_emoji_counts: Dict[int, Counter] = defaultdict(Counter)
+        self.is_roast_mode = is_roast_mode or (lambda uid: False)
         self._guild_emoji_culture: Dict[int, Counter] = defaultdict(Counter)
         self._guild_emoji_timestamps: Dict[int, Deque[Tuple[float, str]]] = defaultdict(lambda: deque(maxlen=2000))
         self._user_familiarity: Dict[int, int] = defaultdict(int)
@@ -1298,6 +1299,9 @@ class InterjectionEngine:
         self.signals = SignalStack()
 
     async def maybe_interject(self, message: discord.Message) -> Optional[str]:
+        if self.runtime.is_roast_mode(message.author.id):
+            return None
+
         p = self.brain.should_interject_probability(message)
         roll = self.brain._rng.random()
         hlog("INTERJECT check", "p=", round(p,3), "roll=", round(roll,3), "msg=", message.content)
