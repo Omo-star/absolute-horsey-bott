@@ -248,6 +248,9 @@ class HumanBrain:
         self._channel_emoji_counts: Dict[int, Counter] = defaultdict(Counter)
         self.is_roast_mode = is_roast_mode or (lambda uid: False)
         self._guild_emoji_culture: Dict[int, Counter] = defaultdict(Counter)
+        self._user_engaged_memory: Dict[int, Deque[Tuple[float, int, str]]] = defaultdict(
+            lambda: deque(maxlen=50)
+        )
         self._guild_emoji_timestamps: Dict[int, Deque[Tuple[float, str]]] = defaultdict(lambda: deque(maxlen=2000))
         self._user_familiarity: Dict[int, int] = defaultdict(int)
         self._user_channel_affinity: Dict[Tuple[int, int], int] = defaultdict(int)
@@ -345,6 +348,13 @@ class HumanBrain:
                 except:
                     pass
 
+            uem = data.get("user_engaged_memory", {})
+            for k, v in uem.items():
+                uid = int(k)
+                dq = deque(maxlen=50)
+                for ts, cid, txt in v[-50:]:
+                    dq.append((float(ts), int(cid), str(txt)))
+                self._user_engaged_memory[uid] = dq
         except Exception:
             pass
 
@@ -365,8 +375,47 @@ class HumanBrain:
             "user_given_reacts": ucg,
             "guild_emoji_culture": {
                 str(gid): dict(c) for gid, c in self._guild_emoji_culture.items()
+            },
+            "user_engaged_memory": {
+                str(uid): list(dq)
+                for uid, dq in self._user_engaged_memory.items()
             }
+
         }
+    def remember_user_engagement(self, user_id: int, channel_id: int, content: str) -> None:
+        if not content:
+            return
+
+        content = re.sub(r"\s+", " ", content).strip()
+        if len(content) > 220:
+            content = content[:220] + "…"
+
+        self._user_engaged_memory[user_id].append(
+            (_now(), channel_id, content)
+        )
+
+    def get_user_engagement_memory(self, user_id: int, limit: int = 15) -> List[str]:
+        dq = self._user_engaged_memory.get(user_id)
+        if not dq:
+            return []
+    
+        out = []
+        seen = set()
+
+        for _, _, txt in reversed(dq):
+            norm = txt.lower()
+            if norm in seen:
+                continue
+            if _low_effort(txt):
+                continue
+    
+            seen.add(norm)
+            out.append(f"{int((now - ts)//60)}m ago: {txt}")
+
+            if len(out) >= limit:
+                break
+
+        return list(reversed(out))
 
     def maybe_persist(self) -> None:
         t = _now()
@@ -425,7 +474,7 @@ class HumanBrain:
                         continue
                     await msg.add_reaction(emoji)
                     self._mark_react(cid, msg.author.id, emoji, guild.id)
-                    self._pending_react_back[(message.author.id, message.id)] = (_now(), emoji)
+                    self._pending_react_back[(msg.author.id, msg.id)] = (_now(), emoji)
                     break
             except Exception:
                 pass
@@ -716,11 +765,6 @@ class HumanBrain:
         self._user_recent_emoji[user_id].append(emoji)
         self._user_familiarity[user_id] += 1
         self._user_channel_affinity[(user_id, channel_id)] += 1
-        if guild_id:
-            self._guild_emoji_culture[guild_id][emoji] += 1
-            self._guild_emoji_timestamps[guild_id].append((_now(), emoji))
-
-
     def _len_bonus(self, content: str) -> float:
         L = len(content)
         return min(L / 260.0, 0.24)
@@ -1047,6 +1091,12 @@ class HumanBrain:
         try:
             await message.add_reaction(emoji)
             self._mark_react(message.channel.id, message.author.id, emoji, message.guild.id)
+            self.remember_user_engagement(
+                message.author.id,
+                message.channel.id,
+                message.content or ""
+            )
+            self._pending_react_back[(message.author.id, message.id)] = (_now(), emoji)
             if self._rng.random() < REGRET_CHANCE and self._social_risk(message.channel.id) > 0.58:
                 delay = self._rng.uniform(*REGRET_DELAY_RANGE)
                 return {
@@ -1080,6 +1130,11 @@ class HumanBrain:
                     continue
                 try:
                     msg = await ch.fetch_message(mid)
+                    self.remember_user_engagement(
+                        msg.author.id,
+                        cid,
+                        msg.content or ""
+                   )
                 except Exception:
                     continue
                 if msg.author.bot:
@@ -1333,7 +1388,9 @@ class InterjectionEngine:
             return None
         bucket = self.signals.bucket(message.content or "")
         hlog("INTERJECT calling ai_interject_line")
-        text = await ai_interject_line(bucket, message.content or "")
+        mem_lines = self.brain.get_user_engagement_memory(message.author.id, limit=20)
+        text = await ai_interject_line(bucket, message.content or "", mem_lines)
+
         if not text:
             hlog("INTERJECT AI returned empty, using template")
             text = self.templates.pick(bucket, self.brain._rng)
@@ -1342,7 +1399,7 @@ class InterjectionEngine:
 
         await self.brain.human_delay(message.channel, text)
         try:
-            self.brain.mark_busy(message.channel.id)
+            self.brain.mark_busy(message.channel.id))
             await message.channel.send(text)
             self.brain.observe_channel_message(message.channel.id, text)
             self.brain.mark_interjected(message.channel.id, success_hint=None)
@@ -1449,10 +1506,14 @@ class BrainRuntime:
             if mode:
                 reply = await self.roast_fn(message.content, uid, mode)
             else:
-                reply = await self.chat_fn(message.content)
-
+                reply = await self.chat_fn(message.content, message.author.id)
             if reply:
                 await self.brain.human_delay(message.channel, reply)
+                self.brain.remember_user_engagement(
+                    message.author.id,
+                    message.channel.id,
+                    message.content or ""
+                )
                 await message.channel.send(reply)
                 self.brain.mark_busy(message.channel.id)
             return
