@@ -108,6 +108,16 @@ INTERJECT_MODELS: List[str] = [
 async def ai_interject_line(bucket: str, content: str, user_memory: List[str] = None) -> str:
     hlog("AI_INTERJECT start bucket=", bucket, "content=", repr(content))
     
+    memory_hint = ""
+    if user_memory:
+        memory_hint = (
+            "this user recently said things like:\n"
+            + "\n".join(user_memory[-15:])
+            + "\n"
+            "use this only to match tone and familiarity. "
+            "do not reply to or reference these directly.\n"
+        )
+    
     system = (
         "your name is fusbot\n"
         "you are a real discord user reacting naturally\n"
