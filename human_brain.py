@@ -7,7 +7,7 @@ import os
 import re
 from ai_interject import ai_interject_line
 from collections import defaultdict, deque, Counter
-from typing import Any, Dict, Deque, List, Tuple, Optional, Callable
+from typing import Any, Awaitable, Dict, Deque, List, Tuple, Optional, Callable
 import discord
 
 DEBUG = True
@@ -217,9 +217,6 @@ class BrainStore:
 
 class HumanBrain:
     def __init__(self, persist_path: str = "human_brain_state.json"):
-        self.bot = bot
-        self.chat_fn = chat_fn
-        self.brain = HumanBrain()
         self.store = BrainStore(persist_path)
         self._rng = random.Random()
         self._last_channel_time: Dict[int, float] = {}
@@ -237,7 +234,7 @@ class HumanBrain:
         self._user_given_reacts: Dict[int, int] = defaultdict(int)
         self._moods = ["neutral", "warm", "tired", "silly", "focused"]
         self._self_react_memory: Dict[int, float] = {} 
-        self._pending_self_reacts: Deque[Tuple[float, int, int, int, str]] = deque()
+        self._pending_self_reacts: Deque[Tuple[float, int, int, str]] = deque()
         self._current_mood = self._rng.choice(self._moods)
         self._channel_state: Dict[int, str] = defaultdict(lambda: STATE_LURKING)
         self._last_speak_time: Dict[int, float] = {}
@@ -369,11 +366,16 @@ class HumanBrain:
 
         now = _now()
         keep = deque()
+        cutoff = _now() - 3600
+        self._self_react_memory = {
+            mid: ts for mid, ts in self._self_react_memory.items()
+            if ts > cutoff
+        }
 
         while self._pending_self_reacts:
-            when, cid, uid, mid, emoji = self._pending_self_reacts.popleft()
+            when, cid, mid, emoji = self._pending_self_reacts.popleft()
             if when > now:
-                keep.append((when, cid, uid, mid, emoji))
+                keep.append((when, cid, mid, emoji))
                 continue
 
             try:
@@ -381,20 +383,18 @@ class HumanBrain:
                     ch = guild.get_channel(cid)
                     if not ch:
                         continue
-
                     try:
                         msg = await ch.fetch_message(mid)
                     except Exception:
                         continue
-
                     await msg.add_reaction(emoji)
-                    self._mark_react(cid, uid, emoji)
+                    self._mark_react(cid, msg.author.id, emoji)
                     break
-
             except Exception:
                 pass
 
         self._pending_self_reacts = keep
+
 
     def maybe_ack_reaction_on_self(
         self,
@@ -431,10 +431,10 @@ class HumanBrain:
             return
 
         delay = self._rng.uniform(3.0, 10.0)
-
+        self.observe_received_reaction(reactor_id)
         self._self_react_memory[message_id] = now
         self._pending_self_reacts.append(
-            (now + delay, channel_id, reactor_id, message_id, emoji)
+            (now + delay, channel_id, message_id, emoji)
         )
 
     def observe_channel_message(self, channel_id: int, content: str) -> None:
@@ -907,12 +907,12 @@ class HumanBrain:
             miss += 0.04
         return self._rng.random() < miss
 
-    async def maybe_react(self, message: discord.Message, mentioned: bool = False) -> None:
+    async def maybe_react(self, message: discord.Message, mentioned: bool = False) -> Optional[Dict[str, Any]]:
         if not message.guild:
             return
         if message.author.bot:
             return
-        if (message.content or "").startswith(IGNORE_PREFIXES):
+        if message.content and message.content[0] in IGNORE_PREFIXES:
             return
         if self._cooldown_hard(message.channel.id, message.author.id):
             return
@@ -944,15 +944,18 @@ class HumanBrain:
             await message.add_reaction(emoji)
             self._mark_react(message.channel.id, message.author.id, emoji)
             if self._rng.random() < REGRET_CHANCE and self._social_risk(message.channel.id) > 0.58:
-                await asyncio.sleep(self._rng.uniform(*REGRET_DELAY_RANGE))
-                try:
-                    me = message.guild.me if hasattr(message.guild, "me") else None
-                    if me:
-                        await message.remove_reaction(emoji, me)
-                except Exception:
-                    pass
+                delay = self._rng.uniform(*REGRET_DELAY_RANGE)
+                return {
+                    "type": "regret_react",
+                    "delay": delay,
+                    "channel_id": message.channel.id,
+                    "message_id": message.id,
+                    "emoji": emoji,
+                }
         except Exception:
             return
+        return None
+
 
     async def process_delayed_reacts(self, bot: discord.Client) -> None:
         if not self._delayed_reacts:
@@ -1217,7 +1220,7 @@ class InterjectionEngine:
 
     async def maybe_interject(self, message: discord.Message) -> Optional[str]:
         p = self.brain.should_interject_probability(message)
-        roll = random.random()
+        roll = self.brain._rng.random()
         hlog("INTERJECT check", "p=", round(p,3), "roll=", round(roll,3), "msg=", message.content)
         if roll > p:
             return None
@@ -1226,7 +1229,7 @@ class InterjectionEngine:
         text = await ai_interject_line(bucket, message.content or "")
         if not text:
             hlog("INTERJECT AI returned empty, using template")
-            text = self.templates.pick(bucket, random)
+            text = self.templates.pick(bucket, self.brain._rng)
         else:
             hlog("INTERJECT AI returned:", repr(text))
 
@@ -1251,11 +1254,13 @@ class OutcomeTracker:
         self._pending_interjects[channel_id] = _now()
 
     def observe_message(self, message: discord.Message):
+        if message.author.bot:
+            return
         cid = message.channel.id
         if cid not in self._pending_interjects:
             return
         age = _now() - self._pending_interjects[cid]
-        if age < 2.0:
+        if age < 0.6:
             return
         if age > 18.0:
             self.brain.observe_interject_outcome(cid, False)
@@ -1266,31 +1271,74 @@ class OutcomeTracker:
 
 
 class BrainRuntime:
-    def __init__(self, bot: discord.Client, persist_path: str = "human_brain_state.json"):
+    def __init__(
+        self,
+        bot: discord.Client,
+        chat_fn: Callable[[str], Awaitable[Optional[str]]],
+        persist_path: str = "human_brain_state.json",
+    ):
+        self._pending_regrets: Deque[Tuple[float, int, int, int, str]] = deque()
         self.bot = bot
+        self.chat_fn = chat_fn
         self.brain = HumanBrain(persist_path=persist_path)
         self.interjector = InterjectionEngine(self.brain)
         self.outcomes = OutcomeTracker(self.brain)
         self._task_started = False
 
     async def on_message(self, message: discord.Message):
-        if self.bot.user in message.mentions:
+        if message.author.bot:
+            return
+
+        mentioned = self.bot.user in message.mentions if self.bot.user else False
+
+        result = await self.brain.maybe_react(message, mentioned=mentioned)
+
+        if result and result.get("type") == "regret_react":
+            when = _now() + result["delay"]
+            self._pending_regrets.append(
+                (when, message.guild.id, result["channel_id"], result["message_id"], result["emoji"])
+            )
+
+        if mentioned:
             reply = await self.chat_fn(message.content)
             if reply:
                 await self.brain.human_delay(message.channel, reply)
                 await message.channel.send(reply)
                 self.brain.mark_busy(message.channel.id)
-            return
-        if message.author.bot:
-            return
-        mentioned = self.bot.user in message.mentions if self.bot.user else False
-        await self.brain.maybe_react(message, mentioned=mentioned)
+
         self.outcomes.observe_message(message)
         reply = await self.interjector.maybe_interject(message)
         if reply is not None:
             self.outcomes.note_interject(message.channel.id)
+
         self.brain.self_reflect()
         self.brain.maybe_persist()
+    async def process_regrets(self):
+        now = time.time()
+        keep = deque()
+
+        while self._pending_regrets:
+            when, gid, cid, mid, emoji = self._pending_regrets.popleft()
+            if when > now:
+                keep.append((when, gid, cid, mid, emoji))
+                continue
+            try:
+                guild = self.bot.get_guild(gid)
+                if not guild:
+                    continue
+                ch = guild.get_channel(cid)
+                if not ch:
+                    continue
+                msg = await ch.fetch_message(mid)
+                me = guild.get_member(self.bot.user.id)
+                if self.brain._social_risk(cid) < self.brain._rng.uniform(0.35, 0.55):
+                    continue
+                if me:
+                    await msg.remove_reaction(emoji, me)
+            except Exception:
+                pass
+    
+        self._pending_regrets = keep
 
     async def background_loop(self):
         await self.bot.wait_until_ready()
@@ -1298,6 +1346,7 @@ class BrainRuntime:
             try:
                 await self.brain.process_delayed_reacts(self.bot)
                 await self.brain.process_self_reacts(self.bot)
+                await self.process_regrets()
                 self.brain.self_reflect()
                 self.brain.maybe_persist()
             except Exception:
