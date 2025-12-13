@@ -105,7 +105,7 @@ INTERJECT_MODELS: List[str] = [
     "openai:gpt-4o-mini",
 ]
 
-async def ai_interject_line(bucket: str, content: str) -> str:
+async def ai_interject_line(bucket: str, content: str, user_memory: List[str] = None) -> str:
     hlog("AI_INTERJECT start bucket=", bucket, "content=", repr(content))
 
     system = (
@@ -125,8 +125,14 @@ async def ai_interject_line(bucket: str, content: str) -> str:
         "output only the message\n"
     )
 
+    mem_block = ""
+    if user_memory:
+        mem_block = "recent messages from this user that you reacted to:\n" + "\n".join(user_memory[-15:]) + "\n"
+
+    
     user = (
         f"message type: {bucket}\n"
+        f"{mem_block}"
         f"message content: \"{content}\""
     )
 
