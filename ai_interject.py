@@ -109,6 +109,7 @@ async def ai_interject_line(bucket: str, content: str) -> str:
     hlog("AI_INTERJECT start bucket=", bucket, "content=", repr(content))
 
     system = (
+        "your name is fusbot\n"
         "you are a real discord user reacting naturally\n"
         "write one short casual response\n"
         "1 to 10 words max\n"
