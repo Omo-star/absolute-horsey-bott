@@ -256,7 +256,7 @@ class HumanBrain:
         self._user_given_reacts: Dict[int, int] = defaultdict(int)
         self._moods = ["neutral", "warm", "tired", "silly", "focused"]
         self._self_react_memory: Dict[int, float] = {} 
-        self._pending_react_back: Dict[int, Tuple[float, str]] = {}
+        self._pending_react_back: Dict[Tuple[int, int], Tuple[float, str]] = {}
         self._pending_self_reacts: Deque[Tuple[float, int, int, str]] = deque()
         self._seen_messages: Deque[int] = deque(maxlen=500)
         self._current_mood = self._rng.choice(self._moods)
@@ -424,7 +424,8 @@ class HumanBrain:
                         continue
                     await msg.add_reaction(emoji)
                     self._mark_react(cid, msg.author.id, emoji, guild.id)
-                    self._pending_react_back[message.author.id] = (_now(), emoji)
+                    self._pending_react_back[(msg.author.id, msg.id)] = (_now(), emoji)
+
                     break
             except Exception:
                 pass
@@ -504,22 +505,19 @@ class HumanBrain:
     def observe_reaction_outcome(self, user_id: int, emoji: str, got_back: bool) -> None:
         t = _now()
         self._react_outcomes_user[user_id].append((t, emoji, 1 if got_back else 0))
-    def observe_reaction_back_from_event(
-        self,
-        reactor_id: int,
-    ):
-        pending = self._pending_react_back.get(reactor_id)
+    def observe_reaction_back_from_event(self, reactor_id: int, message_id: int):
+        key = (reactor_id, message_id)
+        pending = self._pending_react_back.get(key)
         if not pending:
             return
 
         ts, emoji = pending
         age = _now() - ts
-
-        # must be after bot reacted, but not too late
         got_back = 0.6 <= age <= 25.0
 
         self.observe_reaction_outcome(reactor_id, emoji, got_back)
-        del self._pending_react_back[reactor_id]
+        del self._pending_react_back[key]
+
 
     def observe_interject_outcome(self, channel_id: int, got_reply: bool) -> None:
         t = _now()
@@ -1049,7 +1047,7 @@ class HumanBrain:
         try:
             await message.add_reaction(emoji)
             self._mark_react(message.channel.id, message.author.id, emoji, message.guild.id)
-            self._pending_react_back[msg.author.id] = (_now(), emoji)
+            self._pending_react_back[(message.author.id, message.id)] = (_now(), emoji)
             if self._rng.random() < REGRET_CHANCE and self._social_risk(message.channel.id) > 0.58:
                 delay = self._rng.uniform(*REGRET_DELAY_RANGE)
                 return {
@@ -1094,7 +1092,7 @@ class HumanBrain:
                     continue
                 await msg.add_reaction(emoji)
                 self._mark_react(cid, uid, emoji, gid)
-                self._pending_react_back[uid] = (_now(), emoji)
+                self._pending_react_back[(uid, mid)] = (_now(), emoji)
             except Exception:
                 continue
         self._delayed_reacts = keep
@@ -1420,7 +1418,7 @@ class BrainRuntime:
         if not msg.author or msg.author.id != self.bot.user.id:
             return
 
-        self.brain.observe_reaction_back_from_event(user.id)
+        self.brain.observe_reaction_back_from_event(user.id, reaction.message.id)
 
     async def on_message(self, message: discord.Message):
         if message.author.bot:
