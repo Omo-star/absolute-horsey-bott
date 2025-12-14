@@ -1087,11 +1087,6 @@ async def gather_all_llm_roasts(prompt, user_id):
 async def bot_chat(msg: str, uid: int):
     log(f"[CHAT] Normal convo: {msg}")
     
-    CHAT_HISTORY[uid].append({
-        "role": "user",
-        "content": msg
-    })
-
     mem_lines = brain_runtime.brain.get_user_engagement_memory(uid, limit=15)
 
     memory_hint = ""
@@ -1119,14 +1114,20 @@ async def bot_chat(msg: str, uid: int):
                 "never sound formal\n"
                 "use slang too\n"
                 "you may reference recent messages in this conversation if relevant\n"
+                "if asked about what was said, quote the exact message when possible\n"
+                "only reference the last few messages, not older ones\n"
+                "only look back when the user clearly asks or implies confusion\n"
                 "do not guess or invent past messages\n"
-                "if unsure, say you’re not sure\n"
                 "output only the message\n"
                 "\n"
                 f"{memory_hint}"
             ),
         },
         *CHAT_HISTORY[uid],
+        {
+            "role": "user",
+            "content": msg,
+        },
     ]
 
 
@@ -1139,10 +1140,15 @@ async def bot_chat(msg: str, uid: int):
                 text = strip_reasoning(raw)
                 if text and len(text.strip()) > 1:
                     CHAT_HISTORY[uid].append({
+                        "role": "user",
+                        "content": msg
+                    })
+                    CHAT_HISTORY[uid].append({
                         "role": "assistant",
                         "content": text
                     })
                     return text
+
 
         except Roast500Error:
             log(f"[CHAT] {model} hit 500 Error, trying next.")
@@ -1361,6 +1367,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
