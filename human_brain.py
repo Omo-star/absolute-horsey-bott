@@ -1685,7 +1685,7 @@ class BrainRuntime:
 
         if mentioned:
             uid = message.author.id
-
+            cid = message.channel.id
             mode = self.get_roast_mode(uid)
 
             if mode:
