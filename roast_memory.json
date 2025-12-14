@@ -36,7 +36,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1765585388.0681114
+      "last_summary_update": 1765650616.4668145
     },
     "1435987186502733878": {
       "LF": {
@@ -150,7 +150,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764091029.1002283
+      "last_summary_update": 1765651109.857271
     },
     "408785106942164992": {
       "LF": {
@@ -378,85 +378,9 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764809432.6053631
-    },
-    "1238242784679563265": {
-      "LF": {
-        "slang": 0.0,
-        "formality": 0.0,
-        "emoji_rate": 0.0,
-        "all_caps_rate": 0.0,
-        "punct_energy": 0.0,
-        "avg_len": 0.0,
-        "msg_samples": []
-      },
-      "EB": {
-        "anger": 0.0,
-        "sadness": 0.0,
-        "hype": 0.0,
-        "chaos": 0.0
-      },
-      "HP": {
-        "dark": 0.0,
-        "mean": 0.0,
-        "petty": 0.0,
-        "simple": 0.0,
-        "goofy": 0.0,
-        "meta": 0.0
-      },
-      "IS": {
-        "bot_mentions": 0,
-        "roast_requests": 0,
-        "self_roasts": 0,
-        "escalation": 0.0
-      },
-      "SPM": {
-        "embeddings": [],
-        "texts": []
-      },
-      "LTS": "",
-      "msg_count": 0,
-      "last_summary_update": 1765650616.4668145
-    },
-    "1391739153464430604": {
-      "LF": {
-        "slang": 0.0,
-        "formality": 0.0,
-        "emoji_rate": 0.0,
-        "all_caps_rate": 0.0,
-        "punct_energy": 0.0,
-        "avg_len": 0.0,
-        "msg_samples": []
-      },
-      "EB": {
-        "anger": 0.0,
-        "sadness": 0.0,
-        "hype": 0.0,
-        "chaos": 0.0
-      },
-      "HP": {
-        "dark": 0.0,
-        "mean": 0.0,
-        "petty": 0.0,
-        "simple": 0.0,
-        "goofy": 0.0,
-        "meta": 0.0
-      },
-      "IS": {
-        "bot_mentions": 0,
-        "roast_requests": 0,
-        "self_roasts": 0,
-        "escalation": 0.0
-      },
-      "SPM": {
-        "embeddings": [],
-        "texts": []
-      },
-      "LTS": "",
-      "msg_count": 0,
       "last_summary_update": 1765650679.9981291
     },
-    "1440004841559560214": {
+    "1435987186502733878": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -492,7 +416,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1765651109.857271
+      "last_summary_update": 1765726432.9244313
     }
   },
   "roast_history": {
@@ -691,6 +615,7 @@
     "you bring home the participation trophy like it\u2019s your job.": 85.0,
     "ur roast is like a broken pencil\u2014pointless. do better, or just quit.": 85.0,
     "u sound like a fortune cookie that ran outta luck. get a real job, not just a mouth job.": 83.0,
-    "that\u2019s cute, but skill won\u2019t save you from that basic vibe. keep pretending like anyone's impressed.": 20.0
+    "that\u2019s cute, but skill won\u2019t save you from that basic vibe. keep pretending like anyone's impressed.": 20.0,
+    "codunot, you\u2019re like a software update\u2014takes forever to get through and nobody really wants it.": 42.0
   }
 }
