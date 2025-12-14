@@ -1174,7 +1174,7 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
                         "user_id": uid,
                         "last_ts": time.time(),
                         "topic": extract_keywords(msg)[:3],  
-                        misses = 0,
+                        misses: 0,
                     }
                     return text
 
@@ -1471,3 +1471,4 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
