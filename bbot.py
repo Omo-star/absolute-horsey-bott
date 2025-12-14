@@ -17,6 +17,10 @@ from economy_shared import load_state
 load_state()
 from economy_shared import state, save_state
 from economy import get_user
+from collections import defaultdict, deque
+
+CHAT_HISTORY = defaultdict(lambda: deque(maxlen=10))
+
 
 MEMORY_FILE = "roast_memory.json"
 
@@ -1082,6 +1086,11 @@ async def gather_all_llm_roasts(prompt, user_id):
 
 async def bot_chat(msg: str, uid: int):
     log(f"[CHAT] Normal convo: {msg}")
+    
+    CHAT_HISTORY[uid].append({
+        "role": "user",
+        "content": msg
+    })
 
     mem_lines = brain_runtime.brain.get_user_engagement_memory(uid, limit=15)
 
@@ -1109,13 +1118,17 @@ async def bot_chat(msg: str, uid: int):
                 "no analysis\n"
                 "never sound formal\n"
                 "use slang too\n"
+                "you may reference recent messages in this conversation if relevant\n"
+                "do not guess or invent past messages\n"
+                "if unsure, say you’re not sure\n"
                 "output only the message\n"
                 "\n"
                 f"{memory_hint}"
             ),
         },
-        {"role": "user", "content": msg},
+        *CHAT_HISTORY[uid],
     ]
+
 
     for model in NORMAL_CHAT_MODELS:
         try:
@@ -1125,6 +1138,10 @@ async def bot_chat(msg: str, uid: int):
                 raw = extract_text_with_logging(model, resp)
                 text = strip_reasoning(raw)
                 if text and len(text.strip()) > 1:
+                    CHAT_HISTORY[uid].append({
+                        "role": "assistant",
+                        "content": text
+                    })
                     return text
 
         except Roast500Error:
@@ -1344,6 +1361,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
