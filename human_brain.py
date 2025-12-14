@@ -392,8 +392,6 @@ class HumanBrain:
         )
 
     def get_user_engagement_memory(self, user_id: int, limit: int = 15) -> List[str]:
-        if not content:
-            return
         dq = self._user_engaged_memory.get(user_id)
         if not dq:
             return []
