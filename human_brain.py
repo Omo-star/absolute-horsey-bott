@@ -104,6 +104,8 @@ PERSIST_EVERY = 180.0
 MAX_CHANNEL_BOLDNESS = 1.35
 MIN_CHANNEL_BOLDNESS = 0.55
 
+ACTIVE_CONVO = {}
+
 STANCE_BUCKETS = {
     "agree": "agree",
     "hype": "agree",
