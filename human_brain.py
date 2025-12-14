@@ -1237,10 +1237,10 @@ class HumanBrain:
         cid = message.channel.id
         uid = message.author.id
         mom = sum(self._social_momentum[cid])
-            if mom >= 3:
-                p *= 1.10
-            elif mom <= -3:
-                p *= 0.75
+        if mom >= 3:
+            p *= 1.10
+        elif mom <= -3:
+            p *= 0.75
 
         self._decay_embarrassment(cid)
         self._update_channel_state(cid)
