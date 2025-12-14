@@ -1666,9 +1666,10 @@ class BrainRuntime:
 
     async def on_message(self, message: discord.Message, *, claimed: bool = False):
         if message.author.bot:
-            return
+            return None
         if claimed:
-            return
+            return None
+
         explicit = self.bot.user in message.mentions if self.bot.user else False
         alias = mentions_fusbot(message.content)
 
@@ -1682,28 +1683,22 @@ class BrainRuntime:
             self._pending_regrets.append(
                 (when, message.guild.id, result["channel_id"], result["message_id"], result["emoji"])
             )
-
         if mentioned:
             uid = message.author.id
             cid = message.channel.id
             mode = self.get_roast_mode(uid)
-
+        
             if mode:
                 reply = await self.roast_fn(message.content, uid, mode)
             else:
-                reply = await self.chat_fn(message.content, message.author.id, cid)
+                reply = await self.chat_fn(message.content, uid, cid)
+        
             if reply:
                 await self.brain.human_delay(message.channel, reply)
                 await message.channel.send(reply)
-                LAST_BOT_MESSAGE[cid] = reply
-                ACTIVE_CONVO[cid] = {
-                    "user_id": uid,
-                    "last_ts": time.time(),
-                    "topic": [],
-                    "misses": 0,
-                }
-                self.brain.mark_busy(message.channel.id)
-            return
+                self.brain.mark_busy(cid)
+        
+            return reply
         reply = await self.interjector.maybe_interject(message)
         if reply is not None:
             self.outcomes.note_interject(message.channel.id)
