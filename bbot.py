@@ -21,6 +21,27 @@ from collections import defaultdict, deque
 
 CHAT_HISTORY = defaultdict(lambda: deque(maxlen=10))
 
+ACTIVE_CONVO = {}
+LAST_BOT_MESSAGE = {}
+
+FOLLOWUP_SYSTEM_PROMPT = """You are a conversation intent classifier.
+
+You will be given:
+- the bot's last message
+- the user's new message
+
+Decide if the user's message is intended as a reply to the bot.
+
+Answer ONLY one word:
+YES or NO
+
+YES if it feels like a reaction, agreement, continuation, clarification,
+or response to what the bot just said — even if vague, slangy, or short.
+
+NO if it feels unrelated or directed elsewhere.
+
+Be human.
+"""
 
 MEMORY_FILE = "roast_memory.json"
 
@@ -1084,7 +1105,7 @@ async def gather_all_llm_roasts(prompt, user_id):
     return candidates
 
 
-async def bot_chat(msg: str, uid: int):
+async def bot_chat(msg: str, uid: int, channel_id: int):
     log(f"[CHAT] Normal convo: {msg}")
     
     mem_lines = brain_runtime.brain.get_user_engagement_memory(uid, limit=15)
@@ -1149,8 +1170,13 @@ async def bot_chat(msg: str, uid: int):
                         "role": "assistant",
                         "content": text
                     })
+                    ACTIVE_CONVO[channel_id] = {
+                        "user_id": uid,
+                        "last_ts": time.time(),
+                        "topic": extract_keywords(msg)[:3],  
+                        misses = 0,
+                    }
                     return text
-
 
         except Roast500Error:
             log(f"[CHAT] {model} hit 500 Error, trying next.")
@@ -1359,34 +1385,89 @@ async def on_reaction_add(reaction, user):
 
     await brain_runtime.on_reaction_add(reaction, user)
 
+FOLLOWUP_MODELS = [
+    "github:gpt-4o-mini",
+    "microsoft/phi-3-mini-128k-instruct", 
+    "gemini-2.0-flash",
+    "groq:llama-3.1-8b-instant",
+]
+
+def _normalize_yesno(text: str) -> str:
+    if not text:
+        return ""
+    t = text.strip().upper()
+    if t.startswith("YES"):
+        return "YES"
+    if t.startswith("NO"):
+        return "NO"
+    return ""
+
+async def followup_completion(model: str, last_bot_msg: str, user_msg: str):
+    system = FOLLOWUP_SYSTEM_PROMPT.strip()
+
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": f"BOT SAID:\n{last_bot_msg}\n\nUSER SAID:\n{user_msg}"},
+    ]
+
+    if model.startswith("gemini"):
+        gemini_user = (
+            system
+            + "\n\n"
+            + f"BOT SAID:\n{last_bot_msg}\n\nUSER SAID:\n{user_msg}\n\n"
+            + "answer only YES or NO"
+        )
+        messages = [{"role": "user", "content": gemini_user}]
+
+    resp = await safe_completion(model, messages)
+    if not resp:
+        return ""
+
+    return extract_text_with_logging(f"FOLLOWUP:{model}", resp) or ""
+
+async def ai_is_followup(last_bot_msg: str, user_msg: str) -> bool:
+    for model in FOLLOWUP_MODELS:
+        try:
+            raw = await followup_completion(model, last_bot_msg, user_msg)
+            ans = _normalize_yesno(raw)
+            if ans == "YES":
+                return True
+            if ans == "NO":
+                return False
+        except Exception as e:
+            log(f"[FOLLOWUP:{model}] error: {e}")
+            continue
+
+    return False
+
+
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
+
+    cid = message.channel.id
+    convo = ACTIVE_CONVO.get(cid)
+
+    if convo and message.author.id == convo["user_id"]:
+        last_bot = LAST_BOT_MESSAGE.get(cid)
+
+    if last_bot and await ai_is_followup(last_bot, message.content):
+        reply = await bot_chat(message.content, message.author.id, cid)
+        if reply:
+            await message.channel.send(reply)
+            LAST_BOT_MESSAGE[cid] = reply
+            convo["last_ts"] = time.time()
+            convo["misses"] = 0
+        return
+    else:
+        convo["misses"] = convo.get("misses", 0) + 1
+        if convo["misses"] >= 2:
+            ACTIVE_CONVO.pop(cid, None)
+
 
     await brain_runtime.on_message(message)
     await bot.process_commands(message)
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
