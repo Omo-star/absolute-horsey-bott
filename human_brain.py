@@ -398,7 +398,9 @@ class HumanBrain:
         dq = self._user_engaged_memory.get(user_id)
         if not dq:
             return []
-    
+
+        now = _now()
+        
         out = []
         seen = set()
 
