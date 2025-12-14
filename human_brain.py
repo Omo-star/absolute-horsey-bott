@@ -1695,6 +1695,13 @@ class BrainRuntime:
             if reply:
                 await self.brain.human_delay(message.channel, reply)
                 await message.channel.send(reply)
+                LAST_BOT_MESSAGE[cid] = reply
+                ACTIVE_CONVO[cid] = {
+                    "user_id": uid,
+                    "last_ts": time.time(),
+                    "topic": [],
+                    "misses": 0,
+                }
                 self.brain.mark_busy(message.channel.id)
             return
         reply = await self.interjector.maybe_interject(message)
