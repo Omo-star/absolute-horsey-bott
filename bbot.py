@@ -1117,6 +1117,7 @@ async def bot_chat(msg: str, uid: int):
                 "if asked about what was said, quote the exact message when possible\n"
                 "only reference the last few messages, not older ones\n"
                 "only look back when the user clearly asks or implies confusion\n"
+                "if the user says \"wdym\", \"what\", or seems confused, clarify your last message\n"
                 "do not guess or invent past messages\n"
                 "output only the message\n"
                 "\n"
@@ -1367,6 +1368,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
