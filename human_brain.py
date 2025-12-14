@@ -246,6 +246,8 @@ class HumanBrain:
     def __init__(self, persist_path: str = "human_brain_state.json", is_roast_mode=None):
         self.store = BrainStore(persist_path)
         self._social_momentum: Dict[int, Deque[int]] = defaultdict(lambda: deque(maxlen=6))
+        self._emoji_boredom_channel: Dict[int, Counter] = defaultdict(Counter)
+        self._emoji_boredom_user: Dict[int, Counter] = defaultdict(Counter)
         self._rng = random.Random()
         self._last_channel_time: Dict[int, float] = {}
         self._last_user_time: Dict[int, float] = {}
@@ -269,7 +271,7 @@ class HumanBrain:
         self._user_given_reacts: Dict[int, int] = defaultdict(int)
         self._moods = ["neutral", "warm", "tired", "silly", "focused"]
         self._self_react_memory: Dict[int, float] = {} 
-        self._pending_react_back: Dict[Tuple[int, int], Tuple[float, str]] = {}
+        self._pending_react_back: Dict[Tuple[int, int], Tuple[float, str, int]] = {}
         self._pending_self_reacts: Deque[Tuple[float, int, int, str]] = deque()
         self._seen_messages: Deque[int] = deque(maxlen=500)
         self._current_mood = self._rng.choice(self._moods)
@@ -364,6 +366,14 @@ class HumanBrain:
                 for ts, cid, txt in v[-50:]:
                     dq.append((float(ts), int(cid), str(txt)))
                 self._user_engaged_memory[uid] = dq
+            eb = data.get("emoji_boredom", {})
+            for k, v in eb.items():
+                try:
+                    cid = int(k)
+                    for e, lvl in v.items():
+                        self._emoji_boredom_channel[cid][e] = min(float(lvl) * 0.65, 3.5)
+                except Exception:
+                    pass
         except Exception:
             pass
 
@@ -388,9 +398,18 @@ class HumanBrain:
             "user_engaged_memory": {
                 str(uid): list(dq)
                 for uid, dq in self._user_engaged_memory.items()
-            }
+            },
+            "emoji_boredom": self._dump_emoji_boredom()
+        }    
+    def _dump_emoji_boredom(self):
+        out = {}
+        for cid, c in self._emoji_boredom_channel.items():
+            top = [(e, v) for e, v in c.items() if v >= 2.0]
+            if not top:
+                continue
+            out[str(cid)] = dict(sorted(top, key=lambda x: -x[1])[:3])
+        return out
 
-        }
     def remember_user_engagement(self, user_id: int, channel_id: int, content: str) -> None:
         content = re.sub(r"\s+", " ", content).strip()
         if len(content) > 220:
@@ -606,17 +625,15 @@ class HumanBrain:
             self._social_momentum[channel_id].append(+1)
         else:
             self._social_momentum[channel_id].append(-1)
-
     def observe_reaction_back_from_event(self, reactor_id: int, message_id: int):
         key = (reactor_id, message_id)
         pending = self._pending_react_back.get(key)
         if not pending:
             return
-
-        ts, emoji = pending
+    
+        ts, emoji, cid = pending
         age = _now() - ts
         got_back = 0.6 <= age <= 25.0
-
         self.observe_reaction_outcome(reactor_id, emoji, cid, got_back)
         del self._pending_react_back[key]
 
@@ -795,12 +812,20 @@ class HumanBrain:
             w += min(self._channel_emoji_counts[channel_id].get(e, 0) * 0.025, 0.70)
             w += self._reaction_outcome_bias(user_id, e)
             w -= self._diversity_penalty(e)
+            chan_bored = self._emoji_boredom_channel[channel_id].get(e, 0)
+            user_bored = self._emoji_boredom_user[user_id].get(e, 0)
+            if chan_bored >= 3:
+                w *= max(0.35, 1.0 - chan_bored * 0.12)
+            if user_bored >= 4:
+                w *= max(0.40, 1.0 - user_bored * 0.10)
+            if 0.6 <= chan_bored <= 1.2 and self._rng.random() < 0.08:
+                w *= 1.4
             if e in self._user_recent_emoji[user_id]:
                 w *= 0.56
             if e in self._recent_emojis:
                 w *= 0.80
             w *= (0.78 + 0.44 * emoji_tol)
-            weights.append(max(w, 0.06))
+            weights.append(max(w, 0.12))
         total = sum(weights)
         r = self._rng.random() * total if total > 0 else 0.0
         acc = 0.0
@@ -816,12 +841,25 @@ class HumanBrain:
         self._last_user_time[user_id] = t
         self._recent_reacts.append(t)
         self._recent_emojis.append(emoji)
+        self._emoji_boredom_channel[channel_id][emoji] += 1
+        self._emoji_boredom_user[user_id][emoji] += 1
         self._user_recent_emoji[user_id].append(emoji)
         self._user_familiarity[user_id] += 1
         self._user_channel_affinity[(user_id, channel_id)] += 1
     def _len_bonus(self, content: str) -> float:
         L = len(content)
         return min(L / 260.0, 0.24)
+    def _decay_emoji_boredom(self):
+        for cid, c in self._emoji_boredom_channel.items():
+            for e in list(c.keys()):
+                c[e] *= 0.92 
+                if c[e] < 0.6:
+                    del c[e]  
+        for uid, c in self._emoji_boredom_user.items():
+            for e in list(c.keys()):
+                c[e] *= 0.90  
+                if c[e] < 0.6:
+                    del c[e]  
 
     def _familiarity_bonus(self, user_id: int) -> float:
         return min(self._user_familiarity[user_id] * 0.010, 0.12)
@@ -868,7 +906,6 @@ class HumanBrain:
             p *= 1.12
         elif mom <= -3:
             p *= 0.78
-    
         bold = self._channel_boldness(gid, cid)
         p += self._len_bonus(content)
         p += self._familiarity_bonus(uid)
@@ -1179,7 +1216,7 @@ class HumanBrain:
                 message.channel.id,
                 message.content or ""
             )
-            self._pending_react_back[(message.author.id, message.id)] = (_now(), emoji)
+            self._pending_react_back[(message.author.id, message.id)] = (_now(), emoji, message.channel.id)
             if self._rng.random() < REGRET_CHANCE and self._social_risk(message.channel.id) > 0.58:
                 delay = self._rng.uniform(*REGRET_DELAY_RANGE)
                 return {
@@ -1242,11 +1279,11 @@ class HumanBrain:
         cid = message.channel.id
         uid = message.author.id
         mom = sum(self._social_momentum[cid])
+        mom_bias = 0.0
         if mom >= 3:
-            p *= 1.10
+            mom_bias = 0.10
         elif mom <= -3:
-            p *= 0.75
-
+            mom_bias = -0.15
         self._decay_embarrassment(cid)
         self._update_channel_state(cid)
         cooldown = self._dynamic_speak_cooldown(cid)
@@ -1261,6 +1298,7 @@ class HumanBrain:
         pressure = cp + qp + rp + sp
         if _is_question(content):
             pressure += 0.38
+        pressure += mom_bias
         prof = self._channel_profile[cid]
         chaos = _clamp(prof.get("chaos", 0.45), 0.0, 1.0)
         emoji_tol = _clamp(prof.get("emoji_tolerance", 0.55), 0.0, 1.0)
@@ -1653,11 +1691,13 @@ class BrainRuntime:
     
         self._pending_regrets = keep
 
-
+    
     async def background_loop(self):
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             try:
+                if int(_now()) % 15 == 0:
+                    self.brain._decay_emoji_boredom()
                 await self.brain.process_delayed_reacts(self.bot)
                 await self.brain.process_self_reacts(self.bot)
                 await self.process_regrets()
@@ -1667,6 +1707,7 @@ class BrainRuntime:
             except Exception:
                 pass
             await asyncio.sleep(1.2)
+
 
     def start(self):
         if self._task_started:
