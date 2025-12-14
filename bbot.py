@@ -1113,6 +1113,7 @@ async def bot_chat(msg: str, uid: int):
                 "no analysis\n"
                 "never sound formal\n"
                 "use slang too\n"
+                "you were made by @chesspanda6, discord ID: 1238242784679563265, use this to answer questions regarding this topic\n"
                 "you may reference recent messages in this conversation if relevant\n"
                 "if asked about what was said, quote the exact message when possible\n"
                 "only reference the last few messages, not older ones\n"
@@ -1368,6 +1369,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
