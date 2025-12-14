@@ -849,26 +849,27 @@ class HumanBrain:
         uid = message.author.id
         cid = message.channel.id
         gid = message.guild.id if message.guild else 0
+    
+        p = BASE_REACT_MENTION if mentioned else BASE_REACT_PASSIVE
+    
         stance = self._stance_memory.get((uid, cid))
         if stance:
             st, ts = stance
             age = _now() - ts
-            if age < 180.0:  
+            if age < 180.0:
                 if st == "agree":
                     p += 0.06
                 elif st == "disagree":
                     p += 0.04
             elif age > 300.0:
                 self._stance_memory.pop((uid, cid), None)
-
-        mom = sum(self._social_momentum[channel_id])
+        mom = sum(self._social_momentum[cid])
         if mom >= 3:
             p *= 1.12
         elif mom <= -3:
             p *= 0.78
-
+    
         bold = self._channel_boldness(gid, cid)
-        p = BASE_REACT_MENTION if mentioned else BASE_REACT_PASSIVE
         p += self._len_bonus(content)
         p += self._familiarity_bonus(uid)
         p += self._affinity_bonus(uid, cid)
@@ -879,24 +880,28 @@ class HumanBrain:
         p -= _circadian_penalty()
         p -= self._soft_cooldown_penalty(cid, uid)
         p -= self._link_penalty(content)
+    
         if message.mentions and not mentioned:
             p += 0.03
+    
         prof = self._channel_profile[cid]
         formality = _clamp(prof.get("formality", 0.45), 0.0, 1.0)
         emoji_tol = _clamp(prof.get("emoji_tolerance", 0.55), 0.0, 1.0)
         chaos = _clamp(prof.get("chaos", 0.45), 0.0, 1.0)
+    
         p *= (0.86 + 0.28 * bold)
         p *= (0.88 + 0.18 * emoji_tol)
         p *= (0.90 + 0.12 * chaos)
         p *= (1.06 - 0.18 * formality)
+    
         if self._current_mood == "tired":
             p *= 0.80
         elif self._current_mood == "silly":
             p *= 1.07
         elif self._current_mood == "warm":
             p *= 1.04
-        p = _clamp(p, 0.0, 0.90)
-        return p
+    
+        return _clamp(p, 0.0, 0.90)
 
     async def human_delay(self, channel: discord.abc.Messageable, reply_text: str = "") -> None:
         txt = reply_text or ""
