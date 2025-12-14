@@ -1664,7 +1664,7 @@ class BrainRuntime:
 
         self.brain.observe_reaction_back_from_event(user.id, reaction.message.id)
 
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message, *, claimed: bool = False):
         if message.author.bot:
             return
         if claimed:
