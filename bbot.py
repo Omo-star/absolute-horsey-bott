@@ -1460,6 +1460,7 @@ async def on_message(message):
             LAST_BOT_MESSAGE[cid] = reply
             convo["last_ts"] = time.time()
             convo["misses"] = 0
+        await brain_runtime.on_message(message, claimed=True)
         return
     else:
         if convo:
@@ -1472,5 +1473,6 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
