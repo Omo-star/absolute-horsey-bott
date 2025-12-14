@@ -1468,11 +1468,22 @@ async def on_message(message):
             if convo["misses"] >= 2:
                 ACTIVE_CONVO.pop(cid, None)
 
-    await brain_runtime.on_message(message)
+    reply = await brain_runtime.on_message(message)
+    if reply:
+        LAST_BOT_MESSAGE[cid] = reply
+        ACTIVE_CONVO[cid] = {
+            "user_id": message.author.id,
+            "last_ts": time.time(),
+            "topic": [],
+            "misses": 0,
+        }
+        return
+    
     await bot.process_commands(message)
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
