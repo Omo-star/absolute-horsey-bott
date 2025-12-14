@@ -1174,7 +1174,7 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
                         "user_id": uid,
                         "last_ts": time.time(),
                         "topic": extract_keywords(msg)[:3],  
-                        misses: 0,
+                        "misses": 0,
                     }
                     return text
 
@@ -1448,7 +1448,8 @@ async def on_message(message):
 
     cid = message.channel.id
     convo = ACTIVE_CONVO.get(cid)
-
+    last_bot = None
+    
     if convo and message.author.id == convo["user_id"]:
         last_bot = LAST_BOT_MESSAGE.get(cid)
 
@@ -1461,14 +1462,15 @@ async def on_message(message):
             convo["misses"] = 0
         return
     else:
-        convo["misses"] = convo.get("misses", 0) + 1
-        if convo["misses"] >= 2:
-            ACTIVE_CONVO.pop(cid, None)
-
+        if convo:
+            convo["misses"] = convo.get("misses", 0) + 1
+            if convo["misses"] >= 2:
+                ACTIVE_CONVO.pop(cid, None)
 
     await brain_runtime.on_message(message)
     await bot.process_commands(message)
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
