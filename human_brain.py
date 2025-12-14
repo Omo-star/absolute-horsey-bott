@@ -104,6 +104,13 @@ PERSIST_EVERY = 180.0
 MAX_CHANNEL_BOLDNESS = 1.35
 MIN_CHANNEL_BOLDNESS = 0.55
 
+STANCE_BUCKETS = {
+    "agree": "agree",
+    "hype": "agree",
+    "funny": "agree",
+    "disbelief": "disagree",
+}
+
 LOW_EFFORT = {
     "hi","hey","hello","yo","sup","ok","okay","k","kk","lol","lmao","nah","bruh","yup","nope","bet",
     "true","facts","real","fr","frfr","same","exactly","100%","yep","yup","yeah","mm","mhm","aight",
@@ -238,10 +245,12 @@ class BrainStore:
 class HumanBrain:
     def __init__(self, persist_path: str = "human_brain_state.json", is_roast_mode=None):
         self.store = BrainStore(persist_path)
+        self._social_momentum: Dict[int, Deque[int]] = defaultdict(lambda: deque(maxlen=6))
         self._rng = random.Random()
         self._last_channel_time: Dict[int, float] = {}
         self._last_user_time: Dict[int, float] = {}
         self._recent_reacts: Deque[float] = deque()
+        self._stance_memory: Dict[Tuple[int, int], Tuple[str, float]] = {}
         self._recent_emojis: Deque[str] = deque(maxlen=REACTION_DIVERSITY_WINDOW)
         self._channel_msgs: Dict[int, Deque[Tuple[float, str]]] = defaultdict(lambda: deque(maxlen=CONTEXT_WINDOW))
         self._channel_culture: Dict[int, Deque[Tuple[float, str]]] = defaultdict(lambda: deque(maxlen=CULTURE_MEMORY_MAX))
@@ -390,6 +399,46 @@ class HumanBrain:
         self._user_engaged_memory[user_id].append(
             (_now(), channel_id, content)
         )
+    def get_contextual_memory(
+        self,
+        user_id: int,
+        channel_id: int,
+        bucket: str,
+        limit: int = 12,
+    ) -> List[str]:
+        dq = self._user_engaged_memory.get(user_id)
+        if not dq:
+            return []
+    
+        now = _now()
+        scored = []
+    
+        for ts, cid, txt in dq:
+            if _low_effort(txt):
+                continue
+    
+            score = 0.0
+    
+            if cid == channel_id:
+                score += 0.45
+    
+            tl = txt.lower()
+            if bucket == "funny" and _has_any(tl, FUNNY_KEYS):
+                score += 0.30
+            elif bucket == "hype" and _has_any(tl, HYPE_KEYS):
+                score += 0.30
+            elif bucket == "sad" and _has_any(tl, SAD_KEYS):
+                score += 0.30
+            elif bucket == "disbelief" and _has_any(tl, DISBELIEF_KEYS):
+                score += 0.30
+
+    
+            score += max(0.0, 1.0 - (now - ts) / 1800.0)
+    
+            scored.append((score, txt))
+    
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [txt for _, txt in scored[:limit]]
 
     def get_user_engagement_memory(self, user_id: int, limit: int = 15) -> List[str]:
         dq = self._user_engaged_memory.get(user_id)
@@ -550,9 +599,14 @@ class HumanBrain:
     def observe_received_reaction(self, user_id: int) -> None:
         self._user_received_reacts[user_id] += 1
 
-    def observe_reaction_outcome(self, user_id: int, emoji: str, got_back: bool) -> None:
+    def observe_reaction_outcome(self, user_id: int, emoji: str, channel_id: int, got_back: bool) -> None:
         t = _now()
         self._react_outcomes_user[user_id].append((t, emoji, 1 if got_back else 0))
+        if got_back:
+            self._social_momentum[channel_id].append(+1)
+        else:
+            self._social_momentum[channel_id].append(-1)
+
     def observe_reaction_back_from_event(self, reactor_id: int, message_id: int):
         key = (reactor_id, message_id)
         pending = self._pending_react_back.get(key)
@@ -563,13 +617,14 @@ class HumanBrain:
         age = _now() - ts
         got_back = 0.6 <= age <= 25.0
 
-        self.observe_reaction_outcome(reactor_id, emoji, got_back)
+        self.observe_reaction_outcome(reactor_id, emoji, cid, got_back)
         del self._pending_react_back[key]
 
 
     def observe_interject_outcome(self, channel_id: int, got_reply: bool) -> None:
         t = _now()
         self._interject_outcomes_channel[channel_id].append((t, 1 if got_reply else 0))
+        self._social_momentum[channel_id].append(+1 if got_reply else -1)
 
     def _culture_decay(self, channel_id: int) -> None:
         t = _now()
@@ -794,6 +849,24 @@ class HumanBrain:
         uid = message.author.id
         cid = message.channel.id
         gid = message.guild.id if message.guild else 0
+        stance = self._stance_memory.get((uid, cid))
+        if stance:
+            st, ts = stance
+            age = _now() - ts
+            if age < 180.0:  
+                if st == "agree":
+                    p += 0.06
+                elif st == "disagree":
+                    p += 0.04
+            elif age > 300.0:
+                self._stance_memory.pop((uid, cid), None)
+
+        mom = sum(self._social_momentum[channel_id])
+        if mom >= 3:
+            p *= 1.12
+        elif mom <= -3:
+            p *= 0.78
+
         bold = self._channel_boldness(gid, cid)
         p = BASE_REACT_MENTION if mentioned else BASE_REACT_PASSIVE
         p += self._len_bonus(content)
@@ -1089,6 +1162,12 @@ class HumanBrain:
 
         try:
             await message.add_reaction(emoji)
+            stance = STANCE_BUCKETS.get(bucket)
+            if stance:
+                self._stance_memory[(message.author.id, message.channel.id)] = (
+                    stance,
+                    _now()
+                )
             self._mark_react(message.channel.id, message.author.id, emoji, message.guild.id)
             self.remember_user_engagement(
                 message.author.id,
@@ -1157,6 +1236,12 @@ class HumanBrain:
             return 0.0
         cid = message.channel.id
         uid = message.author.id
+        mom = sum(self._social_momentum[cid])
+            if mom >= 3:
+                p *= 1.10
+            elif mom <= -3:
+                p *= 0.75
+
         self._decay_embarrassment(cid)
         self._update_channel_state(cid)
         cooldown = self._dynamic_speak_cooldown(cid)
@@ -1387,7 +1472,12 @@ class InterjectionEngine:
             return None
         bucket = self.signals.bucket(message.content or "")
         hlog("INTERJECT calling ai_interject_line")
-        mem_lines = self.brain.get_user_engagement_memory(message.author.id, limit=20)
+        mem_lines = self.brain.get_contextual_memory(
+            message.author.id,
+            message.channel.id,
+            bucket,
+            limit=12,
+        )
         text = await ai_interject_line(bucket, message.content or "", mem_lines)
 
         if not text:
@@ -1518,31 +1608,46 @@ class BrainRuntime:
         self.brain.self_reflect()
         self.brain.maybe_persist()
     async def process_regrets(self):
-        now = time.time()
         keep = deque()
-
+    
         while self._pending_regrets:
             when, gid, cid, mid, emoji = self._pending_regrets.popleft()
+            now = time.time()
             if when > now:
+                await asyncio.sleep(min(when - now, 1.2))
                 keep.append((when, gid, cid, mid, emoji))
                 continue
+    
             try:
                 guild = self.bot.get_guild(gid)
                 if not guild:
                     continue
+    
                 ch = guild.get_channel(cid)
                 if not ch:
                     continue
+    
                 msg = await ch.fetch_message(mid)
                 me = guild.get_member(self.bot.user.id)
+                if not me:
+                    continue
+                await asyncio.sleep(self.brain._rng.uniform(0.25, 0.9))
                 if self.brain._social_risk(cid) < self.brain._rng.uniform(0.35, 0.55):
                     continue
-                if me:
-                    await msg.remove_reaction(emoji, me)
+    
+                await msg.remove_reaction(emoji, me)
+    
+                self.brain._last_channel_embarrassment[cid] = min(
+                    self.brain._last_channel_embarrassment[cid]
+                    + self.brain._rng.uniform(0.08, 0.18),
+                    1.2
+                )
+    
             except Exception:
                 pass
     
         self._pending_regrets = keep
+
 
     async def background_loop(self):
         await self.bot.wait_until_ready()
