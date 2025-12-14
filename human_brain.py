@@ -1399,7 +1399,7 @@ class InterjectionEngine:
 
         await self.brain.human_delay(message.channel, text)
         try:
-            self.brain.mark_busy(message.channel.id))
+            self.brain.mark_busy(message.channel.id)
             await message.channel.send(text)
             self.brain.observe_channel_message(message.channel.id, text)
             self.brain.mark_interjected(message.channel.id, success_hint=None)
