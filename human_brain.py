@@ -248,7 +248,9 @@ class HumanBrain:
         self._social_momentum: Dict[int, Deque[int]] = defaultdict(lambda: deque(maxlen=6))
         self._emoji_boredom_channel: Dict[int, Counter] = defaultdict(Counter)
         self._emoji_boredom_user: Dict[int, Counter] = defaultdict(Counter)
+        self._social_bias: Dict[int, float] = defaultdict(float)
         self._rng = random.Random()
+        self._topic_memory: Dict[Tuple[int, str], Tuple[float, float]] = {}
         self._last_channel_time: Dict[int, float] = {}
         self._last_user_time: Dict[int, float] = {}
         self._recent_reacts: Deque[float] = deque()
@@ -296,7 +298,15 @@ class HumanBrain:
         self._load()
     def mark_busy(self, channel_id: int) -> None:
         self._last_speak_time[channel_id] = _now()
-
+    def _extract_topic(self, content: str) -> Optional[str]:
+        w = _words(content)
+        if len(w) < 4:
+            return None
+        stop = {"the","a","an","and","or","but","to","of","is","are","this","that"}
+        core = [x for x in w if x not in stop]
+        if not core:
+            return None
+        return core[0] 
     def _load(self) -> None:
         data = self.store.load()
         if not data:
@@ -541,7 +551,11 @@ class HumanBrain:
                         continue
                     await msg.add_reaction(emoji)
                     self._mark_react(cid, msg.author.id, emoji, guild.id)
-                    self._pending_react_back[(msg.author.id, msg.id)] = (_now(), emoji)
+                    self._pending_react_back[(msg.author.id, msg.id)] = (
+                        _now(),
+                        emoji,
+                        cid,
+                    )
                     break
             except Exception:
                 pass
@@ -623,8 +637,10 @@ class HumanBrain:
         self._react_outcomes_user[user_id].append((t, emoji, 1 if got_back else 0))
         if got_back:
             self._social_momentum[channel_id].append(+1)
+            self._social_bias[user_id] = _clamp(self._social_bias[user_id] + 0.04, -0.6, 0.6)
         else:
             self._social_momentum[channel_id].append(-1)
+            self._social_bias[user_id] = _clamp(self._social_bias[user_id] - 0.05, -0.6, 0.6)
     def observe_reaction_back_from_event(self, reactor_id: int, message_id: int):
         key = (reactor_id, message_id)
         pending = self._pending_react_back.get(key)
@@ -642,6 +658,9 @@ class HumanBrain:
         t = _now()
         self._interject_outcomes_channel[channel_id].append((t, 1 if got_reply else 0))
         self._social_momentum[channel_id].append(+1 if got_reply else -1)
+        if not got_reply:
+            for uid in list(self._social_bias.keys()):
+                self._social_bias[uid] *= 0.985
 
     def _culture_decay(self, channel_id: int) -> None:
         t = _now()
@@ -901,6 +920,14 @@ class HumanBrain:
                     p += 0.04
             elif age > 300.0:
                 self._stance_memory.pop((uid, cid), None)
+        topic = self._extract_topic(content)
+        if topic:
+            mem = self._topic_memory.get((cid, topic))
+            if mem:
+                opinion, ts = mem
+                age = _now() - ts
+                if age < 3600:  
+                    p += opinion * 0.06
         mom = sum(self._social_momentum[cid])
         if mom >= 3:
             p *= 1.12
@@ -909,6 +936,8 @@ class HumanBrain:
         bold = self._channel_boldness(gid, cid)
         p += self._len_bonus(content)
         p += self._familiarity_bonus(uid)
+        bias = self._social_bias.get(uid, 0.0)
+        p += bias * 0.08
         p += self._affinity_bonus(uid, cid)
         p += self._reciprocity_bonus(uid)
         p += self._context_activity(cid) * 0.07
@@ -1172,6 +1201,19 @@ class HumanBrain:
         p = self.p_react(message, mentioned)
         if self._rng.random() > p:
             bucket = self._pick_bucket(content.lower(), content)
+            topic = self._extract_topic(content)
+            if topic and bucket in ("agree", "disbelief", "sad", "hype"):
+                delta = {
+                    "agree":  +0.15,
+                    "hype":   +0.20,
+                    "disbelief": -0.20,
+                    "sad":    -0.10,
+                }.get(bucket, 0.0)
+            
+                key = (message.channel.id, topic)
+                old, _ = self._topic_memory.get(key, (0.0, 0.0))
+                new = _clamp(old + delta, -1.0, 1.0)
+                self._topic_memory[key] = (new, _now())
             if self._should_queue_late_react(message.channel.id, bucket, content):
                 emoji = self._choose_emoji(
                     message.channel.id,
@@ -1266,7 +1308,11 @@ class HumanBrain:
                     continue
                 await msg.add_reaction(emoji)
                 self._mark_react(cid, uid, emoji, gid)
-                self._pending_react_back[(uid, mid)] = (_now(), emoji)
+                self._pending_react_back[(uid, mid)] = (
+                    _now(),
+                    emoji,
+                    cid,
+                )
             except Exception:
                 continue
         self._delayed_reacts = keep
@@ -1299,6 +1345,7 @@ class HumanBrain:
         if _is_question(content):
             pressure += 0.38
         pressure += mom_bias
+        pressure += self._social_bias.get(uid, 0.0) * 0.10
         prof = self._channel_profile[cid]
         chaos = _clamp(prof.get("chaos", 0.45), 0.0, 1.0)
         emoji_tol = _clamp(prof.get("emoji_tolerance", 0.55), 0.0, 1.0)
@@ -1370,6 +1417,10 @@ class HumanBrain:
         self._last_reflect = t
         avg_fat = self._fatigue_penalty()
         mood = self._current_mood
+        for uid in list(self._social_bias.keys()):
+            self._social_bias[uid] *= 0.97
+            if abs(self._social_bias[uid]) < 0.02:
+                del self._social_bias[uid]
         if avg_fat > 0.26 and mood != "tired":
             if self._rng.random() < 0.42:
                 self._current_mood = "tired"
