@@ -1691,7 +1691,7 @@ class BrainRuntime:
             if mode:
                 reply = await self.roast_fn(message.content, uid, mode)
             else:
-                reply = await self.chat_fn(message.content, message.author.id)
+                reply = await bot_chat(message.content, message.author.id, cid)
             if reply:
                 await self.brain.human_delay(message.channel, reply)
                 await message.channel.send(reply)
