@@ -1452,21 +1452,23 @@ async def on_message(message):
     
     if convo and message.author.id == convo["user_id"]:
         last_bot = LAST_BOT_MESSAGE.get(cid)
+    
+    if last_bot:
+        is_followup = await ai_is_followup(last_bot, message.content)
+    
+        if is_followup:
+            reply = await bot_chat(message.content, message.author.id, cid)
+            if reply:
+                await message.channel.send(reply)
+                LAST_BOT_MESSAGE[cid] = reply
+                convo["last_ts"] = time.time()
+                convo["misses"] = 0
+    
+            await brain_runtime.on_message(message, claimed=True)
+            return
+    
+        ACTIVE_CONVO.pop(cid, None)
 
-    if last_bot and await ai_is_followup(last_bot, message.content):
-        reply = await bot_chat(message.content, message.author.id, cid)
-        if reply:
-            await message.channel.send(reply)
-            LAST_BOT_MESSAGE[cid] = reply
-            convo["last_ts"] = time.time()
-            convo["misses"] = 0
-        await brain_runtime.on_message(message, claimed=True)
-        return
-    else:
-        if convo:
-            convo["misses"] = convo.get("misses", 0) + 1
-            if convo["misses"] >= 2:
-                ACTIVE_CONVO.pop(cid, None)
 
     reply = await brain_runtime.on_message(message)
     if reply:
@@ -1483,6 +1485,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
