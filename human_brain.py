@@ -383,9 +383,6 @@ class HumanBrain:
 
         }
     def remember_user_engagement(self, user_id: int, channel_id: int, content: str) -> None:
-        if not content:
-            return
-
         content = re.sub(r"\s+", " ", content).strip()
         if len(content) > 220:
             content = content[:220] + "…"
@@ -395,6 +392,8 @@ class HumanBrain:
         )
 
     def get_user_engagement_memory(self, user_id: int, limit: int = 15) -> List[str]:
+        if not content:
+            return
         dq = self._user_engaged_memory.get(user_id)
         if not dq:
             return []
@@ -412,7 +411,7 @@ class HumanBrain:
                 continue
     
             seen.add(norm)
-            out.append(f"{int((now - ts)//60)}m ago: {txt}")
+            out.append(txt)
 
             if len(out) >= limit:
                 break
@@ -1511,11 +1510,6 @@ class BrainRuntime:
                 reply = await self.chat_fn(message.content, message.author.id)
             if reply:
                 await self.brain.human_delay(message.channel, reply)
-                self.brain.remember_user_engagement(
-                    message.author.id,
-                    message.channel.id,
-                    message.content or ""
-                )
                 await message.channel.send(reply)
                 self.brain.mark_busy(message.channel.id)
             return
