@@ -1470,8 +1470,14 @@ async def on_message(message):
     
         ACTIVE_CONVO.pop(cid, None)
 
-
+    automod_cog = bot.get_cog("AutoModCog")
+    if automod_cog:
+        handled = await automod_cog.engine.handle_message(message)
+        if handled:
+            return  
+    
     reply = await brain_runtime.on_message(message)
+
     if reply:
         LAST_BOT_MESSAGE[cid] = reply
         ACTIVE_CONVO[cid] = {
@@ -1486,6 +1492,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
