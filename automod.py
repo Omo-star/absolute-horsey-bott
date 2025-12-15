@@ -11,6 +11,9 @@ from collections import defaultdict, deque
 AUTOMOD_FILE = "automod_config.json"
 TEST_USER_IDS = {1238242784679563265}
 
+WINDOW = 6
+COUNT = 5
+
 def load_automod():
     if not os.path.exists(AUTOMOD_FILE):
         return {}
@@ -59,12 +62,17 @@ class AutoModEngine:
     def record_message(self, guild_id: int, user_id: int):
         now = time.time()
         self.msg_times[(guild_id, user_id)].append(now)
-
+        
     def is_spam(self, guild_id: int, user_id: int) -> bool:
+        now = time.time()
         times = self.msg_times[(guild_id, user_id)]
-        if len(times) < 5:
-            return False
-        return times[-1] - times[0] <= 2
+    
+        recent = [t for t in times if now - t <= WINDOW]
+    
+        if len(recent) >= COUNT:
+            return True
+    
+        return False
 
     def contains_slur(self, text: str, slurs: list[str]) -> str | None:
         lowered = text.lower()
@@ -72,6 +80,7 @@ class AutoModEngine:
             if re.search(rf"\b{re.escape(s)}\b", lowered):
                 return s
         return None
+        
     async def handle_message(self, message: discord.Message) -> bool:
         if not message.guild or message.author.bot:
             return False
@@ -84,15 +93,19 @@ class AutoModEngine:
             return False
     
         self.record_message(message.guild.id, message.author.id)
-    
+
+        if is_low_effort(message.content):
+            await self.punish(message, "low effort spam")
+            return True
+
         if self.is_spam(message.guild.id, message.author.id):
             await self.punish(message, "spam")
-            return True  # CLAIMED
+            return True 
     
         slur = self.contains_slur(message.content, cfg["slurs"])
         if slur:
             await self.punish(message, f"slur ({censor_word(slur)})")
-            return True  # CLAIMED
+            return True 
     
         return False
 
@@ -127,18 +140,25 @@ class AutoModEngine:
             await message.channel.send(
                 f"{user.mention} muted for 5 minutes. reason: {reason}."
             )
-
+        
         elif level == 3:
             try:
                 await guild.kick(user, reason=f"automod: {reason}")
+                await message.channel.send(
+                    f"🚪 **{user} was kicked** due to **{reason}**."
+                )
             except:
                 pass
-
+        
         elif level >= 4:
             try:
                 await guild.ban(user, reason=f"automod: {reason}")
+                await message.channel.send(
+                    f"🔨 **{user} was banned** due to **{reason}**."
+                )
             except:
                 pass
+
 
 ENGINE = AutoModEngine()
 
