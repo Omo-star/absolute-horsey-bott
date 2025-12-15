@@ -17,6 +17,7 @@ log = logging.getLogger("imagegen")
 
 REPLICATE_KEY = os.getenv("REPLICATE_API_TOKEN")
 STABILITY_KEY = os.getenv("STABILITY_API_KEY")
+SDXL_VERSION = "7762fd07cf82c948538e2d7cbbd1b0b39d3c0c7a7a0b6e7c2d9bde6c8f3b3c4"
 
 async def _gen_replicate(prompt: str):
     if not REPLICATE_KEY:
@@ -27,7 +28,7 @@ async def _gen_replicate(prompt: str):
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                "https://api.replicate.com/v1/models/stability-ai/sdxl/predictions",
+                f"https://api.replicate.com/v1/models/stability-ai/sdxl/versions/{SDXL_VERSION}/predictions",
                 headers={
                     "Authorization": f"Bearer {REPLICATE_KEY}",
                     "Content-Type": "application/json",
@@ -38,9 +39,10 @@ async def _gen_replicate(prompt: str):
                         "prompt": prompt,
                         "width": 1024,
                         "height": 1024,
+                        "num_outputs": 1,
                     }
                 },
-                timeout=60,
+                timeout=90,
             ) as r:
                 if r.status != 201:
                     log.warning("Replicate HTTP %s: %s", r.status, await r.text())
@@ -49,7 +51,7 @@ async def _gen_replicate(prompt: str):
                 data = await r.json()
                 output = data.get("output")
 
-                if not output or not isinstance(output, list):
+                if not output:
                     log.warning("Replicate returned no output")
                     return None
 
