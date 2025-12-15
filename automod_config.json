@@ -5,10 +5,28 @@
       "fuck"
     ],
     "punishments": {
-      "1": "warn",
+      "1": "timeout:15",
       "2": "timeout:10",
       "3": "kick",
       "4": "ban"
+    },
+    "delete": true,
+    "log": false,
+    "cooldown_seconds": 10,
+    "spam": {
+      "window_seconds": 6,
+      "max_messages": 5,
+      "duplicate_count": 3,
+      "max_mentions": 6,
+      "max_links": 4,
+      "caps_ratio": 0.75,
+      "caps_min_len": 12,
+      "max_zalgo_marks": 12,
+      "repeat_char_limit": 8
+    },
+    "filters": {
+      "block_invites": false,
+      "block_links": false
     }
   },
   "1435926772972519446": {
