@@ -1,12 +1,22 @@
 {
   "1440020962295676938": {
     "enabled": true,
-    "slurs": [
-      "fuck"
-    ]
+    "slurs": ["fuck"],
+    "punishments": {
+      "1": "warn",
+      "2": "timeout:5",
+      "3": "kick",
+      "4": "ban"
+    }
   },
   "1435926772972519446": {
     "enabled": false,
-    "slurs": []
+    "slurs": [],
+    "punishments": {
+      "1": "warn",
+      "2": "timeout:5",
+      "3": "kick",
+      "4": "ban"
+    }
   }
 }
