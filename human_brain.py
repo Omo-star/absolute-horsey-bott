@@ -1560,6 +1560,8 @@ class InterjectionEngine:
     async def maybe_interject(self, message: discord.Message) -> Optional[str]:
         if self.brain.is_roast_mode(message.author.id):
             return None
+        if getattr(message, "_automod_blocked", False):
+            return None
         p = self.brain.should_interject_probability(message)
         roll = self.brain._rng.random()
         hlog("INTERJECT check", "p=", round(p,3), "roll=", round(roll,3), "msg=", message.content)
@@ -1666,6 +1668,8 @@ class BrainRuntime:
 
     async def on_message(self, message: discord.Message, *, claimed: bool = False):
         if message.author.bot:
+            return None
+        if getattr(message, "_automod_blocked", False):
             return None
         if claimed:
             return None
