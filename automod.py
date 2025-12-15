@@ -9,6 +9,7 @@ import datetime
 from collections import defaultdict, deque
 
 AUTOMOD_FILE = "automod_config.json"
+TEST_USER_IDS = {1238242784679563265}
 
 def load_automod():
     if not os.path.exists(AUTOMOD_FILE):
@@ -32,6 +33,8 @@ def censor_word(w: str) -> str:
     return w[:-3] + "***"
 
 def has_mod_perms(member: discord.Member) -> bool:
+    if member.id in TEST_USER_IDS:
+        return False
     return (
         member.guild_permissions.manage_messages
         or member.guild_permissions.administrator
