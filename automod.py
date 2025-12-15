@@ -429,5 +429,83 @@ class AutoModCog(commands.Cog):
 
         await interaction.response.send_message("actions: list, add, remove", ephemeral=True)
 
+    @app_commands.command(name="automod_spam", description="Configure automod spam settings")
+    @app_commands.describe(
+        setting="window_seconds | max_messages | duplicate_count | max_mentions | max_links | caps_ratio | caps_min_len | max_zalgo_marks | repeat_char_limit",
+        value="New value"
+    )
+    async def automod_spam(self, interaction: discord.Interaction, setting: str, value: str):
+        if not interaction.guild:
+            return await interaction.response.send_message("guild only", ephemeral=True)
+        if not isinstance(interaction.user, discord.Member) or not has_mod_perms(interaction.user):
+            return await interaction.response.send_message("no permission", ephemeral=True)
+    
+        cfg = self.engine.get_cfg(interaction.guild.id)
+        spam = cfg["spam"]
+    
+        if setting not in spam:
+            return await interaction.response.send_message(
+                f"unknown setting. valid: {', '.join(spam.keys())}",
+                ephemeral=True
+            )
+    
+        try:
+            if isinstance(spam[setting], float):
+                spam[setting] = float(value)
+            else:
+                spam[setting] = int(value)
+        except:
+            return await interaction.response.send_message("invalid value", ephemeral=True)
+    
+        save_automod()
+        await interaction.response.send_message(f"✅ spam `{setting}` set to `{spam[setting]}`")
+    @app_commands.command(name="automod_filters", description="Configure automod filters")
+    @app_commands.describe(filter="block_invites | block_links", mode="on or off")
+    async def automod_filters(self, interaction: discord.Interaction, filter: str, mode: str):
+        if not interaction.guild:
+            return await interaction.response.send_message("guild only", ephemeral=True)
+        if not isinstance(interaction.user, discord.Member) or not has_mod_perms(interaction.user):
+            return await interaction.response.send_message("no permission", ephemeral=True)
+    
+        cfg = self.engine.get_cfg(interaction.guild.id)
+        filters = cfg["filters"]
+    
+        if filter not in filters:
+            return await interaction.response.send_message(
+                f"unknown filter. valid: {', '.join(filters.keys())}",
+                ephemeral=True
+            )
+    
+        filters[filter] = mode.lower() == "on"
+        save_automod()
+    
+        await interaction.response.send_message(
+            f"✅ filter `{filter}` {'enabled' if filters[filter] else 'disabled'}"
+        )
+    @app_commands.command(name="automod_settings", description="Configure automod behavior")
+    @app_commands.describe(setting="delete | cooldown_seconds", value="value")
+    async def automod_settings(self, interaction: discord.Interaction, setting: str, value: str):
+        if not interaction.guild:
+            return await interaction.response.send_message("guild only", ephemeral=True)
+        if not isinstance(interaction.user, discord.Member) or not has_mod_perms(interaction.user):
+            return await interaction.response.send_message("no permission", ephemeral=True)
+    
+        cfg = self.engine.get_cfg(interaction.guild.id)
+    
+        if setting not in {"delete", "cooldown_seconds"}:
+            return await interaction.response.send_message("invalid setting", ephemeral=True)
+    
+        try:
+            if setting == "delete":
+                cfg["delete"] = value.lower() == "on"
+            else:
+                cfg[setting] = int(value)
+        except:
+            return await interaction.response.send_message("invalid value", ephemeral=True)
+    
+        save_automod()
+        await interaction.response.send_message(f"✅ `{setting}` set to `{cfg[setting]}`")
+
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(AutoModCog(bot))
