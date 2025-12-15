@@ -10,7 +10,7 @@ from collections import defaultdict, deque
 
 AUTOMOD_FILE = "automod_config.json"
 OFFENCES_FILE = "automod_offences.json"
-TEST_USER_IDS = {1238242784679563265}
+TEST_USER_IDS = {}
 AUTOMOD_BLOCKED_MESSAGES: set[int] = set()
 
 WINDOW = 5
