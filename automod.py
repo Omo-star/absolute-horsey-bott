@@ -95,11 +95,13 @@ class AutoModEngine:
         self.record_message(message.guild.id, message.author.id)
         
         if self.is_spam(message.guild.id, message.author.id):
+            message._automod_blocked = True 
             await self.punish(message, "spam")
             return True 
     
         slur = self.contains_slur(message.content, cfg["slurs"])
         if slur:
+            message._automod_blocked = True
             await self.punish(message, f"slur ({censor_word(slur)})")
             return True 
     
