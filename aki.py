@@ -98,9 +98,9 @@ class AkinatorCog(commands.Cog):
         aki = Akinator()
 
         try:
-            question = await asyncio.to_thread(aki.start)
+            question = await asyncio.to_thread(aki.start_game)
         except Exception:
-            log.exception("Akinator start failed")
+            log.exception("Akinator start_game failed")
             await interaction.followup.send(
                 "❌ Failed to connect to Akinator servers."
             )
