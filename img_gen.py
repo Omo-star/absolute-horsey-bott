@@ -17,6 +17,7 @@ log = logging.getLogger("imagegen")
 
 REPLICATE_KEY = os.getenv("REPLICATE_API_TOKEN")
 STABILITY_KEY = os.getenv("STABILITY_API_KEY")
+SDXL_VERSION_ID: str | None = None
 
 async def get_latest_version_id(owner: str, model: str) -> str | None:
     async with aiohttp.ClientSession() as session:
@@ -32,10 +33,18 @@ async def get_latest_version_id(owner: str, model: str) -> str | None:
             latest = data.get("latest_version") or {}
             return latest.get("id")
 
-SDXL_VERSION_ID = await get_latest_version_id("stability-ai", "sdxl")
+async def setup(bot):
+    global SDXL_VERSION_ID
+
+    SDXL_VERSION_ID = await get_latest_version_id("stability-ai", "sdxl")
+    if not SDXL_VERSION_ID:
+        log.warning("Failed to fetch SDXL version; Replicate disabled")
+
+    await bot.add_cog(ImageGen(bot))
+
 
 async def _gen_replicate(prompt: str):
-    if not REPLICATE_KEY:
+    if not REPLICATE_KEY or not SDXL_VERSION_ID:
         return None
 
     log.info("Replicate: generating image")
