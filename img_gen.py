@@ -2,6 +2,7 @@ import os
 import io
 import base64
 import logging
+import json
 import aiohttp
 import discord
 from discord.ext import commands
@@ -32,16 +33,6 @@ async def get_latest_version_id(owner: str, model: str) -> str | None:
             data = await r.json()
             latest = data.get("latest_version") or {}
             return latest.get("id")
-
-async def setup(bot):
-    global SDXL_VERSION_ID
-
-    SDXL_VERSION_ID = await get_latest_version_id("stability-ai", "sdxl")
-    if not SDXL_VERSION_ID:
-        log.warning("Failed to fetch SDXL version; Replicate disabled")
-
-    await bot.add_cog(ImageGen(bot))
-
 
 async def _gen_replicate(prompt: str):
     log.info("Replicate guard: key=%s version=%s", bool(REPLICATE_KEY), SDXL_VERSION_ID)
@@ -168,6 +159,14 @@ class ImageGen(commands.Cog):
         file = discord.File(io.BytesIO(img_bytes), filename="image.png")
         await interaction.followup.send(file=file)
 
-
 async def setup(bot):
+    global SDXL_VERSION_ID
+
+    SDXL_VERSION_ID = await get_latest_version_id("stability-ai", "sdxl")
+    if SDXL_VERSION_ID:
+        log.info("Fetched SDXL version: %s", SDXL_VERSION_ID)
+    else:
+        log.warning("Failed to fetch SDXL version; Replicate disabled")
+
     await bot.add_cog(ImageGen(bot))
+
