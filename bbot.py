@@ -1354,7 +1354,8 @@ async def on_ready():
         "afk",
         "img_gen",
         "aki",
-        "animal"
+        "animal",
+        "badge"
     ]
 
     for ext in extensions:
@@ -1501,6 +1502,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
