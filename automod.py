@@ -183,7 +183,34 @@ class AutoModCog(commands.Cog):
             f"automod {'enabled' if cfg['enabled'] else 'disabled'}"
         )
 
+    @app_commands.command(
+        name="automod_reset",
+        description="Reset automod offence points for a user"
+    )
+    @app_commands.describe(user="User to reset automod points for")
+    async def automod_reset(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member
+    ):
+        if not has_mod_perms(interaction.user):
+            return await interaction.response.send_message(
+                "you dont have permission to do that",
+                ephemeral=True
+            )
 
+        gid = interaction.guild.id
+        uid = user.id
+
+        if gid in ENGINE.offences and uid in ENGINE.offences[gid]:
+            ENGINE.offences[gid][uid] = 0
+            msg = f"🔄 automod points reset for **{user}**."
+        else:
+            msg = f"ℹ️ **{user}** had no automod points."
+
+        await interaction.response.send_message(msg)
+
+    
     @app_commands.command(name="automod_slurs", description="Manage automod slurs")
     @app_commands.describe(action="list, add, or remove", word="word for add/remove")
     async def automod_slurs(
