@@ -10,6 +10,7 @@ from collections import defaultdict, deque
 
 AUTOMOD_FILE = "automod_config.json"
 TEST_USER_IDS = {1238242784679563265}
+AUTOMOD_BLOCKED_MESSAGES: set[int] = set()
 
 WINDOW = 6
 COUNT = 5
@@ -95,13 +96,13 @@ class AutoModEngine:
         self.record_message(message.guild.id, message.author.id)
         
         if self.is_spam(message.guild.id, message.author.id):
-            message._automod_blocked = True 
+            AUTOMOD_BLOCKED_MESSAGES.add(message.id)
             await self.punish(message, "spam")
             return True 
     
         slur = self.contains_slur(message.content, cfg["slurs"])
         if slur:
-            message._automod_blocked = True
+            AUTOMOD_BLOCKED_MESSAGES.add(message.id)
             await self.punish(message, f"slur ({censor_word(slur)})")
             return True 
     
