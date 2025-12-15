@@ -5,6 +5,7 @@ from discord.ui import View, button, Button
 import asyncio
 import aiohttp
 import akinator
+from akinator import Language
 import logging
 
 log = logging.getLogger("aki")
@@ -108,7 +109,7 @@ class AkinatorCog(commands.Cog):
         aki = akinator.Akinator()
         
         try:
-            aki.language = "en"
+            aki.language = Language.EN
             
             question = await asyncio.to_thread(aki.start_game)
 
