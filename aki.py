@@ -5,6 +5,9 @@ from discord.ui import View, button, Button
 import asyncio
 import aiohttp
 import akinator
+import logging
+
+log = logging.getLogger("aki")
 
 ANSWER_MAP = {
     "yes": "y",
@@ -33,13 +36,12 @@ class AkiView(View):
 
         try:
             question = await asyncio.to_thread(self.aki.answer, answer)
-        except Exception:
+        except Exception as e:
+            log.exception("Akinator start_game failed")
             await interaction.followup.send(
-                "❌ Akinator encountered an error. Game ended.", ephemeral=True
+                "❌ Failed to connect to Akinator servers."
             )
-            self.stop()
             return
-
         if self.aki.progression >= 80:
             await asyncio.to_thread(self.aki.win)
             guess = self.aki.first_guess
@@ -112,11 +114,13 @@ class AkinatorCog(commands.Cog):
             )
 
 
-        except Exception:
+        except Exception as e:
+            log.exception("Akinator start_game failed")
             await interaction.followup.send(
                 "❌ Failed to connect to Akinator servers."
             )
             return
+
 
         embed = discord.Embed(
             title="🧠 Akinator",
