@@ -120,7 +120,6 @@ async def _gen_stability(prompt: str):
 
 
 IMAGE_PROVIDERS = [
-    _gen_replicate,
     _gen_stability,
 ]
 
