@@ -186,16 +186,17 @@ class AutoModEngine:
 
     async def punish(self, message: discord.Message, reason: str):
         now = time.time()
-        if now - self.last_punish[(gid, uid)] < 10:
-            return  
-        
-        self.last_punish[(gid, uid)] = now
-        
+    
         guild = message.guild
         user = message.author
-    
         gid = guild.id
         uid = user.id
+    
+        last = self.last_punish.get((gid, uid), 0)
+        if now - last < 10:
+            return
+    
+        self.last_punish[(gid, uid)] = now
 
         alog(
             "PUNISH",
