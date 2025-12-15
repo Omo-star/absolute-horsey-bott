@@ -49,7 +49,7 @@ jobs:
           echo "Bot run complete."
 
       - name: Commit & Push bot state
-        if: success() || github.event_name == 'workflow_dispatch'
+        if: always()
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
