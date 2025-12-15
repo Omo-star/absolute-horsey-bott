@@ -104,8 +104,6 @@ PERSIST_EVERY = 180.0
 MAX_CHANNEL_BOLDNESS = 1.35
 MIN_CHANNEL_BOLDNESS = 0.55
 
-ACTIVE_CONVO = {}
-
 STANCE_BUCKETS = {
     "agree": "agree",
     "hype": "agree",
@@ -1564,7 +1562,9 @@ class InterjectionEngine:
 
         if len(content) <= 1:
             return None
-        
+        if _now() - self.brain._last_speak_time.get(message.channel.id, 0) < 6.0:
+            return None
+
         p = self.brain.should_interject_probability(message)
         roll = self.brain._rng.random()
         hlog("INTERJECT check", "p=", round(p,3), "roll=", round(roll,3), "msg=", message.content)
