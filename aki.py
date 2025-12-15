@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, button, Button
+import asyncio
 import aiohttp
 import akinator
 
@@ -14,7 +15,7 @@ ANSWER_MAP = {
 }
 
 class AkiView(View):
-    def __init__(self, aki: Akinator, user_id: int):
+    def __init__(self, aki, user_id: int):
         super().__init__(timeout=300)
         self.aki = aki
         self.user_id = user_id
@@ -31,7 +32,7 @@ class AkiView(View):
         await interaction.response.defer()
 
         try:
-            question = await self.aki.answer(answer)
+            question = await asyncio.to_thread(self.aki.answer, answer)
         except Exception:
             await interaction.followup.send(
                 "❌ Akinator encountered an error. Game ended.", ephemeral=True
@@ -40,7 +41,7 @@ class AkiView(View):
             return
 
         if self.aki.progression >= 80:
-            await self.aki.win()
+            await asyncio.to_thread(self.aki.win)
             guess = self.aki.first_guess
 
             embed = discord.Embed(
@@ -105,10 +106,11 @@ class AkinatorCog(commands.Cog):
         aki = akinator.Akinator()
         
         try:
-            question = await aki.start_game(
+            question = await asyncio.to_thread(
+                aki.start_game,
                 language="en",
-                client_session=self.session,
             )
+
 
         except Exception:
             await interaction.followup.send(
