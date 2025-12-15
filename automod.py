@@ -69,6 +69,29 @@ class AutoModEngine:
             if re.search(rf"\b{re.escape(s)}\b", lowered):
                 return s
         return None
+    async def handle_message(self, message: discord.Message) -> bool:
+        if not message.guild or message.author.bot:
+            return False
+    
+        if has_mod_perms(message.author):
+            return False
+    
+        cfg = self.get_cfg(message.guild.id)
+        if not cfg["enabled"]:
+            return False
+    
+        self.record_message(message.guild.id, message.author.id)
+    
+        if self.is_spam(message.guild.id, message.author.id):
+            await self.punish(message, "spam")
+            return True  # CLAIMED
+    
+        slur = self.contains_slur(message.content, cfg["slurs"])
+        if slur:
+            await self.punish(message, f"slur ({censor_word(slur)})")
+            return True  # CLAIMED
+    
+        return False
 
     async def punish(self, message: discord.Message, reason: str):
         guild = message.guild
@@ -120,32 +143,6 @@ class AutoModCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.engine = ENGINE
-    
-    async def handle_message(self, message: discord.Message) -> bool:
-        if not message.guild or message.author.bot:
-            return False
-    
-        if has_mod_perms(message.author):
-            return False
-    
-        cfg = self.get_cfg(message.guild.id)
-        if not cfg["enabled"]:
-            return False
-    
-        self.record_message(message.guild.id, message.author.id)
-    
-        if self.is_spam(message.guild.id, message.author.id):
-            await self.punish(message, "spam")
-            return True  # CLAIMED
-    
-        slur = self.contains_slur(message.content, cfg["slurs"])
-        if slur:
-            await self.punish(message, f"slur ({censor_word(slur)})")
-            return True  # CLAIMED
-    
-        return False
-
-
 
     @app_commands.command(name="automod", description="Enable or disable automod")
     @app_commands.describe(mode="on or off")
