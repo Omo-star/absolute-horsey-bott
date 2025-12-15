@@ -13,6 +13,7 @@ from human_brain import BrainRuntime
 import datetime
 import json
 from math import sqrt
+from automod import AUTOMOD_BLOCKED_MESSAGES
 from economy_shared import load_state
 load_state()
 from economy_shared import state, save_state
@@ -1454,6 +1455,7 @@ async def on_message(message):
     if automod_cog:
         handled = await automod_cog.engine.handle_message(message)
         if handled:
+            AUTOMOD_BLOCKED_MESSAGES.discard(message.id)
             return  
     if convo and message.author.id == convo["user_id"]:
         last_bot = LAST_BOT_MESSAGE.get(cid)
@@ -1490,6 +1492,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
