@@ -134,29 +134,24 @@ class AutoModEngine:
     async def punish(self, message: discord.Message, reason: str):
         guild = message.guild
         user = message.author
-
+    
         gid = guild.id
         uid = user.id
-
+    
         self.offences[gid][uid] += 1
         level = self.offences[gid][uid]
-        
+    
         cfg = self.get_cfg(gid)
         action = cfg.get("punishments", {}).get(str(level))
-        
-        try:
-            await message.delete()
-        except:
-            pass
-        
+    
         if not action:
             return
-        
+    
         if action == "warn":
             await message.channel.send(
                 f"{user.mention} warning: stop ({reason})."
             )
-        
+    
         elif action.startswith("timeout"):
             minutes = int(action.split(":")[1])
             try:
@@ -169,24 +164,30 @@ class AutoModEngine:
             await message.channel.send(
                 f"{user.mention} muted for {minutes} minutes. reason: {reason}."
             )
-        
+    
         elif action == "kick":
+            await message.channel.send(
+                f"🚪 **{user} was kicked** due to **{reason}**."
+            )
             try:
                 await guild.kick(user, reason=f"automod: {reason}")
-                await message.channel.send(
-                    f"🚪 **{user} was kicked** due to **{reason}**."
-                )
             except:
                 pass
-        
+    
         elif action == "ban":
+            await message.channel.send(
+                f"🔨 **{user} was banned** due to **{reason}**."
+            )
             try:
                 await guild.ban(user, reason=f"automod: {reason}")
-                await message.channel.send(
-                    f"🔨 **{user} was banned** due to **{reason}**."
-                )
             except:
                 pass
+    
+        try:
+            await message.delete()
+        except:
+            pass
+
 
 
 ENGINE = AutoModEngine()
