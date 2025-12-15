@@ -9,6 +9,7 @@ import datetime
 from collections import defaultdict, deque
 
 AUTOMOD_FILE = "automod_config.json"
+OFFENCES_FILE = "automod_offences.json"
 TEST_USER_IDS = {1238242784679563265}
 AUTOMOD_BLOCKED_MESSAGES: set[int] = set()
 
@@ -34,6 +35,25 @@ def save_automod(data):
 
 AUTOMOD_DATA = load_automod()
 
+def load_offences():
+    if not os.path.exists(OFFENCES_FILE):
+        return {}
+    try:
+        with open(OFFENCES_FILE, "r") as f:
+            data = json.load(f)
+            return {
+                int(gid): {int(uid): int(v) for uid, v in users.items()}
+                for gid, users in data.items()
+            }
+    except Exception as e:
+        print("[AUTOMOD] failed to load offences:", e)
+        return {}
+
+def save_offences(data):
+    with open(OFFENCES_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+
 def censor_word(w: str) -> str:
     if len(w) <= 3:
         return w[0] + "*" * (len(w) - 1)
@@ -54,6 +74,13 @@ class AutoModEngine:
         self.last_messages = defaultdict(lambda: deque(maxlen=5))
         self.msg_times = defaultdict(lambda: deque(maxlen=10))
         self.offences = defaultdict(lambda: defaultdict(int))
+        self.last_punish = defaultdict(float)
+        loaded = load_offences()
+        self.offences = defaultdict(lambda: defaultdict(int))
+
+        for gid, users in loaded.items():
+            for uid, value in users.items():
+                self.offences[gid][uid] = value
 
     def get_cfg(self, guild_id: int):
         gid = str(guild_id)
@@ -158,6 +185,12 @@ class AutoModEngine:
         return False
 
     async def punish(self, message: discord.Message, reason: str):
+        now = time.time()
+        if now - self.last_punish[(gid, uid)] < 10:
+            return  
+        
+        self.last_punish[(gid, uid)] = now
+        
         guild = message.guild
         user = message.author
     
@@ -173,6 +206,12 @@ class AutoModEngine:
       
         self.offences[gid][uid] += 1
         level = self.offences[gid][uid]
+
+        save_offences({
+            str(gid): {str(uid): v for uid, v in users.items()}
+            for gid, users in self.offences.items()
+        })
+
   
         cfg = self.get_cfg(gid)
         action = cfg.get("punishments", {}).get(str(level))
@@ -277,6 +316,10 @@ class AutoModCog(commands.Cog):
 
         if gid in ENGINE.offences and uid in ENGINE.offences[gid]:
             ENGINE.offences[gid][uid] = 0
+            save_offences({
+                str(gid): {str(uid): v for uid, v in users.items()}
+                for gid, users in ENGINE.offences.items()
+            })
             msg = f"🔄 automod points reset for **{user}**."
         else:
             msg = f"ℹ️ **{user}** had no automod points."
