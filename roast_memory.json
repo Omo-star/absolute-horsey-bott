@@ -74,7 +74,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1765376000.1743603
+      "last_summary_update": 1765726432.9244313
     },
     "1220934047794987048": {
       "LF": {
@@ -380,7 +380,7 @@
       "msg_count": 0,
       "last_summary_update": 1765650679.9981291
     },
-    "1435987186502733878": {
+    "1238242784679563265": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -416,7 +416,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1765726432.9244313
+      "last_summary_update": 1765755720.9060109
     }
   },
   "roast_history": {
@@ -436,13 +436,15 @@
       {
         "bot": "I'd call you an overachiever, but that would imply you actually accomplish something!"
       }
-    ]
+    ],
+    "1238242784679563265": []
   },
   "auto_roast": {},
   "roast_mode": {
     "1220934047794987048": "deep",
     "1238242784679563265": "deep",
-    "1350372198992314451": "deep"
+    "1350372198992314451": "deep",
+    "1238242784679563265": "deep"
   },
   "spice_cache": {
     "<@&1441469260948963360> for not working": 0.0,
@@ -616,6 +618,7 @@
     "ur roast is like a broken pencil\u2014pointless. do better, or just quit.": 85.0,
     "u sound like a fortune cookie that ran outta luck. get a real job, not just a mouth job.": 83.0,
     "that\u2019s cute, but skill won\u2019t save you from that basic vibe. keep pretending like anyone's impressed.": 20.0,
-    "codunot, you\u2019re like a software update\u2014takes forever to get through and nobody really wants it.": 42.0
+    "codunot, you\u2019re like a software update\u2014takes forever to get through and nobody really wants it.": 42.0,
+    "you're so useless, even your shadow won't follow you.": 95.0
   }
 }
