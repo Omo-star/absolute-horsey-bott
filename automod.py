@@ -12,8 +12,8 @@ AUTOMOD_FILE = "automod_config.json"
 TEST_USER_IDS = {1238242784679563265}
 AUTOMOD_BLOCKED_MESSAGES: set[int] = set()
 
-WINDOW = 6
-COUNT = 5
+WINDOW = 5
+COUNT = 4
 
 def load_automod():
     if not os.path.exists(AUTOMOD_FILE):
@@ -69,30 +69,24 @@ class AutoModEngine:
     def record_message(self, guild_id: int, user_id: int):
         now = time.time()
         self.msg_times[(guild_id, user_id)].append(now)
-    def is_near_spam(self, guild_id: int, user_id: int) -> bool:
-        now = time.time()
-        times = self.msg_times[(guild_id, user_id)]
-        recent = [t for t in times if now - t <= WINDOW]
-        return len(recent) >= COUNT - 2 
         
-    def is_spam(self, guild_id: int, user_id: int) -> bool:
+    def is_spam(self, guild_id: int, user_id: int, content: str) -> bool:
         now = time.time()
-        times = self.msg_times[(guild_id, user_id)]
     
+        times = self.msg_times[(guild_id, user_id)]
         recent = [t for t in times if now - t <= WINDOW]
     
         if len(recent) >= COUNT:
             return True
     
-        return False
-
-    def is_duplicate_spam(self, guild_id: int, user_id: int, content: str) -> bool:
         msgs = self.last_messages[(guild_id, user_id)]
-        content = content.lower().strip()
+        norm = self.normalize(content)
+        msgs.append(norm)
     
-        msgs.append(content)
+        if msgs.count(norm) >= 3:
+            return True
     
-        return msgs.count(content) >= 3
+        return False
 
     def normalize(self, text: str) -> str:
         text = text.lower()
@@ -119,25 +113,22 @@ class AutoModEngine:
             return False
     
         self.record_message(message.guild.id, message.author.id)
-        
-        if self.is_spam(message.guild.id, message.author.id):
+    
+        if self.is_spam(
+            message.guild.id,
+            message.author.id,
+            message.content
+        ):
             AUTOMOD_BLOCKED_MESSAGES.add(message.id)
             await self.punish(message, "spam")
             return True 
-
-        if self.is_duplicate_spam(message.guild.id, message.author.id, message.content):
-            AUTOMOD_BLOCKED_MESSAGES.add(message.id)
-            await self.punish(message, "duplicate spam")
-            return True
-        
+    
         slur = self.contains_slur(message.content, cfg["slurs"])
         if slur:
             AUTOMOD_BLOCKED_MESSAGES.add(message.id)
             await self.punish(message, f"slur ({censor_word(slur)})")
-            return True 
-        if self.is_near_spam(message.guild.id, message.author.id):
-            AUTOMOD_BLOCKED_MESSAGES.add(message.id)
-            return False
+            return True  
+    
         return False
 
     async def punish(self, message: discord.Message, reason: str):
