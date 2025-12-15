@@ -157,7 +157,6 @@ class AutoModEngine:
                 )
             except:
                 pass
-        AUTOMOD_BLOCKED_MESSAGES.discard(message.id)
 
 ENGINE = AutoModEngine()
 
