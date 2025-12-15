@@ -119,6 +119,7 @@ ENGINE = AutoModEngine()
 class AutoModCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.engine = ENGINE
     
     async def handle_message(self, message: discord.Message) -> bool:
         if not message.guild or message.author.bot:
