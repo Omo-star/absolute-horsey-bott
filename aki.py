@@ -28,9 +28,7 @@ class AkiView(View):
             question = await self.aki.answer(answer)
         except Exception:
             log.exception("Akinator answer failed")
-            await interaction.followup.send(
-                "❌ Akinator encountered an error. Game ended."
-            )
+            await interaction.followup.send("❌ Game ended due to an error.")
             self.stop()
             return
 
@@ -39,9 +37,7 @@ class AkiView(View):
                 guess = await self.aki.win()
             except Exception:
                 log.exception("Akinator win failed")
-                await interaction.followup.send(
-                    "❌ Akinator failed to make a guess."
-                )
+                await interaction.followup.send("❌ Failed to make a guess.")
                 self.stop()
                 return
 
@@ -101,19 +97,16 @@ class AkinatorCog(commands.Cog):
     async def aki(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
-        aki = AsyncAkinator(
-            language=Language.English,
-            theme=Theme.Characters,
-            child_mode=False,
-        )
+        aki = AsyncAkinator()
+        aki.language = Language.English
+        aki.theme = Theme.Characters
+        aki.child_mode = False
 
         try:
             question = await aki.start_game()
         except Exception:
             log.exception("Akinator start_game failed")
-            await interaction.followup.send(
-                "❌ Failed to connect to Akinator servers."
-            )
+            await interaction.followup.send("❌ Failed to start Akinator.")
             return
 
         embed = discord.Embed(
