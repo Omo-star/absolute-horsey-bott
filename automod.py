@@ -119,30 +119,31 @@ ENGINE = AutoModEngine()
 class AutoModCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    
+    async def handle_message(self, message: discord.Message) -> bool:
         if not message.guild or message.author.bot:
-            return
-
+            return False
+    
         if has_mod_perms(message.author):
-            return
-
-        cfg = ENGINE.get_cfg(message.guild.id)
+            return False
+    
+        cfg = self.get_cfg(message.guild.id)
         if not cfg["enabled"]:
-            return
-
-        ENGINE.record_message(message.guild.id, message.author.id)
-
-        if ENGINE.is_spam(message.guild.id, message.author.id):
-            await ENGINE.punish(message, "spam")
-            return
-
-        slur = ENGINE.contains_slur(message.content, cfg["slurs"])
+            return False
+    
+        self.record_message(message.guild.id, message.author.id)
+    
+        if self.is_spam(message.guild.id, message.author.id):
+            await self.punish(message, "spam")
+            return True  # CLAIMED
+    
+        slur = self.contains_slur(message.content, cfg["slurs"])
         if slur:
-            await ENGINE.punish(message, f"slur ({censor_word(slur)})")
-            return
+            await self.punish(message, f"slur ({censor_word(slur)})")
+            return True  # CLAIMED
+    
+        return False
+
 
 
     @app_commands.command(name="automod", description="Enable or disable automod")
