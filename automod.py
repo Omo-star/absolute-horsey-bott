@@ -15,6 +15,10 @@ AUTOMOD_BLOCKED_MESSAGES: set[int] = set()
 WINDOW = 5
 COUNT = 4
 
+def alog(*args):
+    ts = datetime.datetime.now().strftime("%H:%M:%S")
+    print(f"[AUTOMOD {ts}]", *args)
+
 def load_automod():
     if not os.path.exists(AUTOMOD_FILE):
         return {}
@@ -64,6 +68,13 @@ class AutoModEngine:
                 }
             }
             save_automod(AUTOMOD_DATA)
+        alog(
+            "CFG",
+            f"guild={guild_id}",
+            f"enabled={AUTOMOD_DATA[str(guild_id)]['enabled']}",
+            f"slurs={len(AUTOMOD_DATA[str(guild_id)]['slurs'])}"
+        )
+
         return AUTOMOD_DATA[str(guild_id)]
 
     def record_message(self, guild_id: int, user_id: int):
@@ -72,11 +83,20 @@ class AutoModEngine:
         
     def is_spam(self, guild_id: int, user_id: int, content: str) -> bool:
         now = time.time()
-    
+
+        alog(
+            "CHECK-SPAM",
+            f"user={user_id}",
+            f"recent_msgs={len(recent)}",
+            f"window={WINDOW}s",
+            f"count={COUNT}"
+        )
+
         times = self.msg_times[(guild_id, user_id)]
         recent = [t for t in times if now - t <= WINDOW]
     
         if len(recent) >= COUNT:
+            alog("SPAM-HIT", f"user={user_id}", "reason=rate")
             return True
     
         msgs = self.last_messages[(guild_id, user_id)]
@@ -84,6 +104,7 @@ class AutoModEngine:
         msgs.append(norm)
     
         if msgs.count(norm) >= 3:
+            alog("SPAM-HIT", f"user={user_id}", "reason=duplicate")
             return True
     
         return False
@@ -107,7 +128,13 @@ class AutoModEngine:
     
         if has_mod_perms(message.author):
             return False
-    
+        alog(
+            "MSG",
+            f"guild={message.guild.id}",
+            f"user={message.author.id}",
+            f"content={message.content!r}"
+        )
+
         cfg = self.get_cfg(message.guild.id)
         if not cfg["enabled"]:
             return False
@@ -137,10 +164,24 @@ class AutoModEngine:
     
         gid = guild.id
         uid = user.id
-    
+
+        alog(
+            "PUNISH",
+            f"user={user.id}",
+            f"guild={guild.id}",
+            f"reason={reason}"
+        )
+      
         self.offences[gid][uid] += 1
         level = self.offences[gid][uid]
-    
+
+        alog(
+            "OFFENCE",
+            f"user={uid}",
+            f"level={level}",
+            f"action={action}"
+        )
+  
         cfg = self.get_cfg(gid)
         action = cfg.get("punishments", {}).get(str(level))
     
@@ -171,8 +212,9 @@ class AutoModEngine:
             )
             try:
                 await guild.kick(user, reason=f"automod: {reason}")
-            except:
-                pass
+            except Exception as e:
+                alog("TIMEOUT-FAIL", f"user={uid}", repr(e))
+
     
         elif action == "ban":
             await message.channel.send(
@@ -180,13 +222,15 @@ class AutoModEngine:
             )
             try:
                 await guild.ban(user, reason=f"automod: {reason}")
-            except:
-                pass
-    
+            except Exception as e:
+                alog("TIMEOUT-FAIL", f"user={uid}", repr(e))
+
+
         try:
             await message.delete()
-        except:
-            pass
+            alog("DELETE", f"msg={message.id}", "ok")
+        except Exception as e:
+            alog("DELETE-FAIL", f"msg={message.id}", repr(e))
 
 
 
