@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, button, Button
-from akinator.async_aki import Akinator
+import akinator
 
 ANSWER_MAP = {
     "yes": "y",
@@ -97,7 +97,7 @@ class AkinatorCog(commands.Cog):
     async def aki(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
-        aki = Akinator()
+        aki = akinator.Akinator()
         try:
             question = await aki.start_game(language="en")
         except Exception:
