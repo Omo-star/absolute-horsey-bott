@@ -174,6 +174,9 @@ class AutoModEngine:
       
         self.offences[gid][uid] += 1
         level = self.offences[gid][uid]
+  
+        cfg = self.get_cfg(gid)
+        action = cfg.get("punishments", {}).get(str(level))
 
         alog(
             "OFFENCE",
@@ -181,10 +184,7 @@ class AutoModEngine:
             f"level={level}",
             f"action={action}"
         )
-  
-        cfg = self.get_cfg(gid)
-        action = cfg.get("punishments", {}).get(str(level))
-    
+        
         if not action:
             return
     
