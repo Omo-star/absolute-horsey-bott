@@ -8,6 +8,15 @@ from discord.ext import commands
 from discord import app_commands
 from openai import OpenAI
 import google.generativeai as genai
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+log = logging.getLogger("imagegen")
 
 
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
@@ -20,74 +29,107 @@ if GEMINI_KEY:
     genai.configure(api_key=GEMINI_KEY)
 
 async def _gen_openai(prompt: str):
+    log.info("OpenAI: generating image")
+
     try:
-        loop = asyncio.get_event_loop()
+        resp = openai_client.images.generate(
+            model="gpt-image-1",
+            prompt=prompt,
+            size="1024x1024",
+            response_format="b64_json",
+        )
 
-        def call():
-            return openai_client.images.generate(
-                model="gpt-image-1",
-                prompt=prompt,
-                size="1024x1024"
-            )
+        img = base64.b64decode(resp.data[0].b64_json)
+        log.info("OpenAI: success (%d bytes)", len(img))
+        return img
 
-        resp = await asyncio.wait_for(loop.run_in_executor(None, call), timeout=20)
-        img_b64 = resp.data[0].b64_json
-        return base64.b64decode(img_b64)
-
-    except Exception:
+    except Exception as e:
+        log.error("OpenAI failed: %s", e, exc_info=True)
         return None
-
 
 async def _gen_openrouter(prompt: str):
     if not OPENROUTER_KEY:
+        log.warning("OpenRouter: no API key")
         return None
 
-    url = "https://openrouter.ai/api/v1/images/generations"
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_KEY}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://example.com",
-        "X-Title": "fusbot",
-    }
-    payload = {
-        "model": "stabilityai/stable-diffusion-xl",
-        "prompt": prompt,
-        "size": "1024x1024",
-    }
+    log.info("OpenRouter: generating image")
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload, timeout=25) as r:
+            async with session.post(
+                "https://openrouter.ai/api/v1/images/generations",
+                headers={
+                    "Authorization": f"Bearer {OPENROUTER_KEY}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://example.com",
+                    "X-Title": "fusbot",
+                },
+                json={
+                    "model": "stabilityai/sdxl",
+                    "prompt": prompt,
+                    "size": "1024x1024",
+                    "response_format": "b64_json",
+                },
+                timeout=30,
+            ) as r:
+
+                if r.status != 200:
+                    text = await r.text()
+                    log.warning(
+                        "OpenRouter HTTP %s: %s",
+                        r.status,
+                        text[:300],
+                    )
+                    return None
+
                 data = await r.json()
-                img_b64 = data["data"][0]["b64_json"]
-                return base64.b64decode(img_b64)
+                img = base64.b64decode(data["data"][0]["b64_json"])
 
-    except Exception:
+                log.info("OpenRouter: success (%d bytes)", len(img))
+                return img
+
+    except Exception as e:
+        log.error("OpenRouter failed: %s", e, exc_info=True)
         return None
-
 
 async def _gen_gemini(prompt: str):
     if not GEMINI_KEY:
+        log.warning("Gemini: no API key")
         return None
+
+    log.info("Gemini: generating image")
 
     try:
-        model = genai.GenerativeModel("models/gemini-2.0-flash-image")
-        resp = model.generate_content(prompt)
+        model = genai.GenerativeModel("models/gemini-1.5-pro-vision-latest")
+
+        resp = model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "image/png"},
+        )
 
         for part in resp.candidates[0].content.parts:
-            if hasattr(part, "inline_data"):
-                return part.inline_data.data
+            if part.inline_data:
+                img = part.inline_data.data
+                log.info("Gemini: success (%d bytes)", len(img))
+                return img
 
+        log.warning("Gemini: no image in response")
         return None
 
-    except Exception:
+    except Exception as e:
+        log.error("Gemini failed: %s", e, exc_info=True)
         return None
 
 async def generate_image(prompt: str):
     for fn in (_gen_openai, _gen_openrouter, _gen_gemini):
+        log.info("Trying provider: %s", fn.__name__)
         img = await fn(prompt)
         if img:
+            log.info("Provider %s succeeded", fn.__name__)
             return img
+        log.info("Provider %s failed, trying next", fn.__name__)
+
+    log.error("All image providers failed")
     return None
 
 
