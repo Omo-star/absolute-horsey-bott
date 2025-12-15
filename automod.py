@@ -9,7 +9,7 @@ import datetime
 from collections import defaultdict, deque
 
 AUTOMOD_FILE = "automod_config.json"
-TEST_USER_IDS = {123456789}
+TEST_USER_IDS = {1238242784679563265}
 AUTOMOD_BLOCKED_MESSAGES: set[int] = set()
 
 WINDOW = 6
