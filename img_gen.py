@@ -15,6 +15,9 @@ logging.basicConfig(
 
 log = logging.getLogger("imagegen")
 
+REPLICATE_KEY = os.getenv("REPLICATE_API_TOKEN")
+STABILITY_KEY = os.getenv("STABILITY_API_KEY")
+
 async def get_latest_version_id(owner: str, model: str) -> str | None:
     async with aiohttp.ClientSession() as session:
         async with session.get(
@@ -29,9 +32,6 @@ async def get_latest_version_id(owner: str, model: str) -> str | None:
             latest = data.get("latest_version") or {}
             return latest.get("id")
 
-
-REPLICATE_KEY = os.getenv("REPLICATE_API_TOKEN")
-STABILITY_KEY = os.getenv("STABILITY_API_KEY")
 SDXL_VERSION_ID = await get_latest_version_id("stability-ai", "sdxl")
 
 async def _gen_replicate(prompt: str):
