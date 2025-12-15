@@ -30,7 +30,6 @@ def save_automod(data):
 
 AUTOMOD_DATA = load_automod()
 
-
 def censor_word(w: str) -> str:
     if len(w) <= 3:
         return w[0] + "*" * (len(w) - 1)
@@ -48,6 +47,7 @@ def has_mod_perms(member: discord.Member) -> bool:
 
 class AutoModEngine:
     def __init__(self):
+        self.last_messages = defaultdict(lambda: deque(maxlen=5))
         self.msg_times = defaultdict(lambda: deque(maxlen=10))
         self.offences = defaultdict(lambda: defaultdict(int))
 
@@ -55,7 +55,13 @@ class AutoModEngine:
         if str(guild_id) not in AUTOMOD_DATA:
             AUTOMOD_DATA[str(guild_id)] = {
                 "enabled": False,
-                "slurs": []
+                "slurs": [],
+                "punishments": {
+                    "1": "warn",
+                    "2": "timeout:5",
+                    "3": "kick",
+                    "4": "ban"
+                }
             }
             save_automod(AUTOMOD_DATA)
         return AUTOMOD_DATA[str(guild_id)]
@@ -80,8 +86,22 @@ class AutoModEngine:
     
         return False
 
+    def is_duplicate_spam(self, guild_id: int, user_id: int, content: str) -> bool:
+        msgs = self.last_messages[(guild_id, user_id)]
+        content = content.lower().strip()
+    
+        msgs.append(content)
+    
+        return msgs.count(content) >= 3
+
+    def normalize(self, text: str) -> str:
+        text = text.lower()
+        text = re.sub(r"[^a-z0-9\s]", "", text)  
+        text = re.sub(r"(.)\1{2,}", r"\1\1", text)
+        return text
+    
     def contains_slur(self, text: str, slurs: list[str]) -> str | None:
-        lowered = text.lower()
+        lowered = self.normalize(text)
         for s in slurs:
             if re.search(rf"\b{re.escape(s)}\b", lowered):
                 return s
@@ -104,7 +124,12 @@ class AutoModEngine:
             AUTOMOD_BLOCKED_MESSAGES.add(message.id)
             await self.punish(message, "spam")
             return True 
-    
+
+        if self.is_duplicate_spam(message.guild.id, message.author.id, message.content):
+            AUTOMOD_BLOCKED_MESSAGES.add(message.id)
+            await self.punish(message, "duplicate spam")
+            return True
+        
         slur = self.contains_slur(message.content, cfg["slurs"])
         if slur:
             AUTOMOD_BLOCKED_MESSAGES.add(message.id)
@@ -124,30 +149,37 @@ class AutoModEngine:
 
         self.offences[gid][uid] += 1
         level = self.offences[gid][uid]
-
+        
+        cfg = self.get_cfg(gid)
+        action = cfg.get("punishments", {}).get(str(level))
+        
         try:
             await message.delete()
         except:
             pass
-
-        if level == 1:
+        
+        if not action:
+            return
+        
+        if action == "warn":
             await message.channel.send(
-                f"{user.mention} warning: stop ({reason}). next offence = mute."
+                f"{user.mention} warning: stop ({reason})."
             )
-
-        elif level == 2:
+        
+        elif action.startswith("timeout"):
+            minutes = int(action.split(":")[1])
             try:
                 await user.timeout(
-                    datetime.timedelta(minutes=5),
+                    datetime.timedelta(minutes=minutes),
                     reason=f"automod: {reason}"
                 )
             except:
                 pass
             await message.channel.send(
-                f"{user.mention} muted for 5 minutes. reason: {reason}."
+                f"{user.mention} muted for {minutes} minutes. reason: {reason}."
             )
         
-        elif level == 3:
+        elif action == "kick":
             try:
                 await guild.kick(user, reason=f"automod: {reason}")
                 await message.channel.send(
@@ -156,7 +188,7 @@ class AutoModEngine:
             except:
                 pass
         
-        elif level >= 4:
+        elif action == "ban":
             try:
                 await guild.ban(user, reason=f"automod: {reason}")
                 await message.channel.send(
@@ -164,6 +196,7 @@ class AutoModEngine:
                 )
             except:
                 pass
+
 
 ENGINE = AutoModEngine()
 
