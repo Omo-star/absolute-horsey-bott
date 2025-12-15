@@ -1,13 +1,12 @@
 import asyncio
 import base64
+import aiohttp
 import io
 import os
-import aiohttp
 import discord
 from discord.ext import commands
 from discord import app_commands
 from openai import OpenAI
-import google.generativeai as genai
 import logging
 
 logging.basicConfig(
@@ -44,15 +43,14 @@ async def _gen_openai(prompt: str):
         return None
 
 async def generate_image(prompt: str):
-    for fn in (_gen_openai):
-        log.info("Trying provider: %s", fn.__name__)
-        img = await fn(prompt)
-        if img:
-            log.info("Provider %s succeeded", fn.__name__)
-            return img
-        log.info("Provider %s failed, trying next", fn.__name__)
+    log.info("Trying OpenAI image generation")
 
-    log.error("All image providers failed")
+    img = await _gen_openai(prompt)
+    if img:
+        log.info("OpenAI succeeded")
+        return img
+
+    log.error("Image generation failed")
     return None
 
 
