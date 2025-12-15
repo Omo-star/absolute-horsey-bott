@@ -282,6 +282,56 @@ class AutoModCog(commands.Cog):
             msg = f"ℹ️ **{user}** had no automod points."
 
         await interaction.response.send_message(msg)
+        
+    @app_commands.command(
+        name="automod_punishment",
+        description="Set automod punishment for an offence level"
+    )
+    @app_commands.describe(
+        level="Offence number (1, 2, 3, ...)",
+        action="warn | timeout:minutes | kick | ban"
+    )
+    async def automod_punishment(
+        self,
+        interaction: discord.Interaction,
+        level: int,
+        action: str
+    ):
+        if not has_mod_perms(interaction.user):
+            return await interaction.response.send_message(
+                "you dont have permission to do that",
+                ephemeral=True
+            )
+    
+        cfg = ENGINE.get_cfg(interaction.guild.id)
+    
+        if level < 1:
+            return await interaction.response.send_message(
+                "level must be >= 1",
+                ephemeral=True
+            )
+    
+        action = action.lower()
+    
+        valid = (
+            action == "warn"
+            or action == "kick"
+            or action == "ban"
+            or (action.startswith("timeout:") and action.split(":")[1].isdigit())
+        )
+    
+        if not valid:
+            return await interaction.response.send_message(
+                "invalid action. use warn, kick, ban, or timeout:<minutes>",
+                ephemeral=True
+            )
+    
+        cfg["punishments"][str(level)] = action
+        save_automod(AUTOMOD_DATA)
+    
+        await interaction.response.send_message(
+            f"✅ automod punishment set: level {level} → `{action}`"
+        )
 
     
     @app_commands.command(name="automod_slurs", description="Manage automod slurs")
