@@ -10,6 +10,7 @@ from ai_interject import ai_interject_line
 from collections import defaultdict, deque, Counter
 from typing import Any, Awaitable, Dict, Deque, List, Tuple, Optional, Callable
 import discord
+from automod import AUTOMOD_BLOCKED_MESSAGES
 
 _EMOJI_RE = re.compile(
     "["
@@ -1560,7 +1561,7 @@ class InterjectionEngine:
     async def maybe_interject(self, message: discord.Message) -> Optional[str]:
         if self.brain.is_roast_mode(message.author.id):
             return None
-        if getattr(message, "_automod_blocked", False):
+        if message.id in AUTOMOD_BLOCKED_MESSAGES:
             return None
         p = self.brain.should_interject_probability(message)
         roll = self.brain._rng.random()
@@ -1669,7 +1670,7 @@ class BrainRuntime:
     async def on_message(self, message: discord.Message, *, claimed: bool = False):
         if message.author.bot:
             return None
-        if getattr(message, "_automod_blocked", False):
+        if message.id in AUTOMOD_BLOCKED_MESSAGES:
             return None
         if claimed:
             return None
