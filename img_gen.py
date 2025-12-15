@@ -31,7 +31,6 @@ async def _gen_openai(prompt: str):
             model="gpt-image-1",
             prompt=prompt,
             size="1024x1024",
-            response_format="b64_json",
         )
 
         img = base64.b64decode(resp.data[0].b64_json)
