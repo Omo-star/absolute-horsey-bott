@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, button, Button
 import logging
+import asyncio
 import akinator
 
 log = logging.getLogger("aki")
@@ -33,7 +34,7 @@ class AkiView(View):
         await interaction.response.defer()
 
         try:
-            await self.aki.answer(answer)
+            await asyncio.to_thread(self.aki.answer, answer)
         except Exception:
             log.exception("Akinator answer failed")
             await interaction.followup.send("❌ Game ended due to an error.")
@@ -101,7 +102,7 @@ class AkinatorCog(commands.Cog):
         aki = akinator.Akinator()
 
         try:
-            await aki.start_game()
+            await asyncio.to_thread(aki.start_game)
         except Exception:
             log.exception("Akinator start_game failed")
             await interaction.followup.send("❌ Failed to start Akinator.")
