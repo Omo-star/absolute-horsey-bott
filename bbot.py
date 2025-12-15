@@ -13,7 +13,6 @@ from human_brain import BrainRuntime
 import datetime
 import json
 from math import sqrt
-from automod import AUTOMOD_BLOCKED_MESSAGES
 from economy_shared import load_state
 load_state()
 from economy_shared import state, save_state
@@ -87,6 +86,17 @@ def log(*msg):
     else:
         print(f"[{timestamp}] {text}")
 
+def brain_allowed(message: discord.Message) -> bool:
+    if message.author.bot:
+            return False
+    if not message.guild:
+            return False
+    if message.content and message.content[0] in ("!", "/"):
+            return False
+    if message.content and len(message.content.strip()) <= 1:
+        return False
+
+    return True
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -1171,12 +1181,7 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
                         "role": "assistant",
                         "content": text
                     })
-                    ACTIVE_CONVO[channel_id] = {
-                        "user_id": uid,
-                        "last_ts": time.time(),
-                        "topic": extract_keywords(msg)[:3],  
-                        "misses": 0,
-                    }
+
                     return text
 
         except Roast500Error:
@@ -1447,7 +1452,6 @@ async def ai_is_followup(last_bot_msg: str, user_msg: str) -> bool:
 async def on_message(message):
     if message.author.bot:
         return
-
     cid = message.channel.id
     convo = ACTIVE_CONVO.get(cid)
     last_bot = None
@@ -1455,11 +1459,9 @@ async def on_message(message):
     if automod_cog:
         handled = await automod_cog.engine.handle_message(message)
         if handled:
-            AUTOMOD_BLOCKED_MESSAGES.discard(message.id)
             return  
     if convo and message.author.id == convo["user_id"]:
         last_bot = LAST_BOT_MESSAGE.get(cid)
-    
     if last_bot:
         is_followup = await ai_is_followup(last_bot, message.content)
     
@@ -1470,21 +1472,8 @@ async def on_message(message):
                 LAST_BOT_MESSAGE[cid] = reply
                 convo["last_ts"] = time.time()
                 convo["misses"] = 0
-            def brain_allowed(message: discord.Message) -> bool:
-                if message.author.bot:
-                    return False
-                if not message.guild:
-                    return False
-                if message.content and message.content[0] in ("!", "/", "."):
-                    return False
-                return True
             if cid in ACTIVE_CONVO:
                 return await bot.process_commands(message)
-            brain_runtime.brain.observe_channel_message(
-                message.channel.id,
-                message.content,
-                message.id
-            )
             return
     
         ACTIVE_CONVO.pop(cid, None)
@@ -1508,6 +1497,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
