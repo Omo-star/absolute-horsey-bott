@@ -559,6 +559,147 @@ During execution:
 
 ---
 
+# 🛡️ 17. AutoMod System — `/automod`
+
+A **lightweight, behavior-based moderation system** designed to keep chat readable **without punishing slang, typos, or casual talk**.
+
+AutoMod focuses on **how users behave**, not *how they type*.
+
+Disabled by default so no suprises :)
+
+**AutoMod is intentionally not very feature-heavy since human moderation is of-course better. AutoMod is recommended because it controls safe parameters to stop immediate threats to your server.**
+
+---
+
+## CORE PRINCIPLES
+
+- ✅ No punishment for short messages like `fr`, `gg`, `a`
+- ✅ Spam is detected by **message bursts**, not message content
+- ✅ Slur filtering is **server-configurable**
+- ✅ Gradual escalation with clear feedback
+- ✅ Fully slash-command controlled
+- ✅ Disabled by default
+
+---
+
+## 🚨 PUNISHMENT ESCALATION
+
+AutoMod uses a **4-step escalation ladder**:
+
+1. **First Offense**  
+   ⚠️ Public warning pinging the user  
+   _Message is deleted_
+
+2. **Second Offense**  
+   🔇 5-minute mute (timeout)  
+   _Public notice sent_
+
+3. **Third Offense**  
+   🚪 User is kicked from the server  
+   _Public message: “User was kicked due to reason”_
+
+4. **Fourth Offense**  
+   🔨 User is banned  
+   _Public message: “User was banned due to reason”_
+
+Offenses are tracked per-user, per-server.
+
+---
+
+## 📊 SPAM DETECTION
+
+Spam is detected using **rate limits**, not content analysis.
+
+**Default rules:**
+- 5 or more messages
+- Within a 6-second window
+
+This avoids false positives caused by:
+- Discord message delays
+- Typos
+- Casual slang
+- Fast conversations
+
+---
+
+## 🚫 SLUR FILTERING
+
+AutoMod supports a **customizable banned word list**.
+
+- Matches whole words only
+- Case-insensitive
+- Slurs are censored when listed
+- Punishment applies immediately
+
+Example display:
+
+- f***
+- n****
+
+---
+
+## 🧩 SLASH COMMANDS
+
+### `/automod on`
+Enables AutoMod for the server.
+
+### `/automod off`
+Disables AutoMod.
+
+---
+
+### `/automod_slurs list`
+Shows all configured slurs (censored).
+
+### `/automod_slurs add <word>`
+Adds a word to the banned list.
+
+### `/automod_slurs remove <word>`
+Removes a word from the banned list.
+
+---
+
+## 🔒 PERMISSIONS
+
+Only users with **moderation privileges** can control AutoMod:
+- Manage Messages
+- Administrator
+- Server Owner
+
+---
+
+## ⚙️ CONFIG STORAGE
+
+AutoMod stores configuration in:
+
+**automod_config.json**
+
+
+Tracked data includes:
+- Enabled / disabled state
+- Slur list per server
+
+This file is safe to commit and persists across restarts.
+
+---
+
+## 🧠 DESIGN PHILOSOPHY
+
+AutoMod is intentionally **minimal**:
+- No AI moderation
+- No sentiment guessing
+- No typo punishment
+- No guessing intent
+
+It exists to stop **spam and abuse**, not normal chat.
+
+---
+
+**Result:**  
+Clean channels, fewer false positives, happier users.
+
+---
+
 ### SUMMARY
 The `/hack` system is a **deep technical RPG** where:
 - Your scripts = your equipment  
