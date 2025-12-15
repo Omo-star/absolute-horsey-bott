@@ -3,23 +3,13 @@ from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, button, Button
 import asyncio
-import aiohttp
-import akinator
-from akinator import Language
 import logging
+from akinator import Akinator, Answer
 
 log = logging.getLogger("aki")
 
-ANSWER_MAP = {
-    "yes": "y",
-    "no": "n",
-    "idk": "idk",
-    "probably": "p",
-    "probably_not": "pn",
-}
-
 class AkiView(View):
-    def __init__(self, aki, user_id: int):
+    def __init__(self, aki: Akinator, user_id: int):
         super().__init__(timeout=300)
         self.aki = aki
         self.user_id = user_id
@@ -32,17 +22,19 @@ class AkiView(View):
             return False
         return True
 
-    async def handle_answer(self, interaction: discord.Interaction, answer: str):
+    async def handle_answer(self, interaction: discord.Interaction, answer: Answer):
         await interaction.response.defer()
 
         try:
             question = await asyncio.to_thread(self.aki.answer, answer)
-        except Exception as e:
-            log.exception("Akinator start_game failed")
+        except Exception:
+            log.exception("Akinator answer failed")
             await interaction.followup.send(
-                "❌ Failed to connect to Akinator servers."
+                "❌ Akinator encountered an error. Game ended."
             )
+            self.stop()
             return
+
         if self.aki.progression >= 80:
             await asyncio.to_thread(self.aki.win)
             guess = self.aki.first_guess
@@ -52,6 +44,7 @@ class AkiView(View):
                 description=f"**{guess['name']}**\n{guess['description']}",
                 color=0xE8BC90,
             )
+
             if guess.get("absolute_picture_path"):
                 embed.set_image(url=guess["absolute_picture_path"])
 
@@ -75,49 +68,43 @@ class AkiView(View):
 
     @button(label="Yes", style=discord.ButtonStyle.success)
     async def yes(self, interaction: discord.Interaction, _: Button):
-        await self.handle_answer(interaction, ANSWER_MAP["yes"])
+        await self.handle_answer(interaction, Answer.YES)
 
     @button(label="No", style=discord.ButtonStyle.danger)
     async def no(self, interaction: discord.Interaction, _: Button):
-        await self.handle_answer(interaction, ANSWER_MAP["no"])
+        await self.handle_answer(interaction, Answer.NO)
 
     @button(label="I don't know", style=discord.ButtonStyle.secondary)
     async def idk(self, interaction: discord.Interaction, _: Button):
-        await self.handle_answer(interaction, ANSWER_MAP["idk"])
+        await self.handle_answer(interaction, Answer.DONT_KNOW)
 
     @button(label="Probably", style=discord.ButtonStyle.primary)
     async def probably(self, interaction: discord.Interaction, _: Button):
-        await self.handle_answer(interaction, ANSWER_MAP["probably"])
+        await self.handle_answer(interaction, Answer.PROBABLY)
 
     @button(label="Probably not", style=discord.ButtonStyle.primary)
     async def probably_not(self, interaction: discord.Interaction, _: Button):
-        await self.handle_answer(interaction, ANSWER_MAP["probably_not"])
+        await self.handle_answer(interaction, Answer.PROBABLY_NOT)
 
 
 class AkinatorCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.session = aiohttp.ClientSession()
 
-    async def cog_unload(self):
-        await self.session.close()
-    
     @app_commands.command(name="aki", description="Play Akinator with buttons")
     async def aki(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
-        aki = akinator.Akinator()
-        
-        try:
-            question = await asyncio.to_thread(aki.start_game)
+        aki = Akinator()
 
-        except Exception as e:
-            log.exception("Akinator start_game failed")
+        try:
+            question = await asyncio.to_thread(aki.start)
+        except Exception:
+            log.exception("Akinator start failed")
             await interaction.followup.send(
                 "❌ Failed to connect to Akinator servers."
             )
             return
-
 
         embed = discord.Embed(
             title="🧠 Akinator",
