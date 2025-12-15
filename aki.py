@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, button, Button
+import aiohttp
 import akinator
 
 ANSWER_MAP = {
@@ -92,14 +93,23 @@ class AkiView(View):
 class AkinatorCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.session = aiohttp.ClientSession()
 
+    async def cog_unload(self):
+        await self.session.close()
+    
     @app_commands.command(name="aki", description="Play Akinator with buttons")
     async def aki(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
         aki = akinator.Akinator()
+        
         try:
-            question = await aki.start_game(language="en")
+            question = await aki.start_game(
+                language="en",
+                client_session=self.session,
+            )
+
         except Exception:
             await interaction.followup.send(
                 "❌ Failed to connect to Akinator servers."
