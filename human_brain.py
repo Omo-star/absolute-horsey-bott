@@ -1672,8 +1672,6 @@ class BrainRuntime:
     async def on_message(self, message: discord.Message, *, claimed: bool = False):
         if message.author.bot:
             return None
-        if claimed:
-            return None
 
         explicit = self.bot.user in message.mentions if self.bot.user else False
         alias = mentions_fusbot(message.content)
