@@ -26,6 +26,8 @@ jobs:
       GITHUB: ${{ secrets.GITHUB }}
       PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      STABILITY_API_KEY: ${{ secrets.STABILITY_API_KEY }}
+      REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
 
     steps:
       - name: Checkout code
