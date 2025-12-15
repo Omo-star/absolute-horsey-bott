@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: discord-bot
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   run-bot:
@@ -49,7 +49,7 @@ jobs:
           echo "Bot run complete."
 
       - name: Commit & Push bot state
-        if: always()
+        if: success() || github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -57,7 +57,7 @@ jobs:
           git fetch origin main
           git pull origin main --strategy-option theirs
 
-          git add state.json roast_memory.json human_brain_state.json || true
+          git add state.json roast_memory.json human_brain_state.json automod_config.json || true
 
           if ! git diff --cached --quiet; then
             git commit -m "Update bot state"
