@@ -63,6 +63,11 @@ class AutoModEngine:
     def record_message(self, guild_id: int, user_id: int):
         now = time.time()
         self.msg_times[(guild_id, user_id)].append(now)
+    def is_near_spam(self, guild_id: int, user_id: int) -> bool:
+        now = time.time()
+        times = self.msg_times[(guild_id, user_id)]
+        recent = [t for t in times if now - t <= WINDOW]
+        return len(recent) >= COUNT - 2 
         
     def is_spam(self, guild_id: int, user_id: int) -> bool:
         now = time.time()
@@ -105,7 +110,9 @@ class AutoModEngine:
             AUTOMOD_BLOCKED_MESSAGES.add(message.id)
             await self.punish(message, f"slur ({censor_word(slur)})")
             return True 
-    
+        if self.is_near_spam(message.guild.id, message.author.id):
+            AUTOMOD_BLOCKED_MESSAGES.add(message.id)
+            return False
         return False
 
     async def punish(self, message: discord.Message, reason: str):
