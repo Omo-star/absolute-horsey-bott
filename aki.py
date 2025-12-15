@@ -3,12 +3,20 @@ from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, button, Button
 import logging
-from akinator import AsyncAkinator, Answer, Language, Theme
+import akinator
 
 log = logging.getLogger("aki")
 
+ANSWER_MAP = {
+    "yes": "y",
+    "no": "n",
+    "idk": "i",
+    "probably": "p",
+    "probably_not": "pn",
+}
+
 class AkiView(View):
-    def __init__(self, aki: AsyncAkinator, user_id: int):
+    def __init__(self, aki: akinator.Akinator, user_id: int):
         super().__init__(timeout=300)
         self.aki = aki
         self.user_id = user_id
@@ -21,34 +29,26 @@ class AkiView(View):
             return False
         return True
 
-    async def handle_answer(self, interaction: discord.Interaction, answer: Answer):
+    async def handle_answer(self, interaction: discord.Interaction, answer: str):
         await interaction.response.defer()
 
         try:
-            question = await self.aki.answer(answer)
+            await self.aki.answer(answer)
         except Exception:
             log.exception("Akinator answer failed")
             await interaction.followup.send("❌ Game ended due to an error.")
             self.stop()
             return
 
-        if self.aki.progression >= 80:
-            try:
-                guess = await self.aki.win()
-            except Exception:
-                log.exception("Akinator win failed")
-                await interaction.followup.send("❌ Failed to make a guess.")
-                self.stop()
-                return
-
+        if self.aki.finished:
             embed = discord.Embed(
                 title="🎯 I guess...",
-                description=f"**{guess.name}**\n{guess.description}",
+                description=f"**{self.aki.name_proposition}**\n{self.aki.description_proposition}",
                 color=0xE8BC90,
             )
 
-            if guess.absolute_picture_path:
-                embed.set_image(url=guess.absolute_picture_path)
+            if self.aki.photo:
+                embed.set_image(url=self.aki.photo)
 
             await interaction.followup.edit_message(
                 message_id=interaction.message.id,
@@ -59,9 +59,10 @@ class AkiView(View):
         else:
             embed = discord.Embed(
                 title="🧠 Akinator",
-                description=question,
+                description=str(self.aki),
                 color=0xE8BC90,
             )
+
             await interaction.followup.edit_message(
                 message_id=interaction.message.id,
                 embed=embed,
@@ -70,23 +71,23 @@ class AkiView(View):
 
     @button(label="Yes", style=discord.ButtonStyle.success)
     async def yes(self, interaction: discord.Interaction, _: Button):
-        await self.handle_answer(interaction, Answer.Yes)
+        await self.handle_answer(interaction, ANSWER_MAP["yes"])
 
     @button(label="No", style=discord.ButtonStyle.danger)
     async def no(self, interaction: discord.Interaction, _: Button):
-        await self.handle_answer(interaction, Answer.No)
+        await self.handle_answer(interaction, ANSWER_MAP["no"])
 
     @button(label="I don't know", style=discord.ButtonStyle.secondary)
     async def idk(self, interaction: discord.Interaction, _: Button):
-        await self.handle_answer(interaction, Answer.Idk)
+        await self.handle_answer(interaction, ANSWER_MAP["idk"])
 
     @button(label="Probably", style=discord.ButtonStyle.primary)
     async def probably(self, interaction: discord.Interaction, _: Button):
-        await self.handle_answer(interaction, Answer.Probably)
+        await self.handle_answer(interaction, ANSWER_MAP["probably"])
 
     @button(label="Probably not", style=discord.ButtonStyle.primary)
     async def probably_not(self, interaction: discord.Interaction, _: Button):
-        await self.handle_answer(interaction, Answer.ProbablyNot)
+        await self.handle_answer(interaction, ANSWER_MAP["probably_not"])
 
 
 class AkinatorCog(commands.Cog):
@@ -97,13 +98,10 @@ class AkinatorCog(commands.Cog):
     async def aki(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
-        aki = AsyncAkinator()
-        aki.language = Language.English
-        aki.theme = Theme.Characters
-        aki.child_mode = False
+        aki = akinator.Akinator()
 
         try:
-            question = await aki.start_game()
+            await aki.start_game()
         except Exception:
             log.exception("Akinator start_game failed")
             await interaction.followup.send("❌ Failed to start Akinator.")
@@ -111,7 +109,7 @@ class AkinatorCog(commands.Cog):
 
         embed = discord.Embed(
             title="🧠 Akinator",
-            description=question,
+            description=str(aki),
             color=0xE8BC90,
         )
 
