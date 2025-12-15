@@ -44,51 +44,53 @@ async def setup(bot):
 
 
 async def _gen_replicate(prompt: str):
+    log.info("Replicate guard: key=%s version=%s", bool(REPLICATE_KEY), SDXL_VERSION_ID)
+
     if not REPLICATE_KEY or not SDXL_VERSION_ID:
+        log.warning("Replicate disabled due to missing key or version")
         return None
 
     log.info("Replicate: generating image")
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://api.replicate.com/v1/predictions",
-                headers={
-                    "Authorization": f"Bearer {REPLICATE_KEY}",
-                    "Content-Type": "application/json",
-                    "Prefer": "wait",  # or "wait=60"
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            "https://api.replicate.com/v1/predictions",
+            headers={
+                "Authorization": f"Bearer {REPLICATE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "wait=60",
+            },
+            json={
+                "version": SDXL_VERSION_ID,
+                "input": {
+                    "prompt": prompt,
+                    "width": 1024,
+                    "height": 1024,
                 },
-                json={
-                    "version": SDXL_VERSION_ID,
-                    "input": {
-                        "prompt": prompt,
-                        "width": 1024,
-                        "height": 1024,
-                    },
-                },
-                timeout=90,
-            ) as r:
-                if r.status != 201:
-                    log.warning("Replicate HTTP %s: %s", r.status, await r.text())
-                    return None
+            },
+            timeout=90,
+        ) as r:
+            text = await r.text()
+            log.info("Replicate status=%s body=%s", r.status, text)
 
-                data = await r.json()
-                output = data.get("output")
-                if not output or not isinstance(output, list):
-                    log.warning("Replicate returned no output: %s", data)
-                    return None
+            if r.status != 201:
+                return None
 
-                image_url = output[0]
+            data = json.loads(text)
+            output = data.get("output")
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(image_url, timeout=30) as r:
-                img = await r.read()
-                log.info("Replicate: success (%d bytes)", len(img))
-                return img
+            log.info("Replicate output field: %r", output)
 
-    except Exception as e:
-        log.error("Replicate failed: %s", e, exc_info=True)
-        return None
+            if not output:
+                return None
+
+            image_url = output[0]
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(image_url) as r:
+            img = await r.read()
+            log.info("Replicate image bytes=%d", len(img))
+            return img
 
 async def _gen_stability(prompt: str):
     if not STABILITY_KEY:
