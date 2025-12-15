@@ -1563,6 +1563,14 @@ class InterjectionEngine:
             return None
         if message.id in AUTOMOD_BLOCKED_MESSAGES:
             return None
+        content = (message.content or "").strip()
+
+        if len(content) <= 2:
+            return None
+        if _low_effort(message.content):
+            return None
+
+        
         p = self.brain.should_interject_probability(message)
         roll = self.brain._rng.random()
         hlog("INTERJECT check", "p=", round(p,3), "roll=", round(roll,3), "msg=", message.content)
