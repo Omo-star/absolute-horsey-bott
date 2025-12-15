@@ -93,11 +93,7 @@ class AutoModEngine:
             return False
     
         self.record_message(message.guild.id, message.author.id)
-
-        if is_low_effort(message.content):
-            await self.punish(message, "low effort spam")
-            return True
-
+        
         if self.is_spam(message.guild.id, message.author.id):
             await self.punish(message, "spam")
             return True 
