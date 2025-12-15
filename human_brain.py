@@ -1565,11 +1565,8 @@ class InterjectionEngine:
             return None
         content = (message.content or "").strip()
 
-        if len(content) <= 2:
+        if len(content) <= 1:
             return None
-        if _low_effort(message.content):
-            return None
-
         
         p = self.brain.should_interject_probability(message)
         roll = self.brain._rng.random()
