@@ -1470,13 +1470,29 @@ async def on_message(message):
                 LAST_BOT_MESSAGE[cid] = reply
                 convo["last_ts"] = time.time()
                 convo["misses"] = 0
-    
-            await brain_runtime.on_message(message, claimed=True)
+            def brain_allowed(message: discord.Message) -> bool:
+                if message.author.bot:
+                    return False
+                if not message.guild:
+                    return False
+                if message.content and message.content[0] in ("!", "/", "."):
+                    return False
+                return True
+            if cid in ACTIVE_CONVO:
+                return await bot.process_commands(message)
+            brain_runtime.brain.observe_channel_message(
+                message.channel.id,
+                message.content,
+                message.id
+            )
             return
     
         ACTIVE_CONVO.pop(cid, None)
     
-    reply = await brain_runtime.on_message(message)
+    reply = None
+    if brain_allowed(message):
+        reply = await brain_runtime.on_message(message)
+
 
     if reply:
         LAST_BOT_MESSAGE[cid] = reply
@@ -1492,6 +1508,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
