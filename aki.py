@@ -108,11 +108,9 @@ class AkinatorCog(commands.Cog):
         aki = akinator.Akinator()
         
         try:
-            question = await asyncio.to_thread(
-                aki.start_game,
-                language="en",
-            )
-
+            aki.language = "en"
+            
+            question = await asyncio.to_thread(aki.start_game)
 
         except Exception as e:
             log.exception("Akinator start_game failed")
