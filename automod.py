@@ -56,26 +56,25 @@ class AutoModEngine:
         self.offences = defaultdict(lambda: defaultdict(int))
 
     def get_cfg(self, guild_id: int):
-        if str(guild_id) not in AUTOMOD_DATA:
-            AUTOMOD_DATA[str(guild_id)] = {
-                "enabled": False,
-                "slurs": [],
-                "punishments": {
-                    "1": "warn",
-                    "2": "timeout:5",
-                    "3": "kick",
-                    "4": "ban"
-                }
-            }
-            save_automod(AUTOMOD_DATA)
-        alog(
-            "CFG",
-            f"guild={guild_id}",
-            f"enabled={AUTOMOD_DATA[str(guild_id)]['enabled']}",
-            f"slurs={len(AUTOMOD_DATA[str(guild_id)]['slurs'])}"
-        )
+        gid = str(guild_id)
+    
+        if gid not in AUTOMOD_DATA:
+            AUTOMOD_DATA[gid] = {}
+    
+        cfg = AUTOMOD_DATA[gid]
+    
+        cfg.setdefault("enabled", False)
+        cfg.setdefault("slurs", [])
+        cfg.setdefault("punishments", {
+            "1": "warn",
+            "2": "timeout:5",
+            "3": "kick",
+            "4": "ban"
+        })
+    
+        save_automod(AUTOMOD_DATA)
+        return cfg
 
-        return AUTOMOD_DATA[str(guild_id)]
 
     def record_message(self, guild_id: int, user_id: int):
         now = time.time()
