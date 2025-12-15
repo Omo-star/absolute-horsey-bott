@@ -83,17 +83,17 @@ class AutoModEngine:
         
     def is_spam(self, guild_id: int, user_id: int, content: str) -> bool:
         now = time.time()
-
+    
+        times = self.msg_times[(guild_id, user_id)]
+        recent = [t for t in times if now - t <= WINDOW]
+    
         alog(
             "CHECK-SPAM",
             f"user={user_id}",
             f"recent_msgs={len(recent)}",
-            f"window={WINDOW}s",
-            f"count={COUNT}"
+            f"window={WINDOW}",
+            f"count={COUNT}",
         )
-
-        times = self.msg_times[(guild_id, user_id)]
-        recent = [t for t in times if now - t <= WINDOW]
     
         if len(recent) >= COUNT:
             alog("SPAM-HIT", f"user={user_id}", "reason=rate")
