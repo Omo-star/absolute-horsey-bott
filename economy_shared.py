@@ -8,7 +8,7 @@ state = {}
 def load_state():
     global state
     if not os.path.exists(STATE_FILE):
-        state = {"users": {}, "items": {}, "world": {}, "arena_world": {}, "lab_world": {}, "voidmaze_world": {}}
+        state = {"users": {}, "items": {}, "world": {}, "arena_world": {}, "lab_world": {}, "voidmaze_world": {}, "afk": {}}
         save_state()
         return state
 
