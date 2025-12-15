@@ -1450,7 +1450,11 @@ async def on_message(message):
     cid = message.channel.id
     convo = ACTIVE_CONVO.get(cid)
     last_bot = None
-    
+    automod_cog = bot.get_cog("AutoModCog")
+    if automod_cog:
+        handled = await automod_cog.engine.handle_message(message)
+        if handled:
+            return  
     if convo and message.author.id == convo["user_id"]:
         last_bot = LAST_BOT_MESSAGE.get(cid)
     
@@ -1469,12 +1473,6 @@ async def on_message(message):
             return
     
         ACTIVE_CONVO.pop(cid, None)
-
-    automod_cog = bot.get_cog("AutoModCog")
-    if automod_cog:
-        handled = await automod_cog.engine.handle_message(message)
-        if handled:
-            return  
     
     reply = await brain_runtime.on_message(message)
 
@@ -1492,6 +1490,7 @@ async def on_message(message):
 
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
+
 
 
 
