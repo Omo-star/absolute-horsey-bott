@@ -36,7 +36,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1765755720.9060109
+      "last_summary_update": 1765846718.069224
     },
     "1435987186502733878": {
       "LF": {
@@ -380,7 +380,7 @@
       "msg_count": 0,
       "last_summary_update": 1765650679.9981291
     },
-    "1238242784679563265": {
+    "1350372198992314451": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -416,7 +416,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1765846718.069224
+      "last_summary_update": 1765903118.813807
     }
   },
   "roast_history": {
@@ -436,15 +436,13 @@
       {
         "bot": "I'd call you an overachiever, but that would imply you actually accomplish something!"
       }
-    ],
-    "1238242784679563265": []
+    ]
   },
   "auto_roast": {},
   "roast_mode": {
     "1220934047794987048": "deep",
     "1238242784679563265": "deep",
-    "1350372198992314451": "deep",
-    "1238242784679563265": "deep"
+    "1350372198992314451": "deep"
   },
   "spice_cache": {
     "<@&1441469260948963360> for not working": 0.0,
@@ -622,6 +620,7 @@
     "you're so useless, even your shadow won't follow you.": 95.0,
     "you think you roast, but it sounds more like whiny toddler logic. step it up, clown, at least get some original material.": 85.0,
     "your jokes hit harder than a wet noodle, and that\u2019s being generous. your roast skills are like an empty stage\u2014nobody\u2019s showing up!": 85.0,
-    "you\u2019re so deep, i\u2019m surprised the ocean hasn\u2019t claimed you yet.": 95.0
+    "you\u2019re so deep, i\u2019m surprised the ocean hasn\u2019t claimed you yet.": 95.0,
+    "that velvet vibe got you thinking you're all smooth, but we all know you're just a texture disaster.": 85.0
   }
 }
