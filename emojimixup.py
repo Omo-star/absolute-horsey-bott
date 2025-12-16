@@ -67,19 +67,45 @@ class EmojiMixupView(View):
             "❌ No valid mix found.",
             ephemeral=True
         )
-
     @button(label="↔️ Swap", style=discord.ButtonStyle.secondary)
     async def swap(self, interaction: discord.Interaction, _: Button):
-        await self.remix_core(interaction, self.e2, self.e1)
+        try:
+            await self.remix_core(interaction, self.e2, self.e1)
+        except Exception:
+            await interaction.response.send_message(
+                "❌ No valid mix found.",
+                ephemeral=True
+            )
 
+    
     @button(label="🎲 Random Left", style=discord.ButtonStyle.success)
     async def rand_left(self, interaction: discord.Interaction, _: Button):
-        await self.remix_core(interaction, random.choice(self.cog.emojis), self.e2)
-
+        for _ in range(20):
+            a = random.choice(self.cog.emojis)
+            try:
+                await self.remix_core(interaction, a, self.e2)
+                return
+            except Exception:
+                continue
+    
+        await interaction.response.send_message(
+            "❌ No valid mix found.",
+            ephemeral=True
+        )
     @button(label="🎲 Random Right", style=discord.ButtonStyle.success)
     async def rand_right(self, interaction: discord.Interaction, _: Button):
-        await self.remix_core(interaction, self.e1, random.choice(self.cog.emojis))
-
+        for _ in range(20):
+            b = random.choice(self.cog.emojis)
+            try:
+                await self.remix_core(interaction, self.e1, b)
+                return
+            except Exception:
+                continue
+    
+        await interaction.response.send_message(
+            "❌ No valid mix found.",
+            ephemeral=True
+        )
     @button(label="⭐ Favorite", style=discord.ButtonStyle.success)
     async def favorite(self, interaction: discord.Interaction, _: Button):
         await interaction.response.defer(ephemeral=True)
