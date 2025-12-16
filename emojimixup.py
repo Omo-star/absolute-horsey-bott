@@ -36,27 +36,37 @@ class EmojiMixupView(View):
             await interaction.response.send_message("Not your mix ✋", ephemeral=True)
             return False
         return True
-
+    
     async def remix_core(self, interaction: discord.Interaction, a: str, b: str):
-        await interaction.response.defer()
         try:
             file, url = await self.cog.get_mix_file(a, b)
         except Exception:
-            await interaction.followup.send("❌ No valid mix found.")
-            return
+            raise
+    
         self.e1, self.e2 = a, b
         embed = self.cog.build_embed(a, b)
         await self.cog.record(interaction, a, b, url)
-        await interaction.message.delete()
-        await interaction.followup.send(
+    
+        await interaction.response.edit_message(
             embed=embed,
-            file=file,
+            attachments=[file],
             view=self
         )
+
     @button(label="🔀 Remix", style=discord.ButtonStyle.primary)
     async def remix(self, interaction: discord.Interaction, _: Button):
-        a, b = random.sample(self.cog.emojis, 2)
-        await self.remix_core(interaction, a, b)
+        for _ in range(20):
+            a, b = random.sample(self.cog.emojis, 2)
+            try:
+                await self.remix_core(interaction, a, b)
+                return
+            except Exception:
+                continue
+    
+        await interaction.response.send_message(
+            "❌ No valid mix found.",
+            ephemeral=True
+        )
 
     @button(label="↔️ Swap", style=discord.ButtonStyle.secondary)
     async def swap(self, interaction: discord.Interaction, _: Button):
