@@ -47,14 +47,12 @@ class EmojiMixupView(View):
         self.e1, self.e2 = a, b
         embed = self.cog.build_embed(a, b)
         await self.cog.record(interaction, a, b, url)
-        await interaction.followup.edit_message(
-            message_id=interaction.message.id,
+        await interaction.message.delete()
+        await interaction.followup.send(
             embed=embed,
-            view=self,
-            attachments=[],
-            files=[file]
+            file=file,
+            view=self
         )
-
     @button(label="🔀 Remix", style=discord.ButtonStyle.primary)
     async def remix(self, interaction: discord.Interaction, _: Button):
         a, b = random.sample(self.cog.emojis, 2)
