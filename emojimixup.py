@@ -72,7 +72,7 @@ class EmojiMixupView(View):
     async def rand_right(self, interaction: discord.Interaction, _: Button):
         await self.remix_core(interaction, self.e1, random.choice(self.cog.emojis))
 
-    @button(label="⭐ Favorite", style=discord.ButtonStyle.warning)
+    @button(label="⭐ Favorite", style=discord.ButtonStyle.success)
     async def favorite(self, interaction: discord.Interaction, _: Button):
         await interaction.response.defer(ephemeral=True)
         ok = await self.cog.add_favorite(interaction.user.id, self.e1, self.e2)
