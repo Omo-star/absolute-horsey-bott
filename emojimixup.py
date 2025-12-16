@@ -108,14 +108,24 @@ class EmojiMixupCog(commands.Cog):
     async def discover_mix(self, a: str, b: str) -> Optional[str]:
         cp1 = self.codepoints(a)
         cp2 = self.codepoints(b)
+    
+        attempts = [
+            (cp1, cp2),
+            (cp2, cp1)
+        ]
+    
         for d in DISCOVERY_DATES:
-            url = f"https://www.gstatic.com/android/keyboard/emojikitchen/{d}/u{cp1}/u{cp1}_u{cp2}.png"
-            async with self.session.get(url) as r:
-                if r.status == 200:
-                    async with self.lock:
-                        self.mixups[self.key(a, b)] = f"{d}/u{cp1}/u{cp1}_u{cp2}.png"
-                        self.mixup_path.write_text(json.dumps(self.mixups, ensure_ascii=False, indent=2), encoding="utf-8")
-                    return url
+            for x, y in attempts:
+                url = f"https://www.gstatic.com/android/keyboard/emojikitchen/{d}/u{x}/u{x}_u{y}.png"
+                async with self.session.get(url) as r:
+                    if r.status == 200:
+                        async with self.lock:
+                            self.mixups[self.key(a, b)] = f"{d}/u{x}/u{x}_u{y}.png"
+                            self.mixup_path.write_text(
+                                json.dumps(self.mixups, ensure_ascii=False, indent=2),
+                                encoding="utf-8"
+                            )
+                        return url
         return None
 
     async def get_mix_file(self, a: str, b: str) -> Tuple[discord.File, str]:
