@@ -2,6 +2,12 @@
   "history": {
     "1238242784679563265": [
       {
+        "a": "😆",
+        "b": "😉",
+        "url": "https://www.gstatic.com/android/keyboard/emojikitchen/20201001/u1f606/u1f606_u1f609.png",
+        "ts": 1765901180.118326
+      },
+      {
         "a": "😍",
         "b": "😎",
         "url": "https://www.gstatic.com/android/keyboard/emojikitchen/20201001/u1f60d/u1f60d_u1f60e.png",
@@ -35,6 +41,7 @@
   },
   "favorites": {
     "1238242784679563265": [
+      "😆_😉",
       "😙_😙"
     ]
   }
