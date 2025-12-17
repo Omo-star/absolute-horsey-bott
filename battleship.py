@@ -4,19 +4,22 @@ from discord import app_commands
 from discord.ui import View, Button, Select
 import asyncio, sqlite3, json, os, random, math, time
 from dataclasses import dataclass
-
+COLS = list("ABCDEFGHIJ") 
+ROWS = list("0123456789")
 GRID=10
 LETTERS="ABCDEFGHIJ"
 SHIP_SIZES=[5,4,3,3,2]
-COLS = ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯"]
-ROWS=["0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"]
 
-WATER="🌊"
-MISS="⚪"
-HIT="🔥"
-SHIP="🚢"
-SUNK="💀"
+WATER="~"
+MISS="o"
+HIT="X"
+SHIP="#"
+SUNK_CELL="*"
 BANNER="🧩"
+HIT_EMOJI="🔥"
+MISS_EMOJI="💦"
+SUNK_EMOJI="💀"
+
 
 DB_PATH=os.path.join("data","battleship.db")
 
@@ -63,22 +66,28 @@ class Board:
         self.grid=grid[:] if grid else [0]*100
         self.ships=[s[:] for s in ships] if ships else []
         self.sunk=sunk[:] if sunk else [False]*len(self.ships)
-    def render(self, reveal=False, header=""):
-        top="⬛" + "".join(COLS)
-        out=[(header + top) if header else top]
+    def render(self, reveal=False):
+        out = []
+        out.append("   " + " ".join(COLS))
+    
         for y in range(GRID):
-            row=[ROWS[y]]
+            row = [f"{ROWS[y]} "]
             for x in range(GRID):
-                v=self.grid[_idx(x,y)]
-                if v==0: cell=WATER
-                elif v==1: cell=MISS
-                elif v==2: cell=HIT
-                elif v==3 and reveal: cell=SHIP
-                else: cell=WATER
+                v = self.grid[_idx(x, y)]
+                if v == 0:
+                    cell = WATER
+                elif v == 1:
+                    cell = MISS
+                elif v == 2:
+                    cell = HIT
+                elif v == 3 and reveal:
+                    cell = SHIP
+                else:
+                    cell = WATER
                 row.append(cell)
-            out.append("".join(row))
-        return "\n".join(out)
-
+            out.append(" ".join(row))
+    
+        return "```" + "\n".join(out) + "```"
 
     def public_grid(self):
         return [0 if v==3 else v for v in self.grid]
@@ -653,13 +662,14 @@ class BattleshipGame:
 
         who=self.ai.display_name if (ai and self.ai) else (interaction.user.display_name if interaction else "AI")
         cell=f"{LETTERS[x]}{y}"
-        if res=="miss":
-            msg=f"💦 **MISS** — {who} at **{cell}**"
-            self.turn^=1
+        if res == "miss":
+            msg = f"{MISS_EMOJI} **MISS** — {who} at **{cell}**"
+            self.turn ^= 1
         else:
-            msg=f"🔥 **HIT** — {who} at **{cell}**"
+            msg = f"{HIT_EMOJI} **HIT** — {who} at **{cell}**"
             if sunk_len:
-                msg+=f"  {SUNK} **SUNK {sunk_len}**"
+                msg += f"  {SUNK_EMOJI} **SUNK ship ({sunk_len})**"
+
 
         m=await self.ensure_screen()
         await m.edit(content=self.banner("BATTLEFIELD")+msg+"\n\n"+enemy.render(False), view=None)
