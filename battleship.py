@@ -588,10 +588,21 @@ class BattleshipGame:
                 await self.end(None, reason=f"{u.display_name} has DMs closed")
                 return
 
-        if self.setup_progress[0]>=len(SHIP_SIZES) and self.setup_progress[1]>=len(SHIP_SIZES):
-            self.phase="battle"
-            self.turn=0
+        if self.setup_progress[0] >= len(SHIP_SIZES) and \
+           self.setup_progress[1] >= len(SHIP_SIZES):
+        
+            self.phase = "battle"
+            self.turn = 0
             await self.save()
+        
+            for slot in self.slots:
+                if not slot.is_ai:
+                    try:
+                        u = await self.resolve(slot)
+                        await u.send("🚢 All ships placed. Battle is starting!")
+                    except:
+                        pass
+        
             await self.run_battle_turn()
             return
 
@@ -617,8 +628,16 @@ class BattleshipGame:
         b.place(x,y,d,length)
         self.setup_progress[p]+=1
         await self.save()
-        await interaction.response.edit_message(content=f"✅ Placed ship **{length}**.", view=None)
-
+        await interaction.response.edit_message(
+            content=self.screen_text(
+                interaction.user.id,
+                "setup",
+                self.sel_x,
+                self.sel_y,
+                self.dir
+            ),
+            view=view
+        )
         if self.setup_progress[0]>=len(SHIP_SIZES) and self.setup_progress[1]>=len(SHIP_SIZES):
             self.phase="battle"
             self.turn=0
