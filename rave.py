@@ -18,7 +18,6 @@ from moviepy.editor import (
     CompositeVideoClip,
     ColorClip,
 )
-from moviepy import video as mp_video
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 from moviepy.editor import ImageClip
@@ -297,9 +296,8 @@ class RaveCog(commands.Cog):
             clip = (
                 VideoFileClip(str(path))
                 .loop(duration=dur)
-                .fx(mp_video.fx.resize, height=size[1])
+                .resize(height=size[1])
             )
-
         else:
             clip = ColorClip(size, color=(10, 10, 10), duration=dur)
 
