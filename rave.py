@@ -240,17 +240,9 @@ class RaveCog(commands.Cog):
                 return ("center", y + dy)
             return f
 
-        top = (
-            TextClip(str(FONT), cfg.top.upper(), fontsize=cfg.font, color="white", method="label")
-            .set_position(pos(cfg.top_y))
-            .set_duration(dur)
-        )
+        top = TextClip(text=cfg.top.upper(), font=str(FONT), fontsize=cfg.font, color="white", method="caption").set_position(pos(cfg.top_y)).set_duration(dur)
 
-        bottom = (
-            TextClip(str(FONT), cfg.bottom.upper(), fontsize=cfg.font, color="white", method="label")
-            .set_position(pos(cfg.bottom_y))
-            .set_duration(dur)
-        )
+        bottom = TextClip(text=cfg.bottom.upper(), font=str(FONT), fontsize=cfg.font, color="white", method="caption").set_position(pos(cfg.bottom_y)).set_duration(dur)
 
         comp = CompositeVideoClip([clip, top, bottom], size=size)
         out = DATA / f"{uid}_{now()}.mp4"
