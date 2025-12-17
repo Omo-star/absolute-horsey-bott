@@ -632,9 +632,9 @@ class BattleshipGame:
             content=self.screen_text(
                 interaction.user.id,
                 "setup",
-                self.sel_x,
-                self.sel_y,
-                self.dir
+                x,
+                y,
+                d
             ),
             view=view
         )
