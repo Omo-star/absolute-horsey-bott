@@ -9,7 +9,7 @@ GRID=10
 LETTERS="ABCDEFGHIJ"
 SHIP_SIZES=[5,4,3,3,2]
 COLS = ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯"]
-
+ROWS=["0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"]
 
 WATER="🌊"
 MISS="⚪"
@@ -63,21 +63,22 @@ class Board:
         self.grid=grid[:] if grid else [0]*100
         self.ships=[s[:] for s in ships] if ships else []
         self.sunk=sunk[:] if sunk else [False]*len(self.ships)
-
     def render(self, reveal=False, header=""):
-        top="⬛ " + " ".join(COLS)
-        out=[header+top if header else top]
+        top="⬛" + "".join(COLS)
+        out=[(header + top) if header else top]
         for y in range(GRID):
-            row=[f"{y}️⃣"]
+            row=[ROWS[y]]
             for x in range(GRID):
                 v=self.grid[_idx(x,y)]
-                if v==0: row.append(WATER)
-                elif v==1: row.append(MISS)
-                elif v==2: row.append(HIT)
-                elif v==3 and reveal: row.append(SHIP)
-                else: row.append(WATER)
-            out.append(" ".join(row))
+                if v==0: cell=WATER
+                elif v==1: cell=MISS
+                elif v==2: cell=HIT
+                elif v==3 and reveal: cell=SHIP
+                else: cell=WATER
+                row.append(cell)
+            out.append("".join(row))
         return "\n".join(out)
+
 
     def public_grid(self):
         return [0 if v==3 else v for v in self.grid]
@@ -316,28 +317,75 @@ class SetupOrBattleView(View):
         self.sel_y=0
         self.dir="r"
         for i in range(10):
-            b=Button(label=str(i), style=discord.ButtonStyle.secondary, row=0 if i<5 else 1, custom_id=f"r{i}")
-            b.callback=self._make_cb(b.custom_id)
-            self.add_item(b)
-        for i,c in enumerate(LETTERS):
-            b=Button(label=c, style=discord.ButtonStyle.secondary, row=2 if i<5 else 3, custom_id=f"c{i}")
-            b.callback=self._make_cb(b.custom_id)
-            self.add_item(b)
-        if mode=="setup":
-            a1=Button(label="🔄 Rotate", style=discord.ButtonStyle.primary, row=4, custom_id="rot")
-            a2=Button(label="✅ Place", style=discord.ButtonStyle.success, row=4, custom_id="place")
-            a3=Button(label="🏳️ Forfeit", style=discord.ButtonStyle.danger, row=4, custom_id="ff")
-            a1.callback=self._make_cb("rot")
-            a2.callback=self._make_cb("place")
-            a3.callback=self._make_cb("ff")
-            self.add_item(a1); self.add_item(a2); self.add_item(a3)
+            self.add_item(
+                Button(
+                    label=str(i),
+                    style=discord.ButtonStyle.secondary,
+                    row=0 if i < 5 else 1,
+                    custom_id=f"r{i}"
+                )
+            )
+        
+        for i, c in enumerate(LETTERS):
+            self.add_item(
+                Button(
+                    label=c,
+                    style=discord.ButtonStyle.secondary,
+                    row=2 if i < 5 else 3,
+                    custom_id=f"c{i}"
+                )
+            )
+        
+        if mode == "setup":
+            self.add_item(Button(label="🔄 Rotate", style=discord.ButtonStyle.primary, row=4, custom_id="rot"))
+            self.add_item(Button(label="✅ Place", style=discord.ButtonStyle.success, row=4, custom_id="place"))
+            self.add_item(Button(label="🏳️ Forfeit", style=discord.ButtonStyle.danger, row=4, custom_id="ff"))
         else:
-            a1=Button(label="🔥 FIRE", style=discord.ButtonStyle.danger, row=4, custom_id="fire")
-            a2=Button(label="🏳️ Forfeit", style=discord.ButtonStyle.danger, row=4, custom_id="ff")
-            a1.callback=self._make_cb("fire")
-            a2.callback=self._make_cb("ff")
-            self.add_item(a1); self.add_item(a2)
+            self.add_item(Button(label="🔥 FIRE", style=discord.ButtonStyle.danger, row=4, custom_id="fire"))
+            self.add_item(Button(label="🏳️ Forfeit", style=discord.ButtonStyle.danger, row=4, custom_id="ff"))
 
+    async def interaction_handler(self, interaction: discord.Interaction):
+        cid = interaction.data["custom_id"]
+    
+        if cid == "rot":
+            self.dir = "d" if self.dir == "r" else "r"
+            await interaction.response.edit_message(
+                content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir),
+                view=self
+            )
+            return
+    
+        if cid == "ff":
+            await interaction.response.edit_message(content="🏳️ Forfeit confirmed.", view=None)
+            await self.game.forfeit(self.owner_id)
+            self.stop()
+            return
+    
+        if cid == "place":
+            await self.game.place_ship(interaction, self.sel_x, self.sel_y, self.dir, self)
+            return
+    
+        if cid == "fire":
+            await self.game.fire(interaction, self.sel_x, self.sel_y, self)
+            return
+    
+        if cid.startswith("r") and cid[1:].isdigit():
+            self.sel_y = int(cid[1:])
+            await interaction.response.edit_message(
+                content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir),
+                view=self
+            )
+            return
+    
+        if cid.startswith("c") and cid[1:].isdigit():
+            self.sel_x = int(cid[1:])
+            await interaction.response.edit_message(
+                content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir),
+                view=self
+            )
+            return
+
+    
     async def interaction_check(self, interaction):
         if interaction.user.id!=self.owner_id:
             await interaction.response.send_message("Not for you.", ephemeral=True)
@@ -346,47 +394,6 @@ class SetupOrBattleView(View):
             await interaction.response.send_message("Game is over.", ephemeral=True)
             return False
         return True
-
-    def _make_cb(self, cid:str):
-        async def _cb(interaction: discord.Interaction):
-            if cid == "rot":
-                self.dir = "d" if self.dir == "r" else "r"
-                await interaction.response.edit_message(
-                    content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir),
-                    view=self
-                )
-                return
-        
-            if cid == "ff":
-                await interaction.response.edit_message(content="🏳️ Forfeit confirmed.", view=None)
-                await self.game.forfeit(self.owner_id)
-                self.stop()
-                return
-        
-            if cid == "place":
-                await self.game.place_ship(interaction, self.sel_x, self.sel_y, self.dir, self)
-                return
-        
-            if cid == "fire":
-                await self.game.fire(interaction, self.sel_x, self.sel_y, self)
-                return
-        
-            if cid.startswith("r") and cid[1:].isdigit():
-                self.sel_y = int(cid[1:])
-                await interaction.response.edit_message(
-                    content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir),
-                    view=self
-                )
-                return
-        
-            if cid.startswith("c") and cid[1:].isdigit():
-                self.sel_x = int(cid[1:])
-                await interaction.response.edit_message(
-                    content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir),
-                    view=self
-                )
-                return
-
 
 class RematchView(View):
     def __init__(self, cog, channel_id:int, p1:int, p2:int, ai_diff:str|None):
