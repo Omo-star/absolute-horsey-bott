@@ -10,5 +10,5 @@ requests
 libclang
 akinator
 pillow
-yt-dlp
 moviepy==1.0.3
+
