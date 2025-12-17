@@ -1,29 +1,23 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import View, button, Button, Modal, TextInput, Select
+from discord.ui import View, button, Modal, TextInput, Select
 import asyncio
-import json
 import logging
 import math
 import os
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import aiohttp
-import yt_dlp
 from moviepy.editor import (
     VideoFileClip,
     TextClip,
     CompositeVideoClip,
     ColorClip,
-    VideoClip,
-    ImageClip,
 )
-from moviepy import audio as mp_audio
 from moviepy import video as mp_video
 
 log = logging.getLogger("rave")
@@ -31,24 +25,21 @@ log = logging.getLogger("rave")
 DATA = Path("data/rave")
 ASSETS = DATA / "assets"
 UPLOADS = DATA / "uploads"
+
 DATA.mkdir(parents=True, exist_ok=True)
 ASSETS.mkdir(exist_ok=True)
 UPLOADS.mkdir(exist_ok=True)
 
-PRESETS = DATA / "presets.json"
 FONT_URL = "https://github.com/matomo-org/travis-scripts/raw/master/fonts/Verdana.ttf"
 FONT = ASSETS / "Verdana.ttf"
 
-CRAB = ("crab_template.mp4", "https://youtu.be/gDLE3LikgUs")
-MIKU = ("miku_template.mp4", "https://youtu.be/qeJjQGF6gz4")
+CRAB_TEMPLATE = ASSETS / "crab_template.mp4"
 
 QUEUE = asyncio.Semaphore(2)
 
-
 class Mode(str, Enum):
-    TEMPLATE = "Template"
+    TEMPLATE = "Crab Rave"
     BUILD = "Build"
-
 
 class Base(str, Enum):
     PULSE = "Pulse"
@@ -57,22 +48,14 @@ class Base(str, Enum):
     GRADIENT = "Gradient"
     UPLOAD = "Upload"
 
-
 class Anim(str, Enum):
     STATIC = "Static"
     BOUNCE = "Bounce"
-    WAVE = "Wave"
-    SHAKE = "Shake"
-    SLIDE = "Slide"
-    ZOOM = "Zoom"
-    SPIN = "Spin"
-
 
 class Ease(str, Enum):
     LINEAR = "Linear"
     INOUT = "EaseInOut"
     ELASTIC = "Elastic"
-
 
 @dataclass
 class Cfg:
@@ -83,7 +66,6 @@ class Cfg:
 
     top: str = "TOP TEXT"
     bottom: str = "BOTTOM TEXT"
-    upper: bool = True
 
     font: int = 56
     top_y: int = 200
@@ -92,21 +74,11 @@ class Cfg:
     dur: float = 15.4
     fps: int = 24
     bpm: int = 128
-    vol: float = 0.1
 
     upload: str = ""
 
-
 def now():
     return str(int(time.time() * 1000))
-
-
-def ease(e, x):
-    x = max(0, min(1, x))
-    if e == Ease.ELASTIC:
-        return math.sin(-13 * math.pi / 2 * (x + 1)) * pow(2, -10 * x) + 1
-    return x * x * (3 - 2 * x)
-
 
 class UploadKeyModal(Modal, title="Set Upload Key"):
     key = TextInput(label="Upload key", required=True)
@@ -119,22 +91,6 @@ class UploadKeyModal(Modal, title="Set Upload Key"):
     async def on_submit(self, i):
         self.cfg.upload = self.key.value.strip()
         await i.response.send_message("Upload key set.", ephemeral=True)
-
-class ModeSelect(Select):
-    def __init__(self, view: "RaveView"):
-        self.view_ref = view
-        super().__init__(
-            placeholder="Mode",
-            options=[discord.SelectOption(label=m.value) for m in Mode],
-            min_values=1,
-            max_values=1,
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        self.view_ref.cfg.mode = Mode(self.values[0])
-        await interaction.response.defer()
-        await self.view_ref.refresh(interaction)
-
 
 class TextModal(Modal, title="Text"):
     t = TextInput(label="Top", max_length=64)
@@ -151,6 +107,19 @@ class TextModal(Modal, title="Text"):
         self.cfg.bottom = self.b.value
         await i.response.send_message("Updated.", ephemeral=True)
 
+class ModeSelect(Select):
+    def __init__(self, view):
+        self.view_ref = view
+        super().__init__(
+            placeholder="Mode",
+            options=[discord.SelectOption(label=m.value) for m in Mode],
+        )
+
+    async def callback(self, interaction):
+        self.view_ref.cfg.mode = Mode(self.values[0])
+        await interaction.response.defer()
+        await self.view_ref.refresh(interaction)
+
 class BaseSelect(Select):
     def __init__(self, view):
         self.view_ref = view
@@ -164,7 +133,6 @@ class BaseSelect(Select):
         await interaction.response.defer()
         await self.view_ref.refresh(interaction)
 
-
 class AnimSelect(Select):
     def __init__(self, view):
         self.view_ref = view
@@ -177,7 +145,6 @@ class AnimSelect(Select):
         self.view_ref.cfg.anim = Anim(self.values[0])
         await interaction.response.defer()
         await self.view_ref.refresh(interaction)
-
 
 class RaveView(View):
     def __init__(self, cog, uid):
@@ -209,21 +176,6 @@ class RaveView(View):
     async def refresh(self, i):
         await i.message.edit(embed=self.embed(), view=self)
 
-    async def sel_mode(self, i):
-        self.cfg.mode = Mode(i.data["values"][0])
-        await i.response.defer()
-        await self.refresh(i)
-
-    async def sel_base(self, i):
-        self.cfg.base = Base(i.data["values"][0])
-        await i.response.defer()
-        await self.refresh(i)
-
-    async def sel_anim(self, i):
-        self.cfg.anim = Anim(i.data["values"][0])
-        await i.response.defer()
-        await self.refresh(i)
-
     @button(label="Text", style=discord.ButtonStyle.primary)
     async def btn_text(self, i, _):
         await i.response.send_modal(TextModal(self.cfg))
@@ -249,45 +201,35 @@ class RaveView(View):
             os.remove(out)
             self.stop()
 
-
 class RaveCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    def ensure_template(self, name: str, url: str):
-        path = ASSETS / name
-        if path.exists():
-            return
-    
-        ydl_opts = {
-            "outtmpl": str(path),
-            "format": "mp4/bestvideo+bestaudio",
-            "merge_output_format": "mp4",
-            "quiet": True,
-            "noplaylist": True,
-        }
-    
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
 
     async def ensure(self):
+
         if not FONT.exists():
             async with aiohttp.ClientSession() as s:
                 async with s.get(FONT_URL) as r:
                     FONT.write_bytes(await r.read())
-    
-        await asyncio.to_thread(self.ensure_template, *CRAB)
-        await asyncio.to_thread(self.ensure_template, *MIKU)
 
+        if not CRAB_TEMPLATE.exists():
+            raise RuntimeError(
+                "Missing crab_template.mp4 in data/rave/assets/"
+            )
 
     def render(self, uid, cfg, preview):
         dur = 6 if preview else cfg.dur
         size = (854, 480) if preview else (1280, 720)
 
         if cfg.mode == Mode.TEMPLATE:
-            clip = VideoFileClip(str(ASSETS / CRAB[0])).subclip(0, dur)
+            clip = VideoFileClip(str(CRAB_TEMPLATE)).subclip(0, dur)
         elif cfg.base == Base.UPLOAD:
             path = UPLOADS / f"{uid}_{cfg.upload}"
-            clip = VideoFileClip(str(path)).loop(duration=dur).fx(mp_video.fx.resize, height=size[1])
+            clip = (
+                VideoFileClip(str(path))
+                .loop(duration=dur)
+                .fx(mp_video.fx.resize, height=size[1])
+            )
         else:
             clip = ColorClip(size, color=(10, 10, 10), duration=dur)
 
@@ -298,15 +240,22 @@ class RaveCog(commands.Cog):
                 return ("center", y + dy)
             return f
 
-        top = TextClip(str(FONT), cfg.top.upper(), font_size=cfg.font, color="white") \
-            .set_position(pos(cfg.top_y)).set_duration(dur)
+        top = (
+            TextClip(str(FONT), cfg.top.upper(), font_size=cfg.font, color="white")
+            .set_position(pos(cfg.top_y))
+            .set_duration(dur)
+        )
 
-        bottom = TextClip(str(FONT), cfg.bottom.upper(), font_size=cfg.font, color="white") \
-            .set_position(pos(cfg.bottom_y)).set_duration(dur)
+        bottom = (
+            TextClip(str(FONT), cfg.bottom.upper(), font_size=cfg.font, color="white")
+            .set_position(pos(cfg.bottom_y))
+            .set_duration(dur)
+        )
 
         comp = CompositeVideoClip([clip, top, bottom], size=size)
         out = DATA / f"{uid}_{now()}.mp4"
         comp.write_videofile(str(out), fps=cfg.fps, preset="superfast", logger=None)
+
         comp.close()
         clip.close()
         return out
@@ -327,8 +276,11 @@ class RaveCog(commands.Cog):
     async def ravebg(self, i, file: discord.Attachment):
         key = now() + "_" + file.filename
         await file.save(UPLOADS / f"{i.user.id}_{key}")
-        await i.response.send_message(f"Saved. Upload key: `{key}`", ephemeral=True)
-
+        await i.response.send_message(
+            f"Saved. Upload key: `{key}`",
+            ephemeral=True,
+        )
 
 async def setup(bot):
     await bot.add_cog(RaveCog(bot))
+
