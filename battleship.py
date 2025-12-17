@@ -8,6 +8,8 @@ from dataclasses import dataclass
 GRID=10
 LETTERS="ABCDEFGHIJ"
 SHIP_SIZES=[5,4,3,3,2]
+COLS = ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯"]
+
 
 WATER="🌊"
 MISS="⚪"
@@ -63,7 +65,7 @@ class Board:
         self.sunk=sunk[:] if sunk else [False]*len(self.ships)
 
     def render(self, reveal=False, header=""):
-        top="⬛ "+" ".join(LETTERS)
+        top="⬛ " + " ".join(COLS)
         out=[header+top if header else top]
         for y in range(GRID):
             row=[f"{y}️⃣"]
