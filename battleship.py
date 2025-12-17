@@ -589,7 +589,6 @@ class BattleshipGame:
             except discord.Forbidden:
                 await self.end(None, reason=f"{u.display_name} has DMs closed")
                 return
-
         if self.setup_progress[0] >= len(SHIP_SIZES) and \
            self.setup_progress[1] >= len(SHIP_SIZES):
         
@@ -597,13 +596,13 @@ class BattleshipGame:
             self.turn = 0
             await self.save()
         
-            for slot in self.slots:
-                if not slot.is_ai:
-                    try:
-                        u = await self.resolve(slot)
-                        await u.send("🚢 All ships placed. Battle is starting!")
-                    except:
-                        pass
+            for item in view.children:
+                item.disabled = True
+        
+            await interaction.response.edit_message(
+                content=self.banner("SHIPYARD") + "⚔️ **Battle starting!**",
+                view=view
+            )
         
             await self.run_battle_turn()
             return
