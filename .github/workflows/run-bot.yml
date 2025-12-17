@@ -59,7 +59,7 @@ jobs:
           git fetch origin main
           git pull origin main --strategy-option theirs
 
-          git add state.json roast_memory.json human_brain_state.json automod_config.json automod_offences.json mixup_emojis.json emojimixup_data.json data/rave/presets.json data/rave/assets/* data/rave/uploads/* data/battleship.db || true
+          git add state.json roast_memory.json human_brain_state.json automod_config.json automod_offences.json mixup_emojis.json emojimixup_data.json data/rave/presets.json data/rave/assets/* data/rave/uploads/* data/battleship.db data/monopoly.db || true
 
           if ! git diff --cached --quiet; then
             git commit -m "Update bot state"
