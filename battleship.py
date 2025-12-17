@@ -654,21 +654,25 @@ class BattleshipGame:
         await self.push_watch_updates(self.banner("BATTLEFIELD")+f"🎯 Turn: **{cur.display_name}**\n\n"+self.boards[1-self.turn].render(False))
         await self.save()
 
-    async def fire(self, interaction:discord.Interaction, x:int, y:int, view:View):
-        if self.phase!="battle" or not self.active:
+    async def fire(self, interaction: discord.Interaction, x: int, y: int, view: View):
+        if self.phase != "battle" or not self.active:
             await interaction.response.send_message("Game is not in battle.", ephemeral=True)
             return
-        if self.slot_index(interaction.user.id)!=self.turn:
+    
+        if self.slot_index(interaction.user.id) != self.turn:
             await interaction.response.send_message("Not your turn.", ephemeral=True)
             return
-        await self._apply_fire(interaction, x,y, ai=False)
+    
+        await interaction.response.defer()
+    
+        await self._apply_fire(interaction, x, y, ai=False)
 
     async def _apply_fire(self, interaction, x:int, y:int, ai:bool):
         enemy=self.boards[1-self.turn]
         res, sunk_len = enemy.apply_shot(x,y)
-        if res=="repeat":
-            if interaction and hasattr(interaction,"response"):
-                await interaction.response.send_message("Already fired there.", ephemeral=True)
+        if res == "repeat":
+            if interaction:
+                await interaction.followup.send("Already fired there.", ephemeral=True)
             return
 
         who=self.ai.display_name if (ai and self.ai) else (interaction.user.display_name if interaction else "AI")
