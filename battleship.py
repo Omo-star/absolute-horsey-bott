@@ -346,31 +346,45 @@ class SetupOrBattleView(View):
         return True
 
     def _make_cb(self, cid:str):
-        async def _cb(interaction:discord.Interaction):
-            if cid.startswith("r"):
-                self.sel_y=int(cid[1:])
-                await interaction.response.edit_message(content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir), view=self)
+        async def _cb(interaction: discord.Interaction):
+            if cid == "rot":
+                self.dir = "d" if self.dir == "r" else "r"
+                await interaction.response.edit_message(
+                    content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir),
+                    view=self
+                )
                 return
-            if cid.startswith("c"):
-                self.sel_x=int(cid[1:])
-                await interaction.response.edit_message(content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir), view=self)
-                return
-            if cid=="rot":
-                self.dir="d" if self.dir=="r" else "r"
-                await interaction.response.edit_message(content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir), view=self)
-                return
-            if cid=="ff":
+        
+            if cid == "ff":
                 await interaction.response.edit_message(content="🏳️ Forfeit confirmed.", view=None)
                 await self.game.forfeit(self.owner_id)
                 self.stop()
                 return
-            if cid=="place":
+        
+            if cid == "place":
                 await self.game.place_ship(interaction, self.sel_x, self.sel_y, self.dir, self)
                 return
-            if cid=="fire":
+        
+            if cid == "fire":
                 await self.game.fire(interaction, self.sel_x, self.sel_y, self)
                 return
-        return _cb
+        
+            if cid.startswith("r") and cid[1:].isdigit():
+                self.sel_y = int(cid[1:])
+                await interaction.response.edit_message(
+                    content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir),
+                    view=self
+                )
+                return
+        
+            if cid.startswith("c") and cid[1:].isdigit():
+                self.sel_x = int(cid[1:])
+                await interaction.response.edit_message(
+                    content=self.game.screen_text(self.owner_id, self.mode, self.sel_x, self.sel_y, self.dir),
+                    view=self
+                )
+                return
+
 
 class RematchView(View):
     def __init__(self, cog, channel_id:int, p1:int, p2:int, ai_diff:str|None):
