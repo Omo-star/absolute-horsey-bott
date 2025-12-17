@@ -241,13 +241,13 @@ class RaveCog(commands.Cog):
             return f
 
         top = (
-            TextClip(str(FONT), cfg.top.upper(), font_size=cfg.font, color="white")
+            TextClip(str(FONT), cfg.top.upper(), fontsize=cfg.font, color="white")
             .set_position(pos(cfg.top_y))
             .set_duration(dur)
         )
 
         bottom = (
-            TextClip(str(FONT), cfg.bottom.upper(), font_size=cfg.font, color="white")
+            TextClip(str(FONT), cfg.bottom.upper(), fontsize=cfg.font, color="white")
             .set_position(pos(cfg.bottom_y))
             .set_duration(dur)
         )
