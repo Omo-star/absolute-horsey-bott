@@ -88,8 +88,6 @@ class Cfg:
     bottom: str = "BOTTOM TEXT"
 
     font: int = 56
-    top_y: int = 200
-    bottom_y: int = 270
 
     dur: float = 15.4
     fps: int = 24
@@ -301,15 +299,19 @@ class RaveCog(commands.Cog):
         else:
             clip = ColorClip(size, color=(10, 10, 10), duration=dur)
 
-        def pos(y):
-            def f(t):
-                p = math.sin(2 * math.pi * cfg.bpm / 60 * t)
-                dy = 30 * p if cfg.anim == Anim.BOUNCE else 0
-                return ("center", y + dy)
-            return f
+        def pos_top(t):
+            p = math.sin(2 * math.pi * cfg.bpm / 60 * t)
+            dy = 30 * p if cfg.anim == Anim.BOUNCE else 0
+            return ("center", int(size[1] * 0.08 + dy))
         
-        top = text_clip(cfg.top.upper(), str(FONT), cfg.font, "white", dur, pos(cfg.top_y))
-        bottom = text_clip(cfg.bottom.upper(), str(FONT), cfg.font, "white", dur, pos(cfg.bottom_y))
+        
+        def pos_bottom(t):
+            p = math.sin(2 * math.pi * cfg.bpm / 60 * t)
+            dy = 30 * p if cfg.anim == Anim.BOUNCE else 0
+            return ("center", int(size[1] * 0.80 + dy))
+
+        top = text_clip(cfg.top.upper(), str(FONT), cfg.font, "white", dur, pos_top)
+        bottom = text_clip(cfg.bottom.upper(), str(FONT), cfg.font, "white", dur, pos_bottom)
 
 
         comp = CompositeVideoClip([clip, top, bottom], size=size)
