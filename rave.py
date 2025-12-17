@@ -57,6 +57,8 @@ CRAB_TEMPLATE = ASSETS / "crab_template.mp4"
 
 QUEUE = asyncio.Semaphore(2)
 
+MAX_MB = 8
+
 class Mode(str, Enum):
     TEMPLATE = "Crab Rave"
     BUILD = "Build"
@@ -336,10 +338,18 @@ class RaveCog(commands.Cog):
         description="Upload a background video for rave builds"
     )
     async def ravebg(self, i, file: discord.Attachment):
+        if file.size > MAX_MB * 1024 * 1024:
+            await i.response.send_message(
+                f"❌ File too large ({file.size / 1024 / 1024:.1f} MB). "
+                f"Max allowed is {MAX_MB} MB.",
+                ephemeral=True,
+            )
+            return
+    
         key = now() + "_" + file.filename
         await file.save(UPLOADS / f"{i.user.id}_{key}")
         await i.response.send_message(
-            f"Saved. Upload key: `{key}`",
+            f"✅ Saved. Upload key: `{key}`",
             ephemeral=True,
         )
 
