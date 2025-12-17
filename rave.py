@@ -120,6 +120,21 @@ class UploadKeyModal(Modal, title="Set Upload Key"):
         self.cfg.upload = self.key.value.strip()
         await i.response.send_message("Upload key set.", ephemeral=True)
 
+class ModeSelect(Select):
+    def __init__(self, view: "RaveView"):
+        self.view_ref = view
+        super().__init__(
+            placeholder="Mode",
+            options=[discord.SelectOption(label=m.value) for m in Mode],
+            min_values=1,
+            max_values=1,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view_ref.cfg.mode = Mode(self.values[0])
+        await interaction.response.defer()
+        await self.view_ref.refresh(interaction)
+
 
 class TextModal(Modal, title="Text"):
     t = TextInput(label="Top", max_length=64)
@@ -136,6 +151,33 @@ class TextModal(Modal, title="Text"):
         self.cfg.bottom = self.b.value
         await i.response.send_message("Updated.", ephemeral=True)
 
+class BaseSelect(Select):
+    def __init__(self, view):
+        self.view_ref = view
+        super().__init__(
+            placeholder="Build Base",
+            options=[discord.SelectOption(label=b.value) for b in Base],
+        )
+
+    async def callback(self, interaction):
+        self.view_ref.cfg.base = Base(self.values[0])
+        await interaction.response.defer()
+        await self.view_ref.refresh(interaction)
+
+
+class AnimSelect(Select):
+    def __init__(self, view):
+        self.view_ref = view
+        super().__init__(
+            placeholder="Animation",
+            options=[discord.SelectOption(label=a.value) for a in Anim],
+        )
+
+    async def callback(self, interaction):
+        self.view_ref.cfg.anim = Anim(self.values[0])
+        await interaction.response.defer()
+        await self.view_ref.refresh(interaction)
+
 
 class RaveView(View):
     def __init__(self, cog, uid):
@@ -145,23 +187,9 @@ class RaveView(View):
         self.cfg = Cfg()
         self.status = "Idle"
 
-        self.add_item(Select(
-            placeholder="Mode",
-            options=[discord.SelectOption(label=m.value) for m in Mode],
-            callback=self.sel_mode
-        ))
-
-        self.add_item(Select(
-            placeholder="Build Base",
-            options=[discord.SelectOption(label=b.value) for b in Base],
-            callback=self.sel_base
-        ))
-
-        self.add_item(Select(
-            placeholder="Animation",
-            options=[discord.SelectOption(label=a.value) for a in Anim],
-            callback=self.sel_anim
-        ))
+        self.add_item(ModeSelect(self))
+        self.add_item(BaseSelect(self))
+        self.add_item(AnimSelect(self))
 
     async def interaction_check(self, i):
         return i.user.id == self.uid
@@ -264,13 +292,19 @@ class RaveCog(commands.Cog):
         clip.close()
         return out
 
-    @app_commands.command(name="rave")
+    @app_commands.command(
+        name="rave",
+        description="Open the interactive rave video builder"
+    )
     async def rave(self, i):
         await self.ensure()
         v = RaveView(self, i.user.id)
         await i.response.send_message(embed=v.embed(), view=v)
 
-    @app_commands.command(name="ravebg")
+    @app_commands.command(
+        name="ravebg",
+        description="Upload a background video for rave builds"
+    )
     async def ravebg(self, i, file: discord.Attachment):
         key = now() + "_" + file.filename
         await file.save(UPLOADS / f"{i.user.id}_{key}")
