@@ -239,11 +239,10 @@ class RaveCog(commands.Cog):
                 dy = 30 * p if cfg.anim == Anim.BOUNCE else 0
                 return ("center", y + dy)
             return f
-
-        top = TextClip(cfg.top.upper(), font=str(FONT), fontsize=cfg.font, color="white", method="caption").set_position(pos(cfg.top_y)).set_duration(dur)
         
-        bottom = TextClip(cfg.bottom.upper(), font=str(FONT), fontsize=cfg.font, color="white", method="caption").set_position(pos(cfg.bottom_y)).set_duration(dur)
-
+        top = TextClip(cfg.top.upper(), font=str(FONT), fontsize=cfg.font, color="white", method="caption", size=(1280, None)).set_position(pos(cfg.top_y)).set_duration(dur)
+        
+        bottom = TextClip(cfg.bottom.upper(), font=str(FONT), fontsize=cfg.font, color="white", method="caption", size=(1280, None)).set_position(pos(cfg.bottom_y)).set_duration(dur)
 
         comp = CompositeVideoClip([clip, top, bottom], size=size)
         out = DATA / f"{uid}_{now()}.mp4"
