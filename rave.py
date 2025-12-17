@@ -19,6 +19,19 @@ from moviepy.editor import (
     ColorClip,
 )
 from moviepy import video as mp_video
+from PIL import Image, ImageDraw, ImageFont
+import numpy as np
+from moviepy.editor import ImageClip
+
+def text_clip(txt, font_path, fontsize, color, size, duration, pos):
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype(font_path, fontsize)
+
+    w, h = draw.textbbox((0, 0), txt, font=font)[2:]
+    draw.text(((size[0] - w) // 2, 0), txt, font=font, fill=color)
+
+    return ImageClip(np.array(img)).set_duration(duration).set_position(pos)
 
 log = logging.getLogger("rave")
 
@@ -240,9 +253,9 @@ class RaveCog(commands.Cog):
                 return ("center", y + dy)
             return f
         
-        top = TextClip(cfg.top.upper(), font=str(FONT), fontsize=cfg.font, color="white", method="caption", size=(1280, None)).set_position(pos(cfg.top_y)).set_duration(dur)
-        
-        bottom = TextClip(cfg.bottom.upper(), font=str(FONT), fontsize=cfg.font, color="white", method="caption", size=(1280, None)).set_position(pos(cfg.bottom_y)).set_duration(dur)
+        top = text_clip(cfg.top.upper(), str(FONT), cfg.font, "white", size, dur, pos(cfg.top_y))
+        bottom = text_clip(cfg.bottom.upper(), str(FONT), cfg.font, "white", size, dur, pos(cfg.bottom_y))
+
 
         comp = CompositeVideoClip([clip, top, bottom], size=size)
         out = DATA / f"{uid}_{now()}.mp4"
