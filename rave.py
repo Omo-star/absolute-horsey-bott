@@ -1,8 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import View, Button, Modal, TextInput, Select
-
+from discord.ui import View, button, Button, Modal, TextInput, Select
 import asyncio
 import json
 import logging
@@ -197,19 +196,19 @@ class RaveView(View):
         await i.response.defer()
         await self.refresh(i)
 
-    @Button(label="Text", style=discord.ButtonStyle.primary)
+    @button(label="Text", style=discord.ButtonStyle.primary)
     async def btn_text(self, i, _):
         await i.response.send_modal(TextModal(self.cfg))
 
-    @Button(label="Set Upload", style=discord.ButtonStyle.secondary)
+    @button(label="Set Upload", style=discord.ButtonStyle.secondary)
     async def btn_upload(self, i, _):
         await i.response.send_modal(UploadKeyModal(self.cfg))
 
-    @Button(label="Preview", style=discord.ButtonStyle.success)
+    @button(label="Preview", style=discord.ButtonStyle.success)
     async def btn_preview(self, i, _):
         await self.run(i, True)
 
-    @Button(label="Render", style=discord.ButtonStyle.success)
+    @button(label="Render", style=discord.ButtonStyle.success)
     async def btn_render(self, i, _):
         await self.run(i, False)
 
