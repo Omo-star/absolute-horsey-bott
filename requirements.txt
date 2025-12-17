@@ -11,4 +11,4 @@ libclang
 akinator
 pillow
 yt-dlp
-moviepy
+moviepy==1.0.3
