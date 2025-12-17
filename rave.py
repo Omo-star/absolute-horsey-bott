@@ -282,7 +282,7 @@ class RaveCog(commands.Cog):
             clip = (
                 VideoFileClip(str(CRAB_TEMPLATE))
                 .subclip(0, dur)
-                .fx(mp_video.fx.resize, size)
+                .resize(size)
             )
 
         elif cfg.base == Base.UPLOAD:
