@@ -516,6 +516,8 @@ class BattleshipGame:
         v_idx=self.slot_index(viewer_id)
         arrow="➡️" if d=="r" else "⬇️"
         if mode=="setup":
+            if self.setup_progress[v_idx] >= len(SHIP_SIZES):
+                return self.banner("SHIPYARD") + "🚢 Setup complete. Waiting for opponent…"
             b=self.boards[v_idx]
             l=SHIP_SIZES[self.setup_progress[v_idx]]
             ok="✅" if b.can_place(x,y,d,l) else "❌"
@@ -625,19 +627,27 @@ class BattleshipGame:
         if not b.can_place(x,y,d,length):
             await interaction.response.send_message("Invalid placement.", ephemeral=True)
             return
-        b.place(x,y,d,length)
-        self.setup_progress[p]+=1
+        b.place(x, y, d, length)
+        self.setup_progress[p] += 1
         await self.save()
-        await interaction.response.edit_message(
-            content=self.screen_text(
-                interaction.user.id,
-                "setup",
-                x,
-                y,
-                d
-            ),
-            view=view
-        )
+        
+        if self.setup_progress[p] >= len(SHIP_SIZES):
+            await interaction.response.send_message(
+                "🚢 All ships placed. Waiting for opponent…",
+                ephemeral=True
+            )
+        else:
+            await interaction.response.edit_message(
+                content=self.screen_text(
+                    interaction.user.id,
+                    "setup",
+                    x,
+                    y,
+                    d
+                ),
+                view=view
+            )
+
         if self.setup_progress[0]>=len(SHIP_SIZES) and self.setup_progress[1]>=len(SHIP_SIZES):
             self.phase="battle"
             self.turn=0
