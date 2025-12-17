@@ -589,24 +589,6 @@ class BattleshipGame:
             except discord.Forbidden:
                 await self.end(None, reason=f"{u.display_name} has DMs closed")
                 return
-        if self.setup_progress[0] >= len(SHIP_SIZES) and \
-           self.setup_progress[1] >= len(SHIP_SIZES):
-        
-            self.phase = "battle"
-            self.turn = 0
-            await self.save()
-        
-            for item in view.children:
-                item.disabled = True
-        
-            await interaction.response.edit_message(
-                content=self.banner("SHIPYARD") + "⚔️ **Battle starting!**",
-                view=view
-            )
-        
-            await self.run_battle_turn()
-            return
-
         await m.edit(content=self.banner("SHIPYARD") + "Players are placing ships in DMs.\n\nWant to watch? Use the panel below.", view=SpectatePanel(self.cog, getattr(self.channel,"id",0)))
         await self.push_watch_updates(self.banner("SHIPYARD") + "Ship placement in progress…")
 
@@ -630,30 +612,34 @@ class BattleshipGame:
         self.setup_progress[p] += 1
         await self.save()
         
-        if self.setup_progress[p] >= len(SHIP_SIZES):
-            await interaction.response.send_message(
-                "🚢 All ships placed. Waiting for opponent…",
-                ephemeral=True
-            )
-        else:
+        if self.setup_progress[0] >= len(SHIP_SIZES) and \
+           self.setup_progress[1] >= len(SHIP_SIZES):
+        
+            self.phase = "battle"
+            self.turn = 0
+            await self.save()
+        
+            for item in view.children:
+                item.disabled = True
+        
             await interaction.response.edit_message(
-                content=self.screen_text(
-                    interaction.user.id,
-                    "setup",
-                    x,
-                    y,
-                    d
-                ),
+                content=self.banner("SHIPYARD") + "⚔️ **Battle starting!**",
                 view=view
             )
-
-        if self.setup_progress[0]>=len(SHIP_SIZES) and self.setup_progress[1]>=len(SHIP_SIZES):
-            self.phase="battle"
-            self.turn=0
-            await self.save()
+        
             await self.run_battle_turn()
             return
-        await self.run_setup_step()
+        
+        await interaction.response.edit_message(
+            content=self.screen_text(
+                interaction.user.id,
+                "setup",
+                x,
+                y,
+                d
+            ),
+            view=view
+        )
 
     async def run_battle_turn(self):
         if not self.active: return
