@@ -140,7 +140,6 @@ class ModeSelect(Select):
         self.view_ref.cfg.mode = Mode(self.values[0])
         await interaction.response.defer()
         await self.view_ref.refresh(interaction)
-
 class BaseSelect(Select):
     def __init__(self, view):
         self.view_ref = view
@@ -149,10 +148,14 @@ class BaseSelect(Select):
             options=[discord.SelectOption(label=b.value) for b in Base],
         )
 
+    def sync_state(self):
+        self.disabled = self.view_ref.cfg.mode == Mode.TEMPLATE
+
     async def callback(self, interaction):
         self.view_ref.cfg.base = Base(self.values[0])
         await interaction.response.defer()
         await self.view_ref.refresh(interaction)
+
 
 class AnimSelect(Select):
     def __init__(self, view):
@@ -178,7 +181,9 @@ class RaveView(View):
         self.add_item(ModeSelect(self))
         self.add_item(BaseSelect(self))
         self.add_item(AnimSelect(self))
-
+        for item in self.children:
+            if isinstance(item, BaseSelect):
+                item.sync_state()
     async def interaction_check(self, i):
         return i.user.id == self.uid
 
@@ -195,7 +200,12 @@ class RaveView(View):
         return e
 
     async def refresh(self, i):
+        for item in self.children:
+            if isinstance(item, BaseSelect):
+                item.sync_state()
+    
         await i.message.edit(embed=self.embed(), view=self)
+
 
     @button(label="Text", style=discord.ButtonStyle.primary)
     async def btn_text(self, i, _):
@@ -207,20 +217,47 @@ class RaveView(View):
 
     @button(label="Preview", style=discord.ButtonStyle.success)
     async def btn_preview(self, i, _):
+        if self.cfg.base == Base.UPLOAD and not self.cfg.upload:
+            await i.response.send_message(
+                "⚠️ Please set an upload key first.",
+                ephemeral=True,
+            )
+            return
         await self.run(i, True)
-
+    
+    
     @button(label="Render", style=discord.ButtonStyle.success)
     async def btn_render(self, i, _):
+        if self.cfg.base == Base.UPLOAD and not self.cfg.upload:
+            await i.response.send_message(
+                "⚠️ Please set an upload key first.",
+                ephemeral=True,
+            )
+            return
         await self.run(i, False)
 
     async def run(self, i, preview):
         async with QUEUE:
             self.status = "Rendering"
             await i.response.edit_message(embed=self.embed(), view=self)
-            out = await asyncio.to_thread(self.cog.render, self.uid, self.cfg, preview)
+    
+            try:
+                out = await asyncio.to_thread(
+                    self.cog.render, self.uid, self.cfg, preview
+                )
+            except Exception as e:
+                self.status = "Error"
+                await i.followup.send(
+                    f"❌ **Render failed:** {e}",
+                    ephemeral=True,
+                )
+                await i.message.edit(embed=self.embed(), view=self)
+                return
+    
             await i.followup.send(file=discord.File(out))
             os.remove(out)
             self.stop()
+
 
 class RaveCog(commands.Cog):
     def __init__(self, bot):
@@ -250,12 +287,19 @@ class RaveCog(commands.Cog):
             )
 
         elif cfg.base == Base.UPLOAD:
+            if not cfg.upload:
+                raise ValueError("No upload key set")
+        
             path = UPLOADS / f"{uid}_{cfg.upload}"
+            if not path.exists():
+                raise FileNotFoundError(f"Upload not found: {path}")
+        
             clip = (
                 VideoFileClip(str(path))
                 .loop(duration=dur)
                 .fx(mp_video.fx.resize, height=size[1])
             )
+
         else:
             clip = ColorClip(size, color=(10, 10, 10), duration=dur)
 
