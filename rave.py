@@ -23,15 +23,23 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 from moviepy.editor import ImageClip
 
-def text_clip(txt, font_path, fontsize, color, size, duration, pos):
-    img = Image.new("RGBA", size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
+def text_clip(txt, font_path, fontsize, color, duration, pos):
     font = ImageFont.truetype(font_path, fontsize)
 
-    w, h = draw.textbbox((0, 0), txt, font=font)[2:]
-    draw.text(((size[0] - w) // 2, 0), txt, font=font, fill=color)
+    dummy = Image.new("RGBA", (1, 1))
+    d = ImageDraw.Draw(dummy)
+    w, h = d.textbbox((0, 0), txt, font=font)[2:]
 
-    return ImageClip(np.array(img)).set_duration(duration).set_position(pos)
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    draw.text((0, 0), txt, font=font, fill=color)
+
+    return (
+        ImageClip(np.array(img))
+        .set_duration(duration)
+        .set_position(pos)
+    )
+
 
 log = logging.getLogger("rave")
 
@@ -235,7 +243,12 @@ class RaveCog(commands.Cog):
         size = (854, 480) if preview else (1280, 720)
 
         if cfg.mode == Mode.TEMPLATE:
-            clip = VideoFileClip(str(CRAB_TEMPLATE)).subclip(0, dur)
+            clip = (
+                VideoFileClip(str(CRAB_TEMPLATE))
+                .subclip(0, dur)
+                .fx(mp_video.fx.resize, size)
+            )
+
         elif cfg.base == Base.UPLOAD:
             path = UPLOADS / f"{uid}_{cfg.upload}"
             clip = (
@@ -253,8 +266,8 @@ class RaveCog(commands.Cog):
                 return ("center", y + dy)
             return f
         
-        top = text_clip(cfg.top.upper(), str(FONT), cfg.font, "white", size, dur, pos(cfg.top_y))
-        bottom = text_clip(cfg.bottom.upper(), str(FONT), cfg.font, "white", size, dur, pos(cfg.bottom_y))
+        top = text_clip(cfg.top.upper(), str(FONT), cfg.font, "white", dur, pos(cfg.top_y))
+        bottom = text_clip(cfg.bottom.upper(), str(FONT), cfg.font, "white", dur, pos(cfg.bottom_y))
 
 
         comp = CompositeVideoClip([clip, top, bottom], size=size)
