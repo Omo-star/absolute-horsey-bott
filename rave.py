@@ -253,12 +253,31 @@ class RaveView(View):
 class RaveCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+    def ensure_template(self, name: str, url: str):
+        path = ASSETS / name
+        if path.exists():
+            return
+    
+        ydl_opts = {
+            "outtmpl": str(path),
+            "format": "mp4/bestvideo+bestaudio",
+            "merge_output_format": "mp4",
+            "quiet": True,
+            "noplaylist": True,
+        }
+    
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
 
     async def ensure(self):
         if not FONT.exists():
             async with aiohttp.ClientSession() as s:
                 async with s.get(FONT_URL) as r:
                     FONT.write_bytes(await r.read())
+    
+        await asyncio.to_thread(self.ensure_template, *CRAB)
+        await asyncio.to_thread(self.ensure_template, *MIKU)
+
 
     def render(self, uid, cfg, preview):
         dur = 6 if preview else cfg.dur
