@@ -315,43 +315,54 @@ class DifficultySelect(Select):
         v.done.set()
         v.stop()
         await interaction.response.edit_message(content=f"AI difficulty: **{v.choice}**", view=None)
-
 class SetupOrBattleView(View):
-    def __init__(self, game, owner_id:int, mode:str):
+    def __init__(self, game, owner_id: int, mode: str):
         super().__init__(timeout=300)
-        self.game=game
-        self.owner_id=owner_id
-        self.mode=mode
-        self.sel_x=0
-        self.sel_y=0
-        self.dir="r"
+        self.game = game
+        self.owner_id = owner_id
+        self.mode = mode
+        self.sel_x = 0
+        self.sel_y = 0
+        self.dir = "r"
+
         for i in range(10):
-            self.add_item(
-                Button(
-                    label=str(i),
-                    style=discord.ButtonStyle.secondary,
-                    row=0 if i < 5 else 1,
-                    custom_id=f"r{i}"
-                )
+            b = Button(
+                label=str(i),
+                style=discord.ButtonStyle.secondary,
+                row=0 if i < 5 else 1,
+                custom_id=f"r{i}",
             )
-        
+            b.callback = self.interaction_handler
+            self.add_item(b)
+
         for i, c in enumerate(LETTERS):
-            self.add_item(
-                Button(
-                    label=c,
-                    style=discord.ButtonStyle.secondary,
-                    row=2 if i < 5 else 3,
-                    custom_id=f"c{i}"
-                )
+            b = Button(
+                label=c,
+                style=discord.ButtonStyle.secondary,
+                row=2 if i < 5 else 3,
+                custom_id=f"c{i}",
             )
-        
+            b.callback = self.interaction_handler
+            self.add_item(b)
+
         if mode == "setup":
-            self.add_item(Button(label="🔄 Rotate", style=discord.ButtonStyle.primary, row=4, custom_id="rot"))
-            self.add_item(Button(label="✅ Place", style=discord.ButtonStyle.success, row=4, custom_id="place"))
-            self.add_item(Button(label="🏳️ Forfeit", style=discord.ButtonStyle.danger, row=4, custom_id="ff"))
+            for cid, label, style in [
+                ("rot", "🔄 Rotate", discord.ButtonStyle.primary),
+                ("place", "✅ Place", discord.ButtonStyle.success),
+                ("ff", "🏳️ Forfeit", discord.ButtonStyle.danger),
+            ]:
+                b = Button(label=label, style=style, row=4, custom_id=cid)
+                b.callback = self.interaction_handler
+                self.add_item(b)
+
         else:
-            self.add_item(Button(label="🔥 FIRE", style=discord.ButtonStyle.danger, row=4, custom_id="fire"))
-            self.add_item(Button(label="🏳️ Forfeit", style=discord.ButtonStyle.danger, row=4, custom_id="ff"))
+            for cid, label, style in [
+                ("fire", "🔥 FIRE", discord.ButtonStyle.danger),
+                ("ff", "🏳️ Forfeit", discord.ButtonStyle.danger),
+            ]:
+                b = Button(label=label, style=style, row=4, custom_id=cid)
+                b.callback = self.interaction_handler
+                self.add_item(b)
 
     async def interaction_handler(self, interaction: discord.Interaction):
         cid = interaction.data["custom_id"]
