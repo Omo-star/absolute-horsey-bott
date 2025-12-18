@@ -1365,11 +1365,51 @@ class MonopolyRenderer:
             elif k == "game_over":
                 out.append("🏆 Game Over")
         return "\n".join(out[-6:])
+    @staticmethod
+    def property_card(tile: int) -> str:
+        if tile < 0 or tile >= 40:
+            return ""
+    
+        if PRICEBUY[tile] <= 0:
+            return ""
+    
+        lines = []
+        lines.append(f"**{TILENAME[tile]}**")
+        lines.append(f"Price: ${PRICEBUY[tile]}")
+    
+        if PROPCOLORS[tile] == "rr":
+            lines.append("Railroad")
+            for i, p in enumerate(RRPRICE[1:], start=1):
+                lines.append(f"{i} RR owned: ${p}")
+            return "\n".join(lines)
+    
+        if PROPCOLORS[tile] == "utility":
+            lines.append("Utility")
+            lines.append("1 utility: 4× dice")
+            lines.append("2 utilities: 10× dice")
+            return "\n".join(lines)
+    
+        base = RENTPRICE[tile * 6]
+        lines.append(f"Rent: ${base}")
+        for i in range(1, 5):
+            lines.append(f"{i} houses: ${RENTPRICE[tile * 6 + i]}")
+        lines.append(f"Hotel: ${RENTPRICE[tile * 6 + 5]}")
+        lines.append(f"House cost: ${HOUSEPRICE[tile]}")
+        lines.append(f"Mortgage: ${MORTGAGEPRICE[tile]}")
+    
+        return "\n".join(lines)
 
     @staticmethod
     def embed(events: List[EngineEvent], s: MonopolyState) -> discord.Embed:
         e = discord.Embed(title="Monopoly", color=0x2ecc71)
         e.add_field(name="Players", value=MonopolyRenderer.state_text(s), inline=False)
+        pid = s.p
+        tile = s.tile[pid]
+        
+        card = MonopolyRenderer.property_card(tile)
+        if card:
+            e.add_field(name="Property", value=card, inline=False)
+
         txt = MonopolyRenderer.events_text(events)
         if txt:
             e.add_field(name="Log", value=txt, inline=False)
@@ -1385,20 +1425,42 @@ class MonopolyView(discord.ui.View):
         self.channel_id = channel_id
         self.guild_id = guild_id
         self.sync_buttons()
-
+    
     def sync_buttons(self):
         self.clear_items()
         acts = self.e.legal_actions()
+        pid = self.e.cur()
+        tile = self.e.s.tile[pid]
+    
         if "roll" in acts:
             self.add_item(MonopolyButton("Roll", "roll"))
+    
         if "bail" in acts:
             self.add_item(MonopolyButton("Pay Bail", "bail"))
+    
         if "use_goojf" in acts:
             self.add_item(MonopolyButton("Use GOOJF", "goojf"))
+    
+        if self.e.s.ownedby[tile] == -1 and self.e.s.turn.rolled is not None:
+            price = PRICEBUY[tile]
+            can_afford = self.e.s.bal[pid] >= price
+        
+            self.add_item(
+                MonopolyButton(
+                    f"Buy (${price})",
+                    "buy",
+                    disabled=not can_afford
+                )
+            )
+            self.add_item(MonopolyButton("Decline", "decline"))
+
+    
         if "end" in acts:
             self.add_item(MonopolyButton("End Turn", "end"))
+    
         if "forfeit" in acts:
             self.add_item(MonopolyButton("Forfeit", "forfeit"))
+
 
     async def refresh(self, interaction: discord.Interaction):
         self.sync_buttons()
@@ -1450,6 +1512,11 @@ class MonopolyButton(discord.ui.Button):
         elif self.action == "forfeit":
             e.forfeit_current_player()
             e.end_turn()
+        elif self.action == "buy":
+            e.buy_current_tile()
+        
+        elif self.action == "decline":
+            e.decline_buy_current_tile()
 
         director = MonopolyDirector(e, {})
         director.step_auto_until_choice()
