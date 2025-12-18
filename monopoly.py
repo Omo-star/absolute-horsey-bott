@@ -11,6 +11,18 @@ from discord import app_commands
 from PIL import Image, ImageDraw, ImageFont
 import hashlib
 import io
+TILENAME: List[str] = []
+PRICEBUY: List[int] = []
+RENTPRICE: List[int] = []
+RRPRICE: List[int] = []
+MORTGAGEPRICE: List[int] = []
+TENMORTGAGEPRICE: List[int] = []
+HOUSEPRICE: List[int] = []
+PROPGROUPS: Dict[str, List[int]] = {}
+PROPCOLORS: List[str] = []
+CCNAME: List[str] = []
+CHANCENAME: List[str] = []
+
 TILENAME[:] = [
     "GO","Mediterranean Avenue","Community Chest","Baltic Avenue","Income Tax",
     "Reading Railroad","Oriental Avenue","Chance","Vermont Avenue","Connecticut Avenue",
