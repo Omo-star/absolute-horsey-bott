@@ -11,18 +11,151 @@ from discord import app_commands
 from PIL import Image, ImageDraw, ImageFont
 import hashlib
 import io
+TILENAME[:] = [
+    "GO","Mediterranean Avenue","Community Chest","Baltic Avenue","Income Tax",
+    "Reading Railroad","Oriental Avenue","Chance","Vermont Avenue","Connecticut Avenue",
+    "Jail","St. Charles Place","Electric Company","States Avenue","Virginia Avenue",
+    "Pennsylvania Railroad","St. James Place","Community Chest","Tennessee Avenue","New York Avenue",
+    "Free Parking","Kentucky Avenue","Chance","Indiana Avenue","Illinois Avenue",
+    "B. & O. Railroad","Atlantic Avenue","Ventnor Avenue","Water Works","Marvin Gardens",
+    "Go To Jail","Pacific Avenue","North Carolina Avenue","Community Chest","Pennsylvania Avenue",
+    "Short Line","Chance","Park Place","Luxury Tax","Boardwalk"
+]
 
-TILENAME: List[str] = []
-PRICEBUY: List[int] = []
-RENTPRICE: List[int] = []
-RRPRICE: List[int] = []
-MORTGAGEPRICE: List[int] = []
-TENMORTGAGEPRICE: List[int] = []
-HOUSEPRICE: List[int] = []
-PROPGROUPS: Dict[str, List[int]] = {}
-PROPCOLORS: List[str] = []
-CCNAME: List[str] = []
-CHANCENAME: List[str] = []
+PRICEBUY[:] = [
+    0,60,0,60,0,200,100,0,100,120,
+    0,140,150,140,160,200,180,0,180,200,
+    0,220,0,220,240,200,260,260,150,280,
+    0,300,300,0,320,200,0,350,0,400
+]
+
+HOUSEPRICE[:] = [
+    0,50,0,50,0,0,50,0,50,50,
+    0,100,0,100,100,0,100,0,100,100,
+    0,150,0,150,150,0,150,150,0,150,
+    0,200,200,0,200,0,0,200,0,200
+]
+
+RENTPRICE[:] = [
+    -1,-1,-1,-1,-1,-1,
+    2,10,30,90,160,250,
+    -1,-1,-1,-1,-1,-1,
+    4,20,60,180,320,450,
+    -1,-1,-1,-1,-1,-1,
+    -1,-1,-1,-1,-1,-1,
+    6,30,90,270,400,550,
+    -1,-1,-1,-1,-1,-1,
+    6,30,90,270,400,550,
+    8,40,100,300,450,600,
+    -1,-1,-1,-1,-1,-1,
+    10,50,150,450,625,750,
+    -1,-1,-1,-1,-1,-1,
+    10,50,150,450,625,750,
+    12,60,180,500,700,900,
+    -1,-1,-1,-1,-1,-1,
+    14,70,200,550,750,950,
+    -1,-1,-1,-1,-1,-1,
+    14,70,200,550,750,950,
+    16,80,220,600,800,1000,
+    -1,-1,-1,-1,-1,-1,
+    18,90,250,700,875,1050,
+    -1,-1,-1,-1,-1,-1,
+    18,90,250,700,875,1050,
+    -1,-1,-1,-1,-1,-1,
+    20,100,300,750,925,1100,
+    22,110,330,800,975,1150,
+    -1,-1,-1,-1,-1,-1,
+    22,110,330,800,975,1150,
+    24,120,360,850,1025,1200,
+    -1,-1,-1,-1,-1,-1,
+    26,130,390,900,1100,1275,
+    26,130,390,900,1100,1275,
+    -1,-1,-1,-1,-1,-1,
+    28,150,450,1000,1200,1400,
+    -1,-1,-1,-1,-1,-1,
+    -1,-1,-1,-1,-1,-1,
+    35,175,500,1100,1300,1500,
+    -1,-1,-1,-1,-1,-1,
+    50,200,600,1400,1700,2000
+]
+
+RRPRICE[:] = [0,25,50,100,200]
+
+MORTGAGEPRICE[:] = [
+    0,30,0,30,0,100,50,0,50,60,
+    0,70,75,70,80,100,90,0,90,100,
+    0,110,0,110,120,100,130,130,75,140,
+    0,150,150,0,160,100,0,175,0,200
+]
+
+TENMORTGAGEPRICE[:] = [
+    0,33,0,33,0,110,55,0,55,66,
+    0,77,83,77,88,110,99,0,99,110,
+    0,121,0,121,132,110,143,143,83,154,
+    0,165,165,0,176,110,0,193,0,220
+]
+
+PROPCOLORS[:] = [
+    "", "brown","", "brown","",
+    "rr","lightblue","", "lightblue","lightblue",
+    "", "pink","utility","pink","pink",
+    "rr","orange","", "orange","orange",
+    "", "red","", "red","red",
+    "rr","yellow","yellow","utility","yellow",
+    "", "green","green","", "green",
+    "rr","", "darkblue","", "darkblue"
+]
+
+PROPGROUPS.clear()
+PROPGROUPS.update({
+    "brown": [1,3],
+    "lightblue": [6,8,9],
+    "pink": [11,13,14],
+    "orange": [16,18,19],
+    "red": [21,23,24],
+    "yellow": [26,27,29],
+    "green": [31,32,34],
+    "darkblue": [37,39]
+})
+
+CCNAME[:] = [
+    "Advance to GO",
+    "Bank error in your favor",
+    "Doctor's fees",
+    "Sale of stock",
+    "Get Out of Jail Free",
+    "Go to Jail",
+    "Grand Opera opening",
+    "Holiday fund matures",
+    "Income tax refund",
+    "Life insurance matures",
+    "Hospital fees",
+    "School fees",
+    "Consultancy fee",
+    "Street repairs",
+    "You have won second prize",
+    "You inherit $100",
+    "Birthday gifts"
+]
+
+CHANCENAME[:] = [
+    "Advance to GO",
+    "Advance to Illinois Avenue",
+    "Advance to St. Charles Place",
+    "Advance to nearest Utility",
+    "Advance to nearest Railroad",
+    "Bank pays you dividend",
+    "Get Out of Jail Free",
+    "Go back three spaces",
+    "Go to Jail",
+    "Street repairs",
+    "Pay poor tax",
+    "Take a ride on the Reading",
+    "Take a walk on Boardwalk",
+    "Chairman of the Board",
+    "Building loan matures",
+    "Crossword competition"
+]
 
 
 def _tables_ready() -> None:
@@ -1404,44 +1537,68 @@ class MonopolyCog(commands.Cog):
         self.db = MonopolyDB("data/monopoly.db")
         self.renderer = MonopolyBoardRenderer()
         self.games: Dict[int, MonopolyEngine] = {}
-
-    @app_commands.command(name="monopoly_start")
-    async def monopoly_start(self, interaction: discord.Interaction, opponent: Optional[discord.Member]=None):
+    @app_commands.command(
+        name="monopoly_start",
+        description="Start a new Monopoly game in this channel"
+    )
+    @app_commands.describe(
+        opponent="Optional human opponent (otherwise you play against AI)"
+    )
+    async def monopoly_start(
+        self,
+        interaction: discord.Interaction,
+        opponent: Optional[discord.Member] = None
+    ):
+        await interaction.response.defer()
+    
         players = [PlayerSlot(interaction.user.id)]
         if opponent:
             players.append(PlayerSlot(opponent.id))
         else:
             players.append(PlayerSlot(0, is_ai=True))
+    
         engine = MonopolyEngine.new_game(players, GameConfig())
         self.games[interaction.channel.id] = engine
+    
         view = MonopolyView(engine, self.db, interaction.channel.id, interaction.guild.id)
         board = self.renderer.render(engine.s)
         file = discord.File(io.BytesIO(board), filename="board.png")
-        await interaction.response.send_message(
+    
+        await interaction.followup.send(
             embed=MonopolyRenderer.embed([], engine.s),
             view=view,
             file=file
         )
-
-    @app_commands.command(name="monopoly_resume")
+    
+    
+    @app_commands.command(
+        name="monopoly_resume",
+        description="Resume the saved Monopoly game in this channel"
+    )
     async def monopoly_resume(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+    
         row = self.db.load_game(interaction.channel.id)
         if not row:
-            await interaction.response.send_message("No saved game", ephemeral=True)
+            await interaction.followup.send("No saved Monopoly game in this channel", ephemeral=True)
             return
+    
         _, state = row
         engine = MonopolyEngine(state, GameConfig())
         self.games[interaction.channel.id] = engine
+    
         view = MonopolyView(engine, self.db, interaction.channel.id, interaction.guild.id)
         board = self.renderer.render(engine.s)
         file = discord.File(io.BytesIO(board), filename="board.png")
-        await interaction.response.send_message(
+    
+        await interaction.followup.send(
             embed=MonopolyRenderer.embed([], engine.s),
             view=view,
-            file=file
-        )
+            file=file,
+            ephemeral=False
+    )
 
-    @app_commands.command(name="monopoly_stop")
+    @app_commands.command(name="monopoly_stop", description="Stop the ongoing Monopoly game")
     async def monopoly_stop(self, interaction: discord.Interaction):
         self.db.delete_game(interaction.channel.id)
         self.games.pop(interaction.channel.id, None)
