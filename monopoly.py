@@ -1326,10 +1326,6 @@ class MonopolyDirector:
             if w is not None:
                 self.e._add_event("game_over", winner=w)
         return self.e.events
-import discord
-from discord.ext import commands
-from discord import app_commands
-
 class MonopolyRenderer:
     @staticmethod
     def state_text(s: MonopolyState) -> str:
@@ -1476,8 +1472,12 @@ class MonopolyView(discord.ui.View):
         )
 
 class MonopolyButton(discord.ui.Button):
-    def __init__(self, label: str, action: str):
-        super().__init__(label=label, style=discord.ButtonStyle.primary)
+    def __init__(self, label: str, action: str, disabled: bool = False):
+        super().__init__(
+            label=label,
+            style=discord.ButtonStyle.primary,
+            disabled=disabled
+        )
         self.action = action
 
     async def callback(self, interaction: discord.Interaction):
@@ -1499,33 +1499,35 @@ class MonopolyButton(discord.ui.Button):
                     e.pay_bail_and_roll()
             else:
                 e.normal_roll()
+
             t = e.s.tile[pid]
-            if e.s.ownedby[t] == -1:
-                if slot.is_ai:
-                    e.buy_current_tile()
+            if e.s.ownedby[t] == -1 and slot.is_ai:
+                e.buy_current_tile()
+
+        elif self.action == "buy":
+            e.buy_current_tile()
+
+        elif self.action == "decline":
+            e.decline_buy_current_tile()
+
         elif self.action == "bail":
             e.pay_bail_and_roll()
+
         elif self.action == "goojf":
             e.use_goojf_and_roll()
+
         elif self.action == "end":
             e.end_turn()
+
         elif self.action == "forfeit":
             e.forfeit_current_player()
             e.end_turn()
-        elif self.action == "buy":
-            e.buy_current_tile()
-        
-        elif self.action == "decline":
-            e.decline_buy_current_tile()
 
         director = MonopolyDirector(e, {})
         director.step_auto_until_choice()
 
         await interaction.response.defer()
         await view.refresh(interaction)
-from PIL import Image, ImageDraw, ImageFont
-import hashlib
-import io
 
 BOARD_POSITIONS = [
     (600,600),(520,600),(460,600),(400,600),(340,600),(280,600),(220,600),(160,600),(100,600),(40,600),
