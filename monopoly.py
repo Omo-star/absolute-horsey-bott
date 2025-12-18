@@ -1403,11 +1403,15 @@ class MonopolyView(discord.ui.View):
     async def refresh(self, interaction: discord.Interaction):
         self.sync_buttons()
         self.db.save_game(self.channel_id, self.guild_id, self.e.s)
+    
+        board = interaction.client.get_cog("MonopolyCog").renderer.render(self.e.s)
+        file = discord.File(io.BytesIO(board), filename="board.png")
+    
         await interaction.message.edit(
             embed=MonopolyRenderer.embed(self.e.events, self.e.s),
+            attachments=[file],
             view=self
         )
-
 
 class MonopolyButton(discord.ui.Button):
     def __init__(self, label: str, action: str):
