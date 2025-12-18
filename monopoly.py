@@ -1474,39 +1474,57 @@ class MonopolyBoardRenderer:
         self.cache: Dict[str, bytes] = {}
 
     def render(self, state: MonopolyState) -> bytes:
-        h = hashlib.md5(state.to_json().encode()).hexdigest()
-        if h in self.cache:
-            return self.cache[h]
+        key = hashlib.md5(state.to_json().encode()).hexdigest()
+        if key in self.cache:
+            return self.cache[key]
     
         img = self.base.copy()
-        w, h_img = img.size
-        margin = int(w * 0.06)
-        step = (w - 2 * margin) // 10
+        draw = ImageDraw.Draw(img)
+    
+        w, h = img.size
+        m = int(w * 0.065)
+        s = (w - 2 * m) // 9
     
         positions = []
-        for i in range(10):
-            positions.append((w - margin - i * step, h_img - margin))
+        positions.append((w - m, h - m))
         for i in range(1, 10):
-            positions.append((margin, h_img - margin - i * step))
+            positions.append((w - m - i * s, h - m))
         for i in range(1, 10):
-            positions.append((margin + i * step, margin))
+            positions.append((m, h - m - i * s))
+        for i in range(1, 10):
+            positions.append((m + i * s, m))
         for i in range(1, 9):
-            positions.append((w - margin, margin + i * step))
+            positions.append((w - m, m + i * s))
     
-        draw = ImageDraw.Draw(img)
+        token_size = int(w * 0.03)
+        outline = max(2, token_size // 8)
     
         for i, alive in enumerate(state.isalive):
             if not alive:
                 continue
+    
             x, y = positions[state.tile[i]]
-            ox = (i % 3) * 14
-            oy = (i // 3) * 14
-            draw.ellipse((x+ox, y+oy, x+ox+14, y+oy+14), fill=TOKEN_COLORS[i])
+    
+            ox = (i % 3) * (token_size + 4)
+            oy = (i // 3) * (token_size + 4)
+    
+            cx = int(x + ox - token_size // 2)
+            cy = int(y + oy - token_size // 2)
+    
+            draw.ellipse(
+                (cx - outline, cy - outline, cx + token_size + outline, cy + token_size + outline),
+                fill=(255, 255, 255, 255)
+            )
+    
+            draw.ellipse(
+                (cx, cy, cx + token_size, cy + token_size),
+                fill=TOKEN_COLORS[i]
+            )
     
         buf = io.BytesIO()
         img.save(buf, format="PNG")
-        self.cache[h] = buf.getvalue()
-        return self.cache[h]
+        self.cache[key] = buf.getvalue()
+        return self.cache[key]
 
 
 class MonopolyTradeView(discord.ui.View):
