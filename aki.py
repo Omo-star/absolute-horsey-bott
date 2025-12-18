@@ -99,7 +99,7 @@ class AkinatorCog(commands.Cog):
     async def aki(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
-        aki = akinator.Akinator()
+        aki = akinator.AsyncAkinator()
 
         try:
             await aki.start_game()
