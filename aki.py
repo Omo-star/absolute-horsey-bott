@@ -16,6 +16,19 @@ ANSWER_MAP = {
     "probably_not": "pn",
 }
 
+def patch_akinator():
+    import akinator.client
+
+    original_handler = akinator.client.Akinator._Akinator__handler
+
+    def safe_handler(self, data):
+        data.setdefault("akitude", None)
+        return original_handler(self, data)
+
+    akinator.client.Akinator._Akinator__handler = safe_handler
+
+patch_akinator()
+
 class AkiView(View):
     def __init__(self, aki: akinator.Akinator, user_id: int):
         super().__init__(timeout=300)
