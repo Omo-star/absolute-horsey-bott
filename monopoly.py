@@ -1540,7 +1540,7 @@ TOKEN_COLORS = [
 ]
 
 class MonopolyBoardRenderer:
-    def __init__(self, board_path="monopoly_board.png"):
+    def __init__(self, board_path="monopoly-board.png"):
         self.base = Image.open(board_path).convert("RGBA")
         self.cache: Dict[str, bytes] = {}
 
