@@ -1477,15 +1477,32 @@ class MonopolyBoardRenderer:
         h = hashlib.md5(state.to_json().encode()).hexdigest()
         if h in self.cache:
             return self.cache[h]
+    
         img = self.base.copy()
+        w, h_img = img.size
+        margin = int(w * 0.06)
+        step = (w - 2 * margin) // 10
+    
+        positions = []
+        for i in range(10):
+            positions.append((w - margin - i * step, h_img - margin))
+        for i in range(1, 10):
+            positions.append((margin, h_img - margin - i * step))
+        for i in range(1, 10):
+            positions.append((margin + i * step, margin))
+        for i in range(1, 9):
+            positions.append((w - margin, margin + i * step))
+    
         draw = ImageDraw.Draw(img)
+    
         for i, alive in enumerate(state.isalive):
             if not alive:
                 continue
-            x,y = BOARD_POSITIONS[state.tile[i]]
-            ox = (i % 2) * 10
-            oy = (i // 2) * 10
-            draw.ellipse((x+ox,y+oy,x+ox+12,y+oy+12), fill=TOKEN_COLORS[i])
+            x, y = positions[state.tile[i]]
+            ox = (i % 3) * 14
+            oy = (i // 3) * 14
+            draw.ellipse((x+ox, y+oy, x+ox+14, y+oy+14), fill=TOKEN_COLORS[i])
+    
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         self.cache[h] = buf.getvalue()
