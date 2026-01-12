@@ -1,13 +1,15 @@
 {
   "users": {
     "1255130792372342816": {
-      "balance": 7942,
+      "balance": -66721,
       "last_daily": "2025-12-10T00:56:11.775379",
       "last_work": "2025-12-10T15:10:07.423182",
       "fish_cooldown": "2025-12-10T20:11:02.119748",
       "hunt_cooldown": "2025-12-10T20:11:20.058449",
       "inventory": {
-        "intercontinental_ballistic_missile": 0
+        "intercontinental_ballistic_missile": 0,
+        "lurking_shadow_fragment": 0,
+        "glitched_coin": 0
       },
       "roast_protection_until": null,
       "pray": 0,
@@ -116,7 +118,8 @@
         "queue": [],
         "running": false,
         "last_log": "The experiment misbehaves. Extra loss 252 horsenncy and anomaly Phantom Feedback appears."
-      }
+      },
+      "hunt_shadow_boost": "2026-01-12T16:47:43.440985"
     },
     "1238242784679563265": {
       "balance": 20085,
