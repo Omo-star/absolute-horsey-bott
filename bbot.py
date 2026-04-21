@@ -1343,7 +1343,7 @@ async def on_ready():
     brain_runtime.start()
     extensions = [
         "help",
-        "server_setup",
+        "server-setup",
         "quests",
         "titles",
         "collection",
