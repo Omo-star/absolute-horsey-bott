@@ -192,24 +192,41 @@ class SlashCommands(commands.Cog):
 
                 hint = clean_prompt or f"Roast {member.display_name}"
                 response = await bot_roast(hint, member.id, mode)
-                out.append(f"**{member.display_name}:** {response}")
+                safe_response = discord.utils.escape_mentions(response)
+                out.append(f"{member.mention} {safe_response}")
 
             final = "\n".join(x for x in out if x and x.strip())
             if not final:
                 final = "Even all the models refused to roast 💀."
                 
             brain_runtime.brain.mark_busy(interaction.channel.id)
-            await interaction.followup.send(final)
+            await interaction.followup.send(
+                final,
+                allowed_mentions=discord.AllowedMentions(
+                    users=True,
+                    roles=False,
+                    everyone=False
+                )
+            )
             return
 
         if text.strip():
             resp = await bot_roast(text, interaction.user.id, mode)
-
+        
             if not resp or not resp.strip():
                 resp = "Even the AI models looked at you and said 'nah bro I'm good' 💀."
-
+        
+            safe_resp = discord.utils.escape_mentions(resp)
+        
             brain_runtime.brain.mark_busy(interaction.channel.id)
-            await interaction.followup.send(resp)
+            await interaction.followup.send(
+                f"{interaction.user.mention} {safe_resp}",
+                allowed_mentions=discord.AllowedMentions(
+                    users=True,
+                    roles=False,
+                    everyone=False
+                )
+            )
             return
         brain_runtime.brain.mark_busy(interaction.channel.id)
         await interaction.followup.send(
@@ -264,23 +281,29 @@ class SlashCommands(commands.Cog):
         await interaction.response.send_message(text)
 
     # /autor
-    @app_commands.command(name="autor", description="Enable or disable auto-roast.")
-    async def autor(self, interaction: discord.Interaction, mode: str):
-        mode = mode.lower()
-        if mode == "on":
-            auto_roast[interaction.user.id] = True
+    @app_commands.command(name="autor", description="Enable or disable auto-roast for this server.")
+    @app_commands.choices(mode=[
+        app_commands.Choice(name="on", value="on"),
+        app_commands.Choice(name="off", value="off"),
+    ])
+    async def autor(self, interaction: discord.Interaction, mode: app_commands.Choice[str]):
+        if not interaction.guild:
+            await interaction.response.send_message("this only works in servers", ephemeral=True)
+            return
+    
+        selected = mode.value
+        gid = interaction.guild.id
+    
+        if selected == "on":
+            auto_roast[gid] = True
             save_roast_memory()
             brain_runtime.brain.mark_busy(interaction.channel.id)
-            await interaction.response.send_message("Auto-roast enabled.")
-        elif mode == "off":
-            auto_roast.pop(interaction.user.id, None)
-            save_roast_memory()
-            brain_runtime.brain.mark_busy(interaction.channel.id)
-            await interaction.response.send_message("Auto-roast disabled.")
+            await interaction.response.send_message("auto-roast is now on for this server")
         else:
+            auto_roast.pop(gid, None)
+            save_roast_memory()
             brain_runtime.brain.mark_busy(interaction.channel.id)
-            await interaction.response.send_message("Use `/autor on` or `/autor off`.")
-
+            await interaction.response.send_message("auto-roast is now off for this server")
     # /roastmode
     @app_commands.command(name="roastmode", description="Set your roast mode.")
     @app_commands.choices(mode=[
@@ -934,12 +957,21 @@ async def personality_meter(user_id, last_messages):
     except Exception:
         return []
 
+def normalize_id_keys(d):
+    out = {}
+    for k, v in (d or {}).items():
+        try:
+            out[int(k)] = v
+        except (TypeError, ValueError):
+            out[k] = v
+    return out
+
 _memory = load_roast_memory()
 
-user_memory = _memory["user_memory"]
-roast_history = _memory["roast_history"]
-auto_roast = _memory["auto_roast"]
-roast_mode = _memory["roast_mode"]
+user_memory = normalize_id_keys(_memory["user_memory"])
+roast_history = normalize_id_keys(_memory["roast_history"])
+auto_roast = normalize_id_keys(_memory["auto_roast"])
+roast_mode = normalize_id_keys(_memory["roast_mode"])
 spice_cache = _memory["spice_cache"]
 
 def get_user_memory(uid):
@@ -1600,6 +1632,49 @@ async def ai_is_followup(last_bot_msg: str, user_msg: str) -> bool:
 
     return False
 
+def bot_was_pinged(message: discord.Message) -> bool:
+    return bot.user is not None and any(u.id == bot.user.id for u in message.mentions)
+
+def auto_roast_enabled_for_guild(message: discord.Message) -> bool:
+    if not message.guild:
+        return False
+    return bool(auto_roast.get(message.guild.id, False))
+
+def strip_bot_and_user_mentions(text: str) -> str:
+    if bot.user:
+        text = re.sub(rf"<@!?{bot.user.id}>", "", text)
+    text = re.sub(r"<@!?\d+>", "", text)
+    text = re.sub(r"<@&\d+>", "", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+def pick_roast_target(message: discord.Message):
+    if not bot.user:
+        return message.author
+
+    # prefer first mentioned human that isn't fusbot
+    for user in message.mentions:
+        if user.id != bot.user.id and not user.bot:
+            if message.guild:
+                return message.guild.get_member(user.id) or user
+            return user
+
+    # otherwise roast the person who pinged fusbot
+    return message.author
+
+async def send_roast_reply(channel, target: discord.abc.User, roast_text: str):
+    safe_text = discord.utils.escape_mentions(roast_text)
+    content = f"{target.mention} {safe_text}"
+
+    await channel.send(
+        content,
+        allowed_mentions=discord.AllowedMentions(
+            users=True,
+            roles=False,
+            everyone=False
+        )
+    )
+
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -1617,7 +1692,27 @@ async def on_message(message):
         handled = await automod_cog.engine.handle_message(message)
         if handled:
             return
+    if brain_allowed(message) and bot_was_pinged(message) and auto_roast_enabled_for_guild(message):
+        target = pick_roast_target(message)
 
+        prompt = strip_bot_and_user_mentions(message.content)
+        if not prompt:
+            prompt = f"Roast {target.display_name}"
+
+        mode = roast_mode.get(message.author.id, "deep")
+        reply = await bot_roast(prompt, target.id, mode)
+
+        if reply:
+            await send_roast_reply(message.channel, target, reply)
+
+            LAST_BOT_MESSAGE[skey] = reply
+            ACTIVE_CONVO[skey] = {
+                "user_id": message.author.id,
+                "last_ts": time.time(),
+                "topic": [],
+                "misses": 0,
+            }
+        return
     if convo and (time.time() - convo["last_ts"] > 120):
         ACTIVE_CONVO.pop(skey, None)
         LAST_BOT_MESSAGE.pop(skey, None)
