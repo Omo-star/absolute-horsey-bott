@@ -391,6 +391,7 @@ groq_client = Groq(api_key=os.getenv("GROQ"))
 
 GROQ_MODELS = [
     "qwen/qwen3-32b",
+    "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant"
 ]
 
@@ -414,7 +415,9 @@ HF_TGI_URL = os.getenv("HF_TGI_URL")
 
 HUGGINGFACE_MODELS = []
 
-OPENROUTER_MODELS = []
+OPENROUTER_MODELS = [
+    "x-ai/grok-4.20"
+]
 
 NORMAL_CHAT_MODELS = [
     "groq:llama-3.1-8b-instant",
