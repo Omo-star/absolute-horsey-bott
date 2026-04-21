@@ -438,9 +438,7 @@
       }
     ]
   },
-  "auto_roast": {
-    "1496173122850914344": true
-  },
+  "auto_roast": {},
   "roast_mode": {
     "1220934047794987048": "deep",
     "1238242784679563265": "deep",
@@ -649,6 +647,10 @@
     "\"you're the ghost in the machine that can\u2019t send a full sentence. 2 letters is all you got? wow, talkative for a minute.\"": 95.0,
     "you look like a laggy connection, always dropping the ball. your life is a constant disconnect, nobody can rely on you.": 85.0,
     "you're online all the time, but your social life's a dead zone": 20.0,
-    "you\u2019re like a software update that no one asked for, always popping up and wasting my time. pathetic.": 85.0
+    "you\u2019re like a software update that no one asked for, always popping up and wasting my time. pathetic.": 85.0,
+    "you look like you fell out of a clown car and landed in a bargain bin. i bet your mom dressed you this morning.": 85.0,
+    "i think it's what you get when you talk that noise. my hand already feels tired.": 42.0,
+    "your slapping weak as a baby\u2019s high-five, loud as a wet sock slap. leave your mark like a toddler on a watercolor pad.": 95.0,
+    "you get slapped by reality every day and it shows. your life is a mess and nobody can look up to you.": 85.0
   }
 }
