@@ -122,13 +122,13 @@
       "hunt_shadow_boost": "2026-01-12T16:47:43.440985"
     },
     "1238242784679563265": {
-      "balance": 20085,
-      "last_daily": "2025-12-21T23:05:09.420281",
-      "last_work": "2025-12-21T23:05:15.109589",
+      "balance": 2350,
+      "last_daily": "2026-04-21T14:11:58.602540",
+      "last_work": "2026-04-21T14:11:50.835448",
       "fish_cooldown": "2025-12-10T20:11:11.461069",
       "hunt_cooldown": "2025-12-22T04:07:56.532092",
       "inventory": {
-        "intercontinental_ballistic_missile": 1,
+        "intercontinental_ballistic_missile": 0,
         "odd_box": 0,
         "red_button": 0,
         "ancient_snack": 0,
@@ -139,11 +139,11 @@
         "forgotten_scroll": 0,
         "lurking_shadow_fragment": 0,
         "void_pebble": 0,
-        "antigravity_rubber_ducky": 44
+        "antigravity_rubber_ducky": 32
       },
       "hunt_shadow_boost": "2025-11-24T18:46:16.678894",
-      "pray": 5,
-      "last_pray": "2025-12-21T23:33:54.992498",
+      "pray": 6,
+      "last_pray": "2026-04-21T14:16:43.315254",
       "codepad": {},
       "owned_animals": [
         {
@@ -344,7 +344,9 @@
           "strength": 63
         }
       ],
-      "stocks": {},
+      "stocks": {
+        "CART": 5
+      },
       "dungeon": {
         "active": false,
         "floor": 1,
@@ -1014,8 +1016,8 @@
           "1238242784679563265"
         ],
         "bank": 0,
-        "level": 1,
-        "xp": 0,
+        "level": 2,
+        "xp": 50,
         "created_at": "2026-04-21T14:00:25.762638"
       }
     },

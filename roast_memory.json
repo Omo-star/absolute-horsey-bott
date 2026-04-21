@@ -74,7 +74,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1765726432.9244313
+      "last_summary_update": 1768575818.9206812
     },
     "1220934047794987048": {
       "LF": {
@@ -380,7 +380,7 @@
       "msg_count": 0,
       "last_summary_update": 1765650679.9981291
     },
-    "1435987186502733878": {
+    "1255130792372342816": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -416,7 +416,45 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1768575818.9206812
+      "last_summary_update": 1776781244.4599319
+    },
+    "1374303202312327240": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1776781479.021217
     }
   },
   "roast_history": {
@@ -622,6 +660,8 @@
     "your jokes hit harder than a wet noodle, and that\u2019s being generous. your roast skills are like an empty stage\u2014nobody\u2019s showing up!": 85.0,
     "you\u2019re so deep, i\u2019m surprised the ocean hasn\u2019t claimed you yet.": 95.0,
     "that velvet vibe got you thinking you're all smooth, but we all know you're just a texture disaster.": 85.0,
-    "your brain's on airplane mode while the rest of us are flying high. real talk, if common sense were currency, you'd be broke.": 85.0
+    "your brain's on airplane mode while the rest of us are flying high. real talk, if common sense were currency, you'd be broke.": 85.0,
+    "fahh, the only noise you make that's more irritating than your face.": 85.0,
+    "you play chess like you\u2019re trying to win a game of tic-tac-toe. your strategy's a total joke, but at least it\u2019s consistent.": 85.0
   }
 }
