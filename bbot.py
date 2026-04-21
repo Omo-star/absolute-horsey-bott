@@ -21,6 +21,7 @@ from collections import defaultdict, deque
 
 CHAT_HISTORY = defaultdict(lambda: deque(maxlen=10))
 
+MIN_DEEP_SPICE = 25
 ACTIVE_CONVO = {}
 LAST_BOT_MESSAGE = {}
 
@@ -385,14 +386,66 @@ def compute_user_spice(uid: int) -> float:
     spice = min(100, max(0, total))
 
     return float(spice)
+NON_ROAST_PATTERNS = [
+    "that's a pretty",
+    "that's a classic",
+    "that's a funny insult",
+    "that's a creative insult",
+    "it uses exaggeration",
+    "i don't have a physical body",
+    "i do not have a physical body",
+    "i appreciate the imagery",
+    "i'm sorry",
+    "if you have any issues or questions",
+    "roast generation failed",
+    "as an ai",
+]
 
+def looks_like_real_roast(text: str) -> bool:
+    if not text:
+        return False
+
+    t = text.strip().lower()
+
+    if len(t) < 8:
+        return False
+
+    if any(p in t for p in NON_ROAST_PATTERNS):
+        return False
+
+    # reject explanation-y text
+    explanation_markers = [
+        "this insult",
+        "the insult",
+        "it uses",
+        "it relies on",
+        "the joke",
+        "the roast",
+    ]
+    if any(p in t for p in explanation_markers):
+        return False
+
+    # accept if it looks like a direct jab
+    roast_markers = [
+        "you ",
+        "ur ",
+        "u ",
+        "your ",
+        "look like",
+        "built like",
+        "sound like",
+        "got the",
+        "built ",
+    ]
+
+    return any(p in t for p in roast_markers) or calculate_spiciness(text) >= 15
 GROQ_API_KEY = os.getenv("GROQ")
 groq_client = Groq(api_key=os.getenv("GROQ"))
 
 GROQ_MODELS = [
-    "qwen/qwen3-32b",
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant"
+    "groq:qwen/qwen3-32b",
+    "groq:llama-3.3-70b-versatile",
+    "groq:llama-3.1-8b-instant"
 ]
 
 GITHUB_MODELS = [
@@ -415,9 +468,7 @@ HF_TGI_URL = os.getenv("HF_TGI_URL")
 
 HUGGINGFACE_MODELS = []
 
-OPENROUTER_MODELS = [
-    "x-ai/grok-4.20"
-]
+OPENROUTER_MODELS = []
 
 NORMAL_CHAT_MODELS = [
     "groq:llama-3.1-8b-instant",
@@ -524,26 +575,36 @@ async def safe_completion(model, messages):
     if model.startswith("gemini"):
         def call():
             try:
-                user_text = "\n".join(m["content"] for m in messages if m["role"] == "user")
-                model_name = model
-
-                client = genai.GenerativeModel(model_name)
+                system_text = "\n\n".join(
+                    m["content"] for m in messages if m["role"] == "system"
+                ).strip()
+    
+                user_text = "\n\n".join(
+                    m["content"] for m in messages if m["role"] == "user"
+                ).strip()
+    
+                client = genai.GenerativeModel(
+                    model,
+                    system_instruction=system_text if system_text else None
+                )
+    
                 resp = client.generate_content(user_text)
-
+    
                 if hasattr(resp, "text") and resp.text:
                     return wrap(strip_reasoning(resp.text))
-
+    
                 if hasattr(resp, "candidates"):
                     try:
                         txt = resp.candidates[0].content.parts[0].text
                         return wrap(strip_reasoning(txt))
                     except:
                         pass
-
-                return wrap("Roast generation failed.")
+    
+                return wrap("")
             except Exception as e:
                 log(f"[GEMINI FAIL:{model}] {e}")
                 return None
+    
         return await run_blocking(call)
 
     if model.startswith("github:"):
@@ -644,15 +705,18 @@ def calculate_spiciness(text: str) -> float:
 
 
 async def fast_spice(text: str) -> float:
-    score = await ai_spice(text)
+    if text in spice_cache:
+        return float(spice_cache[text])
 
-    if score is not None and score > 0:
-        spice_cache[text] = score
-        save_roast_memory()
+    ai_score = await ai_spice(text)
+    heuristic_score = calculate_spiciness(text)
 
-    return score if score is not None else 0.0
+    score = max(ai_score or 0.0, heuristic_score)
 
+    spice_cache[text] = score
+    save_roast_memory()
 
+    return score
 
 async def ai_spice(text: str) -> float:
     score = await spice_groq(text)
@@ -1073,7 +1137,7 @@ async def gather_all_llm_roasts(prompt, user_id):
     for m in GROQ_MODELS:
         log(f"[LLM] requesting model {m}")
         tasks.append(safe_completion(m, context))
-        sources.append(f"GROQ:{m}")
+        sources.append(f"GROQ:{m.split(':', 1)[1]}")
 
     for m in OPENROUTER_MODELS:
         log(f"[LLM] requesting model {m}")
@@ -1108,12 +1172,15 @@ async def gather_all_llm_roasts(prompt, user_id):
 
         if not txt or len(txt) < 5:
             continue
-
+        
         if "I'm malfunctioning so hard even my roast code gave up" in txt:
             continue
-
+        
+        if not looks_like_real_roast(txt):
+            log(f"[LLM] rejected non-roast from {src}: {txt[:120]}")
+            continue
+        
         candidates.append({"source": src, "text": txt})
-
     log(f"[LLM] FINISHED — {len(candidates)} valid candidates")
 
     return candidates
@@ -1288,7 +1355,13 @@ async def bot_roast(msg, uid, mode):
 
             best_idx = max(range(len(llm_cands)), key=lambda i: spices[i])
             best = llm_cands[best_idx]
-            log(f"[DEEP] SELECTED from {best['source']} | {best['text']}")
+            best_score = spices[best_idx]
+            
+            log(f"[DEEP] SELECTED from {best['source']} | score={best_score} | {best['text']}")
+            
+            if best_score < MIN_DEEP_SPICE:
+                return "ur roast had more setup than impact. even the ai couldn't make that hit."
+            
             return enforce_short_roast(best["text"])
 
         elif mode == "adjustable":
