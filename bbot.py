@@ -1342,6 +1342,11 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
     brain_runtime.start()
     extensions = [
+        "quests",
+        "titles",
+        "collections",
+        "guilds",
+        "world",
         "achievement",
         "profile",
         "voidmaze",
