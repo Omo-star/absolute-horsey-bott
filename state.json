@@ -122,7 +122,7 @@
       "hunt_shadow_boost": "2026-01-12T16:47:43.440985"
     },
     "1238242784679563265": {
-      "balance": 2539,
+      "balance": 2604,
       "last_daily": "2026-04-21T14:11:58.602540",
       "last_work": "2026-04-21T14:11:50.835448",
       "fish_cooldown": "2025-12-10T20:11:11.461069",
@@ -142,8 +142,8 @@
         "antigravity_rubber_ducky": 32
       },
       "hunt_shadow_boost": "2025-11-24T18:46:16.678894",
-      "pray": 6,
-      "last_pray": "2026-04-21T14:16:43.315254",
+      "pray": 7,
+      "last_pray": "2026-04-21T16:37:52.117108",
       "codepad": {},
       "owned_animals": [
         {
@@ -549,7 +549,7 @@
       }
     },
     "1220934047794987048": {
-      "balance": 419,
+      "balance": 0,
       "last_daily": "2025-11-24T13:53:24.232118",
       "last_work": "2025-11-27T10:12:41.053476",
       "fish_cooldown": "2025-11-27T14:43:52.670309",
@@ -557,7 +557,46 @@
       "inventory": {},
       "roast_protection_until": null,
       "pray": 1,
-      "last_pray": "2025-11-27T10:07:07.983570"
+      "last_pray": "2025-11-27T10:07:07.983570",
+      "owned_animals": [],
+      "team": [],
+      "stocks": {},
+      "dungeon": {
+        "active": false,
+        "floor": 1,
+        "hp": 100,
+        "max_hp": 100,
+        "energy": 3,
+        "relics": [],
+        "curses": [],
+        "skills": {
+          "power": 0,
+          "fortune": 0,
+          "endurance": 0,
+          "instability": 0,
+          "might": 0,
+          "ward": 0,
+          "greed": 0,
+          "warp": 0,
+          "instinct": 0,
+          "focus": 0,
+          "agility": 0,
+          "spirit": 0
+        },
+        "cooldowns": {},
+        "last_event": null,
+        "last_log": ""
+      },
+      "raid": {
+        "joined": false,
+        "damage": 0,
+        "relic_bonus": 0
+      },
+      "pvp": {
+        "invasion_cooldown": null,
+        "defense_bonus": 0,
+        "offense_bonus": 0
+      }
     },
     "1440004841559560214": {
       "balance": 0,

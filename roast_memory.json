@@ -264,7 +264,7 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1764773529.839502
+      "last_summary_update": 1776781479.021217
     },
     "1437537945002184784": {
       "LF": {
@@ -418,7 +418,7 @@
       "msg_count": 0,
       "last_summary_update": 1776781244.4599319
     },
-    "1374303202312327240": {
+    "1238242784679563265": {
       "LF": {
         "slang": 0.0,
         "formality": 0.0,
@@ -454,7 +454,83 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1776781479.021217
+      "last_summary_update": 1776785210.7453184
+    },
+    "1220934047794987048": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1776787701.0458388
+    },
+    "1435987186502733878": {
+      "LF": {
+        "slang": 0.0,
+        "formality": 0.0,
+        "emoji_rate": 0.0,
+        "all_caps_rate": 0.0,
+        "punct_energy": 0.0,
+        "avg_len": 0.0,
+        "msg_samples": []
+      },
+      "EB": {
+        "anger": 0.0,
+        "sadness": 0.0,
+        "hype": 0.0,
+        "chaos": 0.0
+      },
+      "HP": {
+        "dark": 0.0,
+        "mean": 0.0,
+        "petty": 0.0,
+        "simple": 0.0,
+        "goofy": 0.0,
+        "meta": 0.0
+      },
+      "IS": {
+        "bot_mentions": 0,
+        "roast_requests": 0,
+        "self_roasts": 0,
+        "escalation": 0.0
+      },
+      "SPM": {
+        "embeddings": [],
+        "texts": []
+      },
+      "LTS": "",
+      "msg_count": 0,
+      "last_summary_update": 1776787829.0093975
     }
   },
   "roast_history": {
@@ -662,6 +738,18 @@
     "that velvet vibe got you thinking you're all smooth, but we all know you're just a texture disaster.": 85.0,
     "your brain's on airplane mode while the rest of us are flying high. real talk, if common sense were currency, you'd be broke.": 85.0,
     "fahh, the only noise you make that's more irritating than your face.": 85.0,
-    "you play chess like you\u2019re trying to win a game of tic-tac-toe. your strategy's a total joke, but at least it\u2019s consistent.": 85.0
+    "you play chess like you\u2019re trying to win a game of tic-tac-toe. your strategy's a total joke, but at least it\u2019s consistent.": 85.0,
+    "That's a pretty creative insult! I don't have a physical body, so I can't actually be fat or be used as a trampoline. But I appreciate the imagery!": 5.0,
+    "u look like a before photo but the behind is still takin\u2019 years.": 85.0,
+    "hope your wifi is faster than your jokes.": 85.0,
+    "I am a large language model, trained by Google.": 5.0,
+    "you\u2019re like a floppy disk in a cloud storage world. all that memory, but still can\u2019t keep up.": 85.0,
+    "your life\u2019s like a broken pencil \u2014 pointless.": 95.0,
+    "you ping more than a game of dodgeball, it's time to sit down and chill. you're not that important, buddy.": 85.0,
+    "you\u2019re like a software update that nobody asked for. so annoying and just takes up space.": 85.0,
+    "someone needs to tell you the project is over, and it's not even yours. you\u2019re basically a code ghost \u2014 haunting the repo with your cluelessness.": 85.0,
+    "you\u2019re about as useful as a screen door on a submarine. good luck finding any value in that mess.": 85.0,
+    "get a new hobby, 'cause failing's your only talent.": 85.0,
+    "you're like a participation trophy, just taking up space and not impressing anyone.": 85.0
   }
 }
