@@ -374,6 +374,7 @@ def make_embed(topic: str, user: discord.abc.User):
         value=(
             "`/profile` see your account\n"
             "`/balance` check your money\n"
+            "`/recommend` shows the smartest next move\n"
             "`/daily` claim free horsenncy\n"
             "`/work` earn more\n"
             "`/help economy` or `/help adventure`"
