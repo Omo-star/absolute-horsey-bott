@@ -1342,6 +1342,8 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
     brain_runtime.start()
     extensions = [
+        "help",
+        "server_setup",
         "quests",
         "titles",
         "collection",
