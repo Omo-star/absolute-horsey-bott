@@ -553,31 +553,31 @@ class Economy(commands.Cog):
             async def stand(self, button_inter: discord.Interaction, button: discord.ui.Button):
                 if button_inter.user.id != uid:
                     return await button_inter.response.send_message("Not your game.", ephemeral=True)
-
+            
                 self.clear_items()
-
-                await self.update_embed(
-                    button_inter,
-                    state_text="🃏 Revealing dealer's hand…",
-                    reveal=False,
-                    keep_view=True
+            
+                await button_inter.response.edit_message(
+                    embed=make_embed(self.phase, "🃏 Revealing dealer's hand…", reveal_dealer=False),
+                    view=None
                 )
-
-                msg = button_inter.message
-
-                await asyncio.sleep(0.4)
-                embed_mid = make_embed(self.phase, "🃏 The card begins to flip…", reveal_dealer=False)
                 self.phase += 1
-                await msg.edit(embed=embed_mid, view=self)
-
+            
                 await asyncio.sleep(0.4)
-
+            
+                await button_inter.edit_original_response(
+                    embed=make_embed(self.phase, "🃏 The card begins to flip…", reveal_dealer=True),
+                    view=None
+                )
+                self.phase += 1
+            
+                await asyncio.sleep(0.4)
+            
                 while hand_value(dealer) < 17:
                     dealer.append(draw())
-
+            
                 p_total = hand_value(player)
                 d_total = hand_value(dealer)
-
+            
                 if d_total > 21 or p_total > d_total:
                     winnings = int(bet * pray_boost)
                     await update_balance(uid, winnings)
@@ -587,13 +587,12 @@ class Economy(commands.Cog):
                 else:
                     await update_balance(uid, -bet)
                     result_text = f"💀 **Dealer wins.** You lost **{bet} horsenncy.**"
-
-                final_embed = make_embed(self.phase, result_text, reveal_dealer=True)
+            
+                await button_inter.edit_original_response(
+                    embed=make_embed(self.phase, result_text, reveal_dealer=True),
+                    view=None
+                )
                 self.phase += 1
-                await msg.edit(embed=final_embed, view=None)
-
-
-
         view = BlackjackView()
         start_embed = make_embed(phase=0, game_state="🕐 *Game in progress… choose **Hit** or **Stand** below.*", reveal_dealer=False)
         await interaction.response.send_message(embed=start_embed, view=view)
