@@ -26,7 +26,7 @@
     },
     "filters": {
       "block_invites": false,
-      "block_links": false
+      "block_links": true
     }
   },
   "1435926772972519446": {

@@ -122,7 +122,7 @@
       "hunt_shadow_boost": "2026-01-12T16:47:43.440985"
     },
     "1238242784679563265": {
-      "balance": 2350,
+      "balance": 2539,
       "last_daily": "2026-04-21T14:11:58.602540",
       "last_work": "2026-04-21T14:11:50.835448",
       "fish_cooldown": "2025-12-10T20:11:11.461069",
@@ -305,6 +305,16 @@
           "name": "\ud83d\udc08 Wild Cat",
           "rarity": "Common",
           "strength": 29
+        },
+        {
+          "name": "\ud83d\udc05 Tiger",
+          "rarity": "Rare",
+          "strength": 160
+        },
+        {
+          "name": "\ud83e\udd8e Lizard",
+          "rarity": "Common",
+          "strength": 14
         }
       ],
       "team": [
@@ -1023,6 +1033,14 @@
     },
     "user_to_guild": {
       "1238242784679563265": 1
+    }
+  },
+  "server_setup_v2": {
+    "1440020962295676938": {
+      "onboarding_channel_id": 1441787836272742474,
+      "tips_enabled": true,
+      "last_posted_at": "2026-04-21T15:03:02.190744",
+      "created_at": "2026-04-21T15:02:53.500558"
     }
   }
 }
