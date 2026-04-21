@@ -228,30 +228,31 @@ def _strip_fusbot_refs(text: str) -> str:
     return t
 
 def _mention_intent(content: str) -> str:
-    t = _norm(content)
-    stripped = _strip_fusbot_refs(t)
-    words = set(_words(stripped))
+    raw = content or ""
+    stripped = _strip_fusbot_refs(raw)
+    t = _norm(stripped)
+    words = set(_words(t))
 
-    if not stripped:
+    if not t:
         return "social_ping"
 
     if words & MENTION_ROAST_KEYS:
         return "roast_request"
 
-    if _is_question(content):
+    if _is_question(t):
         return "chat_question"
 
-    if stripped in {"yo", "hey", "hi", "sup", "bro", "fusbot?", "what", "wdym", "huh"}:
+    if t in {"yo", "hey", "hi", "sup", "bro", "what", "wdym", "huh"}:
         return "social_ping"
 
     if words & MENTION_SOCIAL_KEYS:
         return "social_ping"
 
-    if len(stripped) <= 8:
-        return "social_ping"
+    # direct plain sentences should default to chat, not silence
+    if len(t) >= 5:
+        return "chat_question"
 
-    return "observe_only"
-
+    return "social_ping"
 def _circadian_penalty() -> float:
     lt = time.localtime()
     hour = lt.tm_hour
@@ -1886,9 +1887,18 @@ class BrainRuntime:
                 return None
         
             if intent == "social_ping":
-                # do not always send a full reply for tiny pings
-                if self.brain._rng.random() < 0.45:
-                    return None
+                if self.brain._rng.random() < 0.25:
+                    reply = random.choice([
+                        "yo",
+                        "sup",
+                        "what’s up",
+                        "yeah?",
+                        "hm?"
+                    ])
+                    await self.brain.human_delay(message.channel, reply)
+                    await message.channel.send(reply)
+                    self.brain.mark_busy(cid)
+                    return reply
         
             if intent == "roast_request" and mode:
                 reply = await self.roast_fn(message.content, uid, mode)
