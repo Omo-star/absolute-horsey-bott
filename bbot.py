@@ -20,10 +20,13 @@ from economy import get_user
 from collections import defaultdict, deque
 
 CHAT_HISTORY = defaultdict(lambda: deque(maxlen=10))
-
-MIN_DEEP_SPICE = 25
 ACTIVE_CONVO = {}
 LAST_BOT_MESSAGE = {}
+
+def session_key(channel_id: int, user_id: int):
+    return (channel_id, user_id)
+    
+MIN_DEEP_SPICE = 25
 
 FOLLOWUP_SYSTEM_PROMPT = """You are a conversation intent classifier.
 
@@ -280,19 +283,19 @@ class SlashCommands(commands.Cog):
 
     # /roastmode
     @app_commands.command(name="roastmode", description="Set your roast mode.")
-    async def roastmode(self, interaction: discord.Interaction, mode: str):
-        mode = mode.lower()
-        if mode not in ["fast", "deep", "adjustable"]:
-            brain_runtime.brain.mark_busy(interaction.channel.id)
-            await interaction.response.send_message("Modes: fast, deep, adjustable")
-            return
-
-        roast_mode[interaction.user.id] = mode
+    @app_commands.choices(mode=[
+        app_commands.Choice(name="fast", value="fast"),
+        app_commands.Choice(name="deep", value="deep"),
+        app_commands.Choice(name="adjustable", value="adjustable"),
+    ])
+    async def roastmode(self, interaction: discord.Interaction, mode: app_commands.Choice[str]):
+        selected = mode.value
+        roast_mode[interaction.user.id] = selected
         roast_history[interaction.user.id] = []
         save_roast_memory()
         brain_runtime.brain.mark_busy(interaction.channel.id)
         await interaction.response.send_message(
-            f"🔥 Roast Mode: **{mode.upper()}**. Use /stoproast to stop."
+            f"🔥 Roast Mode: **{selected.upper()}**. Use /stoproast to stop."
         )
 
     # /stoproast
@@ -312,6 +315,15 @@ class SlashCommands(commands.Cog):
 failed_models = {}
 MAX_HISTORY = 10
 
+REAL_OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+
+if not REAL_OPENAI_KEY:
+    # keep libs happy, but don't pretend openai is enabled
+    os.environ.setdefault("OPENAI_API_KEY", "unused_dummy_key")
+    openai_client = None
+else:
+    openai_client = OpenAI(api_key=REAL_OPENAI_KEY)
+
 GITHUB_API_KEY = (
     os.getenv("GITHUB_TOKEN")
     or os.getenv("GITHUB_API_KEY")
@@ -319,14 +331,8 @@ GITHUB_API_KEY = (
     or ""
 )
 
-openai_client = None
-
-# hopeful fix? dummy key for OpenAI client libs that expect this env var
-if "OPENAI_API_KEY" not in os.environ:
-    os.environ["OPENAI_API_KEY"] = "unused_dummy_key"
-
 if not GITHUB_API_KEY:
-    log("[AUTH] Missing GitHub token — GitHub models will return 401.")
+    log("[AUTH] Missing GitHub token — GitHub models disabled.")
     github_client = None
 else:
     github_client = OpenAI(
@@ -338,7 +344,6 @@ else:
             "Accept": "application/vnd.github+json",
         },
     )
-
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
@@ -526,7 +531,6 @@ def make_chat_response(text):
     resp.choices = [choice]
     return resp
 
-
 async def safe_completion(model, messages):
     loop = asyncio.get_event_loop()
 
@@ -552,7 +556,6 @@ async def safe_completion(model, messages):
         m.content = text
         c.message = m
         r.choices = [c]
-
         return r
 
     if model.startswith("groq:"):
@@ -561,7 +564,10 @@ async def safe_completion(model, messages):
         def call():
             try:
                 resp = groq_client.chat.completions.create(
-                    model=actual, messages=messages, max_tokens=250, temperature=1.0
+                    model=actual,
+                    messages=messages,
+                    max_tokens=250,
+                    temperature=1.0,
                 )
                 txt = extract_text_with_logging(model, resp)
                 return wrap(strip_reasoning(txt))
@@ -571,52 +577,54 @@ async def safe_completion(model, messages):
 
         return await run_blocking(call)
 
-
     if model.startswith("gemini"):
         def call():
             try:
                 system_text = "\n\n".join(
                     m["content"] for m in messages if m["role"] == "system"
                 ).strip()
-    
+
                 user_text = "\n\n".join(
                     m["content"] for m in messages if m["role"] == "user"
                 ).strip()
-    
+
                 client = genai.GenerativeModel(
                     model,
                     system_instruction=system_text if system_text else None
                 )
-    
+
                 resp = client.generate_content(user_text)
-    
+
                 if hasattr(resp, "text") and resp.text:
                     return wrap(strip_reasoning(resp.text))
-    
+
                 if hasattr(resp, "candidates"):
                     try:
                         txt = resp.candidates[0].content.parts[0].text
                         return wrap(strip_reasoning(txt))
-                    except:
+                    except Exception:
                         pass
-    
+
                 return wrap("")
             except Exception as e:
                 log(f"[GEMINI FAIL:{model}] {e}")
                 return None
-    
+
         return await run_blocking(call)
 
     if model.startswith("github:"):
         if github_client is None:
-            return wrap("GitHub model unavailable.")
+            return None
 
         actual = model.split("github:", 1)[1]
 
         def call():
             try:
                 resp = github_client.chat.completions.create(
-                    model=actual, messages=messages, max_tokens=250, temperature=1.1
+                    model=actual,
+                    messages=messages,
+                    max_tokens=250,
+                    temperature=1.1,
                 )
                 txt = extract_text_with_logging(model, resp)
                 return wrap(strip_reasoning(txt))
@@ -626,14 +634,36 @@ async def safe_completion(model, messages):
 
         return await run_blocking(call)
 
+    if model.startswith("openai:"):
+        if openai_client is None:
+            return None
 
+        actual = model.split("openai:", 1)[1]
+
+        def call():
+            try:
+                resp = openai_client.chat.completions.create(
+                    model=actual,
+                    messages=messages,
+                    max_tokens=250,
+                    temperature=1.0,
+                )
+                txt = extract_text_with_logging(model, resp)
+                return wrap(strip_reasoning(txt))
+            except Exception as e:
+                log(f"[OPENAI FAIL:{actual}] {e}")
+                return None
+
+        return await run_blocking(call)
+
+    # everything else is treated as OpenRouter
     def call_or():
         try:
             resp = openrouter_client.chat.completions.create(
                 model=model,
                 messages=messages,
                 max_tokens=250,
-                temperature=1.2
+                temperature=1.2,
             )
             txt = extract_text_with_logging(model, resp)
             return wrap(strip_reasoning(txt))
@@ -642,8 +672,6 @@ async def safe_completion(model, messages):
             return None
 
     return await run_blocking(call_or)
-
-
 INSULT_KEYWORDS = [
     "idiot",
     "stupid",
@@ -1185,10 +1213,41 @@ async def gather_all_llm_roasts(prompt, user_id):
 
     return candidates
 
+FOLLOWUP_MODEL = "groq:llama-3.1-8b-instant"
+
+def obvious_followup(message: discord.Message, convo) -> bool:
+    # direct reply to the bot
+    if message.reference and getattr(message.reference, "resolved", None):
+        ref = message.reference.resolved
+        if getattr(ref, "author", None) and ref.author.id == bot.user.id:
+            return True
+
+    t = message.content.strip().lower()
+
+    # obvious short clarification replies
+    if t in {"wdym", "what", "huh", "why", "how", "explain", "elaborate", "?", "??"}:
+        return True
+
+    # short message soon after bot reply
+    if convo and (time.time() - convo["last_ts"] <= 45):
+        if len(t) <= 60 and not t.startswith(("!", "/")):
+            return True
+
+    return False
+
+async def ai_is_followup(last_bot_msg: str, user_msg: str) -> bool:
+    try:
+        raw = await followup_completion(FOLLOWUP_MODEL, last_bot_msg, user_msg)
+        return _normalize_yesno(raw) == "YES"
+    except Exception as e:
+        log(f"[FOLLOWUP:{FOLLOWUP_MODEL}] error: {e}")
+        return False
 
 async def bot_chat(msg: str, uid: int, channel_id: int):
     log(f"[CHAT] Normal convo: {msg}")
-    
+
+    hist_key = session_key(channel_id, uid)
+
     mem_lines = brain_runtime.brain.get_user_engagement_memory(uid, limit=15)
 
     memory_hint = ""
@@ -1220,20 +1279,16 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
                 "if asked about what was said, quote the exact message when possible\n"
                 "only reference the last few messages, not older ones\n"
                 "only look back when the user clearly asks or implies confusion\n"
-                "if the user says \"wdym\", \"what\", or seems confused, clarify your last message\n"
+                "if the user says 'wdym', 'what', or seems confused, clarify your last message\n"
                 "do not guess or invent past messages\n"
                 "output only the message\n"
                 "\n"
                 f"{memory_hint}"
             ),
         },
-        *CHAT_HISTORY[uid],
-        {
-            "role": "user",
-            "content": msg,
-        },
+        *CHAT_HISTORY[hist_key],
+        {"role": "user", "content": msg},
     ]
-
 
     for model in NORMAL_CHAT_MODELS:
         try:
@@ -1243,17 +1298,9 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
                 raw = extract_text_with_logging(model, resp)
                 text = strip_reasoning(raw)
                 if text and len(text.strip()) > 1:
-                    CHAT_HISTORY[uid].append({
-                        "role": "user",
-                        "content": msg
-                    })
-                    CHAT_HISTORY[uid].append({
-                        "role": "assistant",
-                        "content": text
-                    })
-
+                    CHAT_HISTORY[hist_key].append({"role": "user", "content": msg})
+                    CHAT_HISTORY[hist_key].append({"role": "assistant", "content": text})
                     return text
-
         except Roast500Error:
             log(f"[CHAT] {model} hit 500 Error, trying next.")
             continue
@@ -1262,7 +1309,6 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
             continue
 
     return "my brain lagged a bit, say that again"
-
 async def embed_text(text):
     loop = asyncio.get_event_loop()
 
@@ -1413,10 +1459,18 @@ brain_runtime = BrainRuntime(
     is_roast_mode=lambda uid: uid in roast_mode,
 )
 
+BOOTSTRAPPED = False
+
 @bot.event
 async def on_ready():
+    global BOOTSTRAPPED
+    if BOOTSTRAPPED:
+        return
+    BOOTSTRAPPED = True
+
     print(f"Logged in as {bot.user}")
     brain_runtime.start()
+
     extensions = [
         "help",
         "server-setup",
@@ -1459,19 +1513,23 @@ async def on_ready():
         print("SlashCommands cog loaded successfully.")
     except Exception as e:
         print(f"FAILED to load SlashCommands cog: {e}")
+@bot.command(name="sync")
+@commands.is_owner()
+async def sync_cmd(ctx):
+    synced = await bot.tree.sync()
+    await ctx.send(f"synced {len(synced)} global commands")
+@bot.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    log(f"[APP CMD ERROR] {type(error).__name__}: {error}")
 
+    msg = "something broke on my side"
     try:
-        synced = await bot.tree.sync()
-        print(f"Synced {len(synced)} global commands.")
-    except Exception as e:
-        print(f"Global sync failed: {e}")
-
-    for guild in bot.guilds:
-        try:
-            await bot.tree.sync(guild=guild)
-            print(f"Synced commands for guild {guild.name}")
-        except Exception as e:
-            print(f"Guild sync failed for {guild.name}: {e}")
+        if interaction.response.is_done():
+            await interaction.followup.send(msg, ephemeral=True)
+        else:
+            await interaction.response.send_message(msg, ephemeral=True)
+    except Exception:
+        pass
 @bot.event
 async def on_reaction_add(reaction, user):
     if user.bot or not reaction.message.guild:
@@ -1541,75 +1599,50 @@ async def ai_is_followup(last_bot_msg: str, user_msg: str) -> bool:
 
     return False
 
-
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
+
     cid = message.channel.id
-    convo = ACTIVE_CONVO.get(cid)
-    last_bot = None
+    uid = message.author.id
+    skey = session_key(cid, uid)
+
+    convo = ACTIVE_CONVO.get(skey)
+    last_bot = LAST_BOT_MESSAGE.get(skey)
+
     automod_cog = bot.get_cog("AutoModCog")
     if automod_cog:
         handled = await automod_cog.engine.handle_message(message)
         if handled:
-            return  
-    if convo and message.author.id == convo["user_id"]:
-        last_bot = LAST_BOT_MESSAGE.get(cid)
-    if last_bot:
-        is_followup = await ai_is_followup(last_bot, message.content)
-    
-        if is_followup:
-            reply = await bot_chat(message.content, message.author.id, cid)
-            if reply:
-                await message.channel.send(reply)
-                LAST_BOT_MESSAGE[cid] = reply
-                convo["last_ts"] = time.time()
-                convo["misses"] = 0
-            if cid in ACTIVE_CONVO:
-                return await bot.process_commands(message)
             return
-    
-        ACTIVE_CONVO.pop(cid, None)
-    
+
+    if convo and (time.time() - convo["last_ts"] > 120):
+        ACTIVE_CONVO.pop(skey, None)
+        LAST_BOT_MESSAGE.pop(skey, None)
+        convo = None
+        last_bot = None
+
+    if last_bot:
+        is_followup = obvious_followup(message, convo)
+        if not is_followup:
+            is_followup = await ai_is_followup(last_bot, message.content)
+            
     reply = None
     if brain_allowed(message):
         reply = await brain_runtime.on_message(message)
 
-
     if reply:
-        LAST_BOT_MESSAGE[cid] = reply
-        ACTIVE_CONVO[cid] = {
-            "user_id": message.author.id,
+        LAST_BOT_MESSAGE[skey] = reply
+        ACTIVE_CONVO[skey] = {
+            "user_id": uid,
             "last_ts": time.time(),
             "topic": [],
             "misses": 0,
         }
         return
-    
-    await bot.process_commands(message)
 
+    await bot.process_commands(message)
+    
 if __name__ == "__main__":
     bot.run(os.getenv("DISCORDKEY"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
