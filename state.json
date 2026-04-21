@@ -394,15 +394,15 @@
         "offense_bonus": 0
       },
       "arena": {
-        "rating": 1141,
-        "tokens": 3,
+        "rating": 1133,
+        "tokens": 2,
         "crowns": 5,
         "wins": 6,
-        "losses": 0,
-        "streak": 6,
+        "losses": 1,
+        "streak": 0,
         "level": 3,
-        "xp": 60,
-        "last_log": "Victory!\nRating +25\nXP +39\nCrowns +3\n+1 Fight Token",
+        "xp": 75,
+        "last_log": "Defeat.\nRating -8\nXP +15",
         "in_battle": true,
         "loadout": [
           "\ud83e\udd86 Duck",
@@ -412,19 +412,19 @@
           "\ud83e\udd9d Raccoon"
         ],
         "last_opponent": [
-          "\ud83e\udd8e Lizard",
-          "\ud83d\udc0a Baby Crocodile",
-          "\ud83d\udc0a Abyssal Crocodile",
-          "\ud83e\udd8f Rhino (baby)",
-          "\ud83e\udd83 Turkey"
+          "\ud83d\udc0d Titan Serpent",
+          "\ud83d\udc15 Stray Dog",
+          "\ud83e\udda6 Otter",
+          "\ud83d\udc3a Moon Wolf",
+          "\ud83e\udd98 Wallaby"
         ],
         "passives": {
           "crit_boost": 0.03
         },
-        "last_token_reset": "2025-12-11",
+        "last_token_reset": "2026-04-21",
         "evolved": {},
-        "last_mutator": "Blessed Grounds",
-        "last_ult": "\ud83e\udd83 Turkey used Primal Frenzy"
+        "last_mutator": "Bloodsport",
+        "last_ult": "\ud83e\udd98 Wallaby used Primal Frenzy"
       },
       "voidmaze": {
         "active": false,
@@ -830,18 +830,18 @@
   },
   "arena_world": {
     "season": 1,
-    "chaos": 0.32999999999999996,
-    "total_matches": 6,
+    "chaos": 0.35,
+    "total_matches": 7,
     "last_champion": null,
     "last_event": "The sands are quiet.",
     "ladder": {
       "1238242784679563265": 1091
     },
     "mutator": [
-      "Blessed Grounds",
-      "Healing stronger, damage slightly lower.",
-      0.9,
-      1.25
+      "Bloodsport",
+      "All damage increased, healing reduced.",
+      1.25,
+      0.7
     ]
   },
   "lab_world": {
