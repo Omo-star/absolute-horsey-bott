@@ -154,6 +154,29 @@ DISBELIEF_KEYS = [
     "you lying","ur lying","you’re lying","theres no way","there's no way","calling cap","stop the cap","not a chance","yeah right"
 ]
 
+CONFUSED_KEYS = [
+    "wdym", "what do you mean", "huh", "wait what", "what", "im confused", "i'm confused",
+    "lost me", "hold on", "wait", "??"
+]
+
+VENT_KEYS = [
+    "im done", "i'm done", "this sucks", "cant do this", "i can't do this",
+    "so annoying", "im tired", "i'm tired", "rough", "hate this"
+]
+
+TEASE_KEYS = [
+    "bro", "bruh", "be serious", "ain't no way", "you wild", "ur cooked", "you’re cooked",
+    "nahhh", "crazy work"
+]
+
+INVITE_KEYS = [
+    "thoughts", "what do you think", "look at this", "listen", "check this", "bro listen"
+]
+
+STORY_KEYS = [
+    "so basically", "earlier", "today i", "yesterday", "one time", "bro so", "so then"
+]
+
 DEFAULT_BUCKETS = {
     "ack": ["👍","👌","✅","☑️","🫡"],
     "see": ["👀","🫣","🧠","📝"],
@@ -189,6 +212,45 @@ def _low_effort(text: str) -> bool:
         return True
     return t in LOW_EFFORT
 
+MENTION_ROAST_KEYS = {
+    "roast", "cook", "flame", "destroy", "smoke", "pack", "clown", "violate"
+}
+
+MENTION_SOCIAL_KEYS = {
+    "yo", "hey", "hi", "sup", "bro", "listen", "look", "thoughts", "opinion"
+}
+
+def _strip_fusbot_refs(text: str) -> str:
+    t = text or ""
+    t = re.sub(r"<@!?\d+>", "", t)
+    t = re.sub(r"\bfusbot\b", "", t, flags=re.IGNORECASE)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+def _mention_intent(content: str) -> str:
+    t = _norm(content)
+    stripped = _strip_fusbot_refs(t)
+    words = set(_words(stripped))
+
+    if not stripped:
+        return "social_ping"
+
+    if words & MENTION_ROAST_KEYS:
+        return "roast_request"
+
+    if _is_question(content):
+        return "chat_question"
+
+    if stripped in {"yo", "hey", "hi", "sup", "bro", "fusbot?", "what", "wdym", "huh"}:
+        return "social_ping"
+
+    if words & MENTION_SOCIAL_KEYS:
+        return "social_ping"
+
+    if len(stripped) <= 8:
+        return "social_ping"
+
+    return "observe_only"
 
 def _circadian_penalty() -> float:
     lt = time.localtime()
@@ -493,7 +555,24 @@ class HumanBrain:
                 break
 
         return list(reversed(out))
-
+    def get_recent_channel_lines(self, channel_id: int, limit: int = 6) -> List[str]:
+        dq = self._channel_msgs.get(channel_id)
+        if not dq:
+            return []
+    
+        out = []
+        seen = set()
+    
+        for _, txt in reversed(dq):
+            norm = _norm(txt)
+            if not norm or norm in seen or _low_effort(txt):
+                continue
+            seen.add(norm)
+            out.append(txt)
+            if len(out) >= limit:
+                break
+    
+        return list(reversed(out))
     def maybe_persist(self) -> None:
         t = _now()
         if t - self._last_persist < PERSIST_EVERY:
@@ -774,30 +853,49 @@ class HumanBrain:
             return "disbelief"
         if len(content) > 120:
             return "see"
+        if len(content.strip()) <= 8:
+            return "see"
         return "ack"
 
-    def _mood_tweak_bucket(self, bucket: str) -> str:
+    def _mood_tweak_bucket(self, bucket: str, channel_id: Optional[int] = None) -> str:
         m = self._current_mood
+    
+        if channel_id is not None:
+            emb = self._last_channel_embarrassment[channel_id]
+            conf = self._last_speak_confidence[channel_id]
+    
+            if emb > 0.50:
+                if bucket in ("funny", "hype", "disbelief", "tease"):
+                    return "see"
+            elif conf > 0.68:
+                if bucket in ("ack", "see"):
+                    if self._rng.random() < 0.35:
+                        return "agree"
+    
         if m == "tired":
-            if bucket in ("funny", "hype"):
+            if bucket in ("funny", "hype", "tease"):
                 return "see"
-            if bucket == "sad":
+            if bucket in ("sad", "vent"):
                 return "sad"
             return "see"
+    
         if m == "warm":
-            if bucket in ("ack", "agree"):
+            if bucket in ("ack", "agree", "invite"):
                 return "agree"
-            if bucket == "sad":
+            if bucket in ("sad", "vent"):
                 return "sad"
             return bucket
+    
         if m == "silly":
-            if bucket in ("ack", "agree", "disbelief"):
+            if bucket in ("ack", "agree", "disbelief", "tease"):
                 return "funny"
             return bucket
+    
         if m == "focused":
-            if bucket in ("funny", "hype"):
+            if bucket in ("funny", "hype", "tease"):
                 return "ack"
             return bucket
+    
         return bucket
 
     def _candidate_emojis(self, channel_id: int, user_id: int, bucket: str, guild_id: Optional[int] = None) -> List[str]:
@@ -820,7 +918,7 @@ class HumanBrain:
         return uniq[:18] if uniq else base
 
     def _choose_emoji(self, channel_id: int, user_id: int, bucket: str, guild_id: Optional[int] = None) -> str:
-        bucket = self._mood_tweak_bucket(bucket)
+        bucket = self._mood_tweak_bucket(bucket, channel_id)
         cand = self._candidate_emojis(channel_id, user_id, bucket, guild_id)
         weights = []
         prof = self._channel_profile[channel_id]
@@ -1337,6 +1435,8 @@ class HumanBrain:
         if _now() - last < cooldown:
             return 0.0
         content = (message.content or "")
+        if _low_effort(content):
+            return 0.0
         cp = self._conversation_pressure(cid)
         qp = self._unanswered_question_pressure(cid)
         rp = self._relevance_pressure(message)
@@ -1519,7 +1619,6 @@ class SignalStack:
             "good","great","awesome","nice","amazing","love","happy","excited",
             "fire","clean","perfect","goat","elite","solid"
         }
-
     def score(self, text: str) -> Dict[str, float]:
         t = text.lower()
         w = _words(t)
@@ -1532,29 +1631,105 @@ class SignalStack:
         s["neg"] = sum(1 for x in w if x in self.neg_words)
         s["pos"] = sum(1 for x in w if x in self.pos_words)
         s["caps"] = 1.0 if len(text) > 6 and text.isupper() else 0.0
+        s["confused"] = 1.0 if _has_any(t, CONFUSED_KEYS) else 0.0
+        s["vent"] = 1.0 if _has_any(t, VENT_KEYS) else 0.0
+        s["tease"] = 1.0 if _has_any(t, TEASE_KEYS) else 0.0
+        s["invite"] = 1.0 if _has_any(t, INVITE_KEYS) else 0.0
+        s["story"] = 1.0 if _has_any(t, STORY_KEYS) else 0.0
         return s
-
     def bucket(self, text: str) -> str:
         s = self.score(text)
+    
+        if s["confused"] > 0:
+            return "confused"
+        if s["questions"] > 0 and s["invite"] > 0:
+            return "invite"
         if s["questions"] > 0:
             return "question"
+        if s["vent"] > 0:
+            return "vent"
         if s["neg"] > 0 and s["pos"] == 0:
             return "sad"
         if s["laugh"] > 0:
             return "funny"
+        if s["tease"] > 0:
+            return "tease"
+        if s["story"] > 0:
+            return "story"
         if s["pos"] > 0 and s["exclaim"] > 0:
             return "hype"
         if s["caps"] > 0:
             return "disbelief"
         return "neutral"
-
-
 class InterjectionEngine:
     def __init__(self, brain: HumanBrain):
         self.brain = brain
         self.templates = InterjectTemplates()
         self.signals = SignalStack()
-
+        self.confused = [
+            "wait what",
+            "huh",
+            "hold on 😭",
+            "wdym",
+            "i’m lost already",
+            "wait explain"
+        ]
+        
+        self.vent = [
+            "nah that’s rough",
+            "yeah i’d be annoyed too",
+            "that would irritate me too",
+            "okay yeah that sucks",
+            "rough one fr"
+        ]
+        
+        self.tease = [
+            "bro 😭",
+            "you’re cooked",
+            "nahhh",
+            "crazy work",
+            "be serious"
+        ]
+        
+        self.invite = [
+            "ok wait let me see",
+            "hold on",
+            "lowkey i see it",
+            "wait i get what you mean",
+            "alright fair"
+        ]
+        
+        self.story = [
+            "ok keep going",
+            "wait no finish this",
+            "im listening",
+            "nah continue",
+            "where is this going"
+        ]
+    def _shape_line(self, text: str, bucket: str) -> str:
+        t = (text or "").strip()
+        if not t:
+            return t
+    
+        # keep it short for human interjections
+        if len(t) > 90:
+            t = t[:90].rsplit(" ", 1)[0].strip()
+    
+        # sometimes trim punctuation for fragment feel
+        if self.brain._rng.random() < 0.35:
+            t = t.rstrip(".!?")
+    
+        # sometimes lowercase everything
+        if self.brain._rng.random() < 0.70:
+            t = t[:1].lower() + t[1:] if t else t
+    
+        # rare super-short style for certain moods
+        if bucket in {"funny", "confused", "tease"} and self.brain._rng.random() < 0.22:
+            parts = t.split()
+            if len(parts) >= 2:
+                t = " ".join(parts[:2])
+    
+        return t
     async def maybe_interject(self, message: discord.Message) -> Optional[str]:
         if self.brain.is_roast_mode(message.author.id):
             return None
@@ -1572,20 +1747,31 @@ class InterjectionEngine:
             return None
         bucket = self.signals.bucket(message.content or "")
         hlog("INTERJECT calling ai_interject_line")
-        mem_lines = self.brain.get_contextual_memory(
+        user_mem = self.brain.get_contextual_memory(
             message.author.id,
             message.channel.id,
             bucket,
-            limit=12,
+            limit=8,
         )
+        
+        channel_mem = self.brain.get_recent_channel_lines(
+            message.channel.id,
+            limit=4,
+        )
+        
+        mem_lines = user_mem + [x for x in channel_mem if x not in user_mem]
         text = await ai_interject_line(bucket, message.content or "", mem_lines)
-
+        recent_lines = self.brain.get_recent_channel_lines(message.channel.id, limit=5)
+        if len(recent_lines) >= 4:
+            unique_authored_energy = sum(1 for x in recent_lines if len(x) > 20)
+            if unique_authored_energy >= 4 and self.brain._rng.random() < 0.28:
+                return None
         if not text:
             hlog("INTERJECT AI returned empty, using template")
             text = self.templates.pick(bucket, self.brain._rng)
         else:
             hlog("INTERJECT AI returned:", repr(text))
-
+        text = self._shape_line(text, bucket)
         await self.brain.human_delay(message.channel, text)
         try:
             self.brain.mark_busy(message.channel.id)
@@ -1689,9 +1875,22 @@ class BrainRuntime:
         if mentioned:
             uid = message.author.id
             cid = message.channel.id
+            intent = _mention_intent(message.content or "")
             mode = self.get_roast_mode(uid)
         
-            if mode:
+            if intent == "observe_only":
+                # sometimes just react and move on
+                self.outcomes.observe_message(message)
+                self.brain.self_reflect()
+                self.brain.maybe_persist()
+                return None
+        
+            if intent == "social_ping":
+                # do not always send a full reply for tiny pings
+                if self.brain._rng.random() < 0.45:
+                    return None
+        
+            if intent == "roast_request" and mode:
                 reply = await self.roast_fn(message.content, uid, mode)
             else:
                 reply = await self.chat_fn(message.content, uid, cid)
