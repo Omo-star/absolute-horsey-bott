@@ -442,6 +442,119 @@ class HelpView(discord.ui.View):
         self.author_id = author_id
         self.add_item(HelpTopicSelect())
 
+STARTER_ROUTES = {
+    "money": {
+        "title": "💰 money route",
+        "desc": "fast start for economy and progression",
+        "steps": [
+            "/profile",
+            "/daily",
+            "/work",
+            "/shop",
+            "/help economy",
+        ],
+    },
+    "battle": {
+        "title": "⚔️ battle route",
+        "desc": "build a team and start fighting things",
+        "steps": [
+            "/profile",
+            "/hunt",
+            "/team list",
+            "/battle",
+            "/help adventure",
+        ],
+    },
+    "ai": {
+        "title": "🤖 ai route",
+        "desc": "jump into the bot's ai side first",
+        "steps": [
+            "/roast",
+            "/roastmode",
+            "/code_list",
+            "/hack",
+            "/help ai",
+        ],
+    },
+}
+
+def make_start_embed(route_key: str, user: discord.abc.User) -> discord.Embed:
+    if route_key == "home":
+        embed = discord.Embed(
+            title="🚀 start here",
+            description=f"hey {user.mention} — pick the path you want and i’ll give you the fastest route",
+            color=discord.Color.blurple(),
+            timestamp=datetime.datetime.now(datetime.timezone.utc),
+        )
+        embed.add_field(
+            name="available paths",
+            value=(
+                "💰 money\n"
+                "⚔️ battle\n"
+                "🤖 ai"
+            ),
+            inline=False,
+        )
+        embed.set_footer(text="pick one below")
+        return embed
+
+    data = STARTER_ROUTES[route_key]
+    embed = discord.Embed(
+        title=data["title"],
+        description=data["desc"],
+        color=discord.Color.blurple(),
+        timestamp=datetime.datetime.now(datetime.timezone.utc),
+    )
+    embed.add_field(
+        name="do these in order",
+        value="\n".join(f"{i+1}. `{step}`" for i, step in enumerate(data["steps"])),
+        inline=False,
+    )
+    embed.set_footer(text="finish this path first, then branch out")
+    return embed
+
+class StartView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=180)
+        self.author_id = author_id
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("not your menu", ephemeral=True)
+            return False
+        return True
+
+    @discord.ui.button(label="money", style=discord.ButtonStyle.success, emoji="💰")
+    async def money_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(
+            embed=make_start_embed("money", interaction.user),
+            view=self
+        )
+
+    @discord.ui.button(label="battle", style=discord.ButtonStyle.danger, emoji="⚔️")
+    async def battle_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(
+            embed=make_start_embed("battle", interaction.user),
+            view=self
+        )
+
+    @discord.ui.button(label="ai", style=discord.ButtonStyle.primary, emoji="🤖")
+    async def ai_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(
+            embed=make_start_embed("ai", interaction.user),
+            view=self
+        )
+
+class Help(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @app_commands.command(name="start", description="Get a guided starting route through FuSBot.")
+    async def start(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            embed=make_start_embed("home", interaction.user),
+            view=StartView(interaction.user.id)
+        )
 
 class Help(commands.Cog):
     def __init__(self, bot):
