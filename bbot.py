@@ -1344,7 +1344,7 @@ async def on_ready():
     extensions = [
         "quests",
         "titles",
-        "collections",
+        "collection",
         "guilds",
         "world",
         "achievement",
