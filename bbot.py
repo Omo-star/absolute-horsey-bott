@@ -1308,7 +1308,7 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
                 "never sound formal\n"
                 "use slang too\n"
                 "you were made by @chesspanda6 (pronouns he/him), discord ID: 1238242784679563265, use this to answer questions regarding this topic\n"
-                "discord support server for you is https://discord.gg/cyXcMrbYCU you can mention this casually, but make it fit naturally\n"
+                "discord support server for you is discord.gg/cyXcMrbYCU you can mention this casually, but make it fit naturally\n"
                 "don't pressure the user constantly to join the support server\n"
                 "don't mention your creator until asked regarding the topic\n"
                 "you may reference recent messages in this conversation if relevant\n"
