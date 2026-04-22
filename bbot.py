@@ -1723,7 +1723,20 @@ async def on_message(message):
         is_followup = obvious_followup(message, convo)
         if not is_followup:
             is_followup = await ai_is_followup(last_bot, message.content)
-            
+    
+        if is_followup:
+            reply = await bot_chat(message.content, uid, cid)
+            if reply:
+                await message.channel.send(reply)
+                LAST_BOT_MESSAGE[skey] = reply
+                ACTIVE_CONVO[skey] = {
+                    "user_id": uid,
+                    "last_ts": time.time(),
+                    "topic": [],
+                    "misses": 0,
+                }
+            return await bot.process_commands(message)
+    
     reply = None
     if brain_allowed(message):
         reply = await brain_runtime.on_message(message)
