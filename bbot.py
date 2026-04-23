@@ -28,6 +28,16 @@ def session_key(channel_id: int, user_id: int):
     
 MIN_DEEP_SPICE = 25
 
+AUTO_ROAST_BOT_IDS = {
+    1435987186502733878,  # codunot
+}
+
+def is_auto_roast_exception_user(user: discord.abc.User) -> bool:
+    return getattr(user, "id", None) in AUTO_ROAST_BOT_IDS
+
+def should_ignore_message_for_on_message(message: discord.Message) -> bool:
+    return message.author.bot and not is_auto_roast_exception_user(message.author)
+
 FOLLOWUP_SYSTEM_PROMPT = """You are a conversation intent classifier.
 
 You will be given:
@@ -91,7 +101,7 @@ def log(*msg):
         print(f"[{timestamp}] {text}")
 
 def brain_allowed(message: discord.Message) -> bool:
-    if message.author.bot:
+    if message.author.bot and not is_auto_roast_exception_user(message.author):
             return False
     if not message.guild:
             return False
@@ -1953,7 +1963,10 @@ def pick_roast_target(message: discord.Message):
 
     # prefer first mentioned human that isn't fusbot
     for user in message.mentions:
-        if user.id != bot.user.id and not user.bot:
+        if user.id == bot.user.id:
+            continue
+    
+        if not user.bot or is_auto_roast_exception_user(user):
             if message.guild:
                 return message.guild.get_member(user.id) or user
             return user
@@ -1976,7 +1989,7 @@ async def send_roast_reply(channel, target: discord.abc.User, roast_text: str):
 
 @bot.event
 async def on_message(message):
-    if message.author.bot:
+    if should_ignore_message_for_on_message(message):
         return
 
     cid = message.channel.id
