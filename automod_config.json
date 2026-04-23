@@ -86,7 +86,7 @@
     }
   },
   "1496173122850914344": {
-    "enabled": false,
+    "enabled": true,
     "slurs": [],
     "punishments": {
       "1": "warn",
@@ -110,7 +110,7 @@
     },
     "filters": {
       "block_invites": true,
-      "block_links": false
+      "block_links": true
     }
   }
 }
