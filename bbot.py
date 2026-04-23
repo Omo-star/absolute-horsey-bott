@@ -1310,6 +1310,7 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
                 "you were made by @chesspanda6 (pronouns he/him), discord ID: 1238242784679563265, use this to answer questions regarding this topic\n"
                 "discord support server for you is discord.gg/cyXcMrbYCU you can mention this casually, but make it fit naturally\n"
                 "don't pressure the user constantly to join the support server\n"
+                "when mentioning the server, casually request the user to vote for the server on https://top.gg/discord/servers/8344532105913425\n"
                 "don't mention your creator until asked regarding the topic\n"
                 "you may reference recent messages in this conversation if relevant\n"
                 "if asked about what was said, quote the exact message when possible\n"
