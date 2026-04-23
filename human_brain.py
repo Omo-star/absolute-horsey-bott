@@ -336,7 +336,12 @@ class HumanBrain:
         })
         
         self._channel_memory: Dict[int, Dict[str, Any]] = defaultdict(lambda: {
-            "purpose": "",
+            "purpose": "general",
+            "purpose_scores": {
+                "technical": 0.0,
+                "social/funny": 0.0,
+                "general": 1.0,
+            },
             "topics": {},
             "open_loops": [],
             "inside_jokes": [],
@@ -461,6 +466,12 @@ class HumanBrain:
                     cid = int(k)
                     if isinstance(v, dict):
                         self._channel_memory[cid].update(v)
+                        self._channel_memory[cid].setdefault("purpose", "general")
+                        self._channel_memory[cid].setdefault("purpose_scores", {
+                            "technical": 0.0,
+                            "social/funny": 0.0,
+                            "general": 1.0,
+                        })
                 except Exception:
                     pass
             uem = data.get("user_engaged_memory", {})
@@ -483,8 +494,6 @@ class HumanBrain:
 
     def _dump(self) -> Dict[str, Any]:
         gp = {str(gid): dict(v) for gid, v in self._guild_profile.items()}
-        "guild_memory": {str(gid): dict(v) for gid, v in self._guild_memory.items()},
-        "channel_memory": {str(cid): dict(v) for cid, v in self._channel_memory.items()},
         cp = {str(cid): dict(v) for cid, v in self._channel_profile.items()}
         up = {str(uid): dict(c) for uid, c in self._user_emoji_pref.items()}
         uf = {str(uid): int(v) for uid, v in self._user_familiarity.items()}
@@ -494,6 +503,8 @@ class HumanBrain:
             "mood": self._current_mood,
             "guild_profile": gp,
             "channel_profile": cp,
+            "guild_memory": {str(gid): dict(v) for gid, v in self._guild_memory.items()},
+            "channel_memory": {str(cid): dict(v) for cid, v in self._channel_memory.items()},
             "user_emoji_pref": up,
             "user_familiarity": uf,
             "user_received_reacts": ucr,
@@ -515,6 +526,57 @@ class HumanBrain:
                 continue
             out[str(cid)] = dict(sorted(top, key=lambda x: -x[1])[:3])
         return out
+    def _update_channel_purpose(self, channel_id: int, text: str) -> None:
+        cm = self._channel_memory[channel_id]
+        scores = cm.setdefault("purpose_scores", {
+            "technical": 0.0,
+            "social/funny": 0.0,
+            "general": 1.0,
+        })
+    
+        tl = (text or "").lower()
+    
+        # light decay so the channel can drift over time
+        for k in scores:
+            scores[k] *= 0.96
+    
+        technical_hits = sum(
+            1 for x in (
+                "python", "code", "bug", "error", "function", "traceback",
+                "json", "api", "class", "method", "stack", "database",
+                "sql", "discord.py", "exception"
+            ) if x in tl
+        )
+    
+        social_hits = sum(
+            1 for x in (
+                "lol", "lmao", "😂", "😭", "💀", "🤣", "meme",
+                "bro", "bruh", "nah", "wild", "crazy", "lmfao"
+            ) if x in tl
+        )
+    
+        question_hits = sum(
+            1 for x in (
+                "how do i", "how can i", "what should i", "can someone",
+                "any idea", "i'm stuck", "im stuck", "why is"
+            ) if x in tl
+        )
+    
+        if technical_hits:
+            scores["technical"] += 1.2 + (technical_hits * 0.35)
+    
+        if social_hits:
+            scores["social/funny"] += 1.0 + (social_hits * 0.30)
+    
+        if not technical_hits and not social_hits:
+            scores["general"] += 0.5
+    
+        if question_hits and technical_hits:
+            scores["technical"] += 0.6
+        elif question_hits:
+            scores["general"] += 0.3
+    
+        cm["purpose"] = max(scores, key=scores.get)
     def observe_semantic_memory(self, message: discord.Message) -> None:
         if not message.guild:
             return
@@ -543,14 +605,7 @@ class HumanBrain:
             cm["topics"][kw] = cm["topics"].get(kw, 0) + 1
     
         tl = text.lower()
-    
-        if not cm.get("purpose"):
-            if any(x in tl for x in ("python", "code", "bug", "error", "function", "traceback", "json", "api")):
-                cm["purpose"] = "technical"
-            elif any(x in tl for x in ("lol", "lmao", "😂", "😭", "💀", "meme")):
-                cm["purpose"] = "social/funny"
-            else:
-                cm["purpose"] = "general"
+        self._update_channel_purpose(cid, text)
     
         if any(x in tl for x in ("how do i", "how can i", "can someone", "stuck", "any idea", "what should i")):
             loop = text[:160]
@@ -1929,7 +1984,7 @@ class BrainRuntime:
     def __init__(
         self,
         bot: discord.Client,
-        chat_fn: Callable[[str], Awaitable[Optional[str]]],
+        chat_fn: Callable[[str, int, int, Optional[int]], Awaitable[Optional[str]]],
         roast_fn: Callable[[str, int, str], Awaitable[Optional[str]]],
         get_roast_mode: Callable[[int], Optional[str]],
         persist_path: str = "human_brain_state.json",
