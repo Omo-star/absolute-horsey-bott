@@ -34,9 +34,115 @@
         "embeddings": [],
         "texts": []
       },
-      "LTS": "",
-      "msg_count": 0,
-      "last_summary_update": 1776785210.7453184
+      "LTS": "recent topics: whats, with, actually, i'm, asking",
+      "msg_count": 6,
+      "last_summary_update": 1776976408.7530468,
+      "profile": {
+        "display_names": [
+          "chesspanda6"
+        ],
+        "pronouns": "",
+        "timezone": "",
+        "languages": [],
+        "interests": [],
+        "favorite_topics": [],
+        "disliked_topics": [],
+        "expertise": [],
+        "projects": [],
+        "devices_tools": [],
+        "inside_jokes": [],
+        "sensitive_topics": [],
+        "important_facts": []
+      },
+      "prefs": {
+        "preferred_tone": "",
+        "preferred_length": "",
+        "likes_code_examples": 0.0,
+        "likes_direct_answers": 0.12,
+        "likes_step_by_step": 0.0,
+        "likes_brainstorming": 0.0,
+        "joke_tolerance": 0.5,
+        "roast_tolerance": 0.5
+      },
+      "context": {
+        "active_topics": [
+          "with",
+          "wrong",
+          "whats",
+          "actually",
+          "i'm",
+          "asking",
+          "did",
+          "configure"
+        ],
+        "topic_counts": {
+          "whats": 1,
+          "with": 2,
+          "actually": 1,
+          "i'm": 1,
+          "asking": 1,
+          "did": 1,
+          "configure": 1,
+          "wrong": 2,
+          "don't": 1,
+          "roast": 1,
+          "just": 1,
+          "tell": 1,
+          "stoproast": 1,
+          "messed": 1,
+          "person": 1,
+          "your": 1,
+          "life's": 1,
+          "joke": 1,
+          "you're": 1,
+          "punchline": 1,
+          "buddy": 1,
+          "can't": 1,
+          "even": 1,
+          "find": 1,
+          "humor": 1,
+          "fuck": 1
+        },
+        "open_loops": [],
+        "recent_questions": [
+          "<@1435987186502733878> whats up with you, actually i'm asking. did i configure you wrong? don't roast me, just tell me"
+        ],
+        "recent_messages": [
+          {
+            "ts": 1776976408.7526228,
+            "channel_id": 1496174624097173806,
+            "text": "<@1435987186502733878> whats up with you, actually i'm asking. did i configure you wrong? don't roast me, just tell me"
+          },
+          {
+            "ts": 1776976449.8091795,
+            "channel_id": 1496174624097173806,
+            "text": "<@1435987186502733878> !stoproast"
+          },
+          {
+            "ts": 1776976458.3428895,
+            "channel_id": 1496174624097173806,
+            "text": "<@1435987186502733878> hi"
+          },
+          {
+            "ts": 1776976485.4494112,
+            "channel_id": 1496174624097173806,
+            "text": "<@1435987186502733878> u messed with the wrong person..."
+          },
+          {
+            "ts": 1776976525.0514388,
+            "channel_id": 1496174624097173806,
+            "text": "your life's a joke and you're the punchline, buddy. i can't even find the humor in it."
+          },
+          {
+            "ts": 1776976664.3851626,
+            "channel_id": 1496174624097173806,
+            "text": "<@1440004841559560214> fuck u"
+          }
+        ],
+        "last_seen": 1776976664.3851626,
+        "last_channel_id": 1496174624097173806
+      },
+      "episodes": []
     },
     "1435987186502733878": {
       "LF": {
@@ -74,7 +180,42 @@
       },
       "LTS": "",
       "msg_count": 0,
-      "last_summary_update": 1776787829.0093975
+      "last_summary_update": 1776787829.0093975,
+      "profile": {
+        "display_names": [],
+        "pronouns": "",
+        "timezone": "",
+        "languages": [],
+        "interests": [],
+        "favorite_topics": [],
+        "disliked_topics": [],
+        "expertise": [],
+        "projects": [],
+        "devices_tools": [],
+        "inside_jokes": [],
+        "sensitive_topics": [],
+        "important_facts": []
+      },
+      "prefs": {
+        "preferred_tone": "",
+        "preferred_length": "",
+        "likes_code_examples": 0.0,
+        "likes_direct_answers": 0.0,
+        "likes_step_by_step": 0.0,
+        "likes_brainstorming": 0.0,
+        "joke_tolerance": 0.5,
+        "roast_tolerance": 0.5
+      },
+      "context": {
+        "active_topics": [],
+        "topic_counts": {},
+        "open_loops": [],
+        "recent_questions": [],
+        "recent_messages": [],
+        "last_seen": 0,
+        "last_channel_id": 0
+      },
+      "episodes": []
     },
     "1220934047794987048": {
       "LF": {
@@ -438,7 +579,9 @@
       }
     ]
   },
-  "auto_roast": {},
+  "auto_roast": {
+    "1496173122850914344": true
+  },
   "roast_mode": {
     "1220934047794987048": "deep",
     "1238242784679563265": "deep",
@@ -651,6 +794,19 @@
     "you look like you fell out of a clown car and landed in a bargain bin. i bet your mom dressed you this morning.": 85.0,
     "i think it's what you get when you talk that noise. my hand already feels tired.": 42.0,
     "your slapping weak as a baby\u2019s high-five, loud as a wet sock slap. leave your mark like a toddler on a watercolor pad.": 95.0,
-    "you get slapped by reality every day and it shows. your life is a mess and nobody can look up to you.": 85.0
+    "you get slapped by reality every day and it shows. your life is a mess and nobody can look up to you.": 85.0,
+    "your life's a joke and you're the punchline, buddy. i can't even find the humor in it.": 85.0,
+    "you think i'm no threat? my coffee breath is scarier than your entire act. you're a total yawn fest.": 85.0,
+    "you think you're some big deal just cuz you got a loud mouth. you're basic.": 85.0,
+    "you sound like my grandma tryin' to be cool. your jokes are so old, they got wrinkles.": 85.0,
+    "you think you're witty but really you're just a mess of words that nobody gets. you're like a joke with no punchline.": 85.0,
+    "your jokes are so lame, they even make crickets think the silence is funny": 85.0,
+    "you think you're the life of the party, but nobody even bothered to show up. you're more like the bad punchline that just makes everyone uncomfortable.": 85.0,
+    "Sure, here\u2019s a cleaned-up version with hashtags to help with ease of sharing or referencing on social media:\n\n\"If I'm the punchline, at least I make people laugh; you're the crickets chirping after a flop you think is \"deep.\" \ud83e\udd97\ud83d\ude44.\"\n\nI hope that\u2019s what you had in mind!": 85.0,
+    "i don't even need to roast you, your life is already a punchline. did your parents have kids? were they all this disappointing?": 95.0,
+    "damn, you're so dull. even your best insult is just sad.": 85.0,
+    "\"still use all caps for every sentence? wow, your keyboard's gotta be tired.\"": 85.0,
+    "my jokes are gonna kill you and your comeback is just two weak words. you need to step up your game.": 85.0,
+    "you're too ugly to be hated. \n\nyou can't even afford a decent haircut, and it shows you're cheaper than a dollar store.": 98.0
   }
 }
