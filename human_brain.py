@@ -327,6 +327,21 @@ class HumanBrain:
         self._user_engaged_memory: Dict[int, Deque[Tuple[float, int, str]]] = defaultdict(
             lambda: deque(maxlen=50)
         )
+        self._guild_memory: Dict[int, Dict[str, Any]] = defaultdict(lambda: {
+            "summary": "",
+            "topics": {},
+            "inside_jokes": [],
+            "important_members": {},
+            "last_active": 0.0,
+        })
+        
+        self._channel_memory: Dict[int, Dict[str, Any]] = defaultdict(lambda: {
+            "purpose": "",
+            "topics": {},
+            "open_loops": [],
+            "inside_jokes": [],
+            "last_active": 0.0,
+        })
         self._guild_emoji_timestamps: Dict[int, Deque[Tuple[float, str]]] = defaultdict(lambda: deque(maxlen=2000))
         self._user_familiarity: Dict[int, int] = defaultdict(int)
         self._user_channel_affinity: Dict[Tuple[int, int], int] = defaultdict(int)
@@ -431,7 +446,23 @@ class HumanBrain:
                     self._guild_emoji_culture[gid] = Counter(v)
                 except:
                     pass
-
+            gm = data.get("guild_memory", {})
+            for k, v in gm.items():
+                try:
+                    gid = int(k)
+                    if isinstance(v, dict):
+                        self._guild_memory[gid].update(v)
+                except Exception:
+                    pass
+            
+            cm = data.get("channel_memory", {})
+            for k, v in cm.items():
+                try:
+                    cid = int(k)
+                    if isinstance(v, dict):
+                        self._channel_memory[cid].update(v)
+                except Exception:
+                    pass
             uem = data.get("user_engaged_memory", {})
             for k, v in uem.items():
                 uid = int(k)
@@ -452,6 +483,8 @@ class HumanBrain:
 
     def _dump(self) -> Dict[str, Any]:
         gp = {str(gid): dict(v) for gid, v in self._guild_profile.items()}
+        "guild_memory": {str(gid): dict(v) for gid, v in self._guild_memory.items()},
+        "channel_memory": {str(cid): dict(v) for cid, v in self._channel_memory.items()},
         cp = {str(cid): dict(v) for cid, v in self._channel_profile.items()}
         up = {str(uid): dict(c) for uid, c in self._user_emoji_pref.items()}
         uf = {str(uid): int(v) for uid, v in self._user_familiarity.items()}
@@ -482,7 +515,83 @@ class HumanBrain:
                 continue
             out[str(cid)] = dict(sorted(top, key=lambda x: -x[1])[:3])
         return out
-
+    def observe_semantic_memory(self, message: discord.Message) -> None:
+        if not message.guild:
+            return
+        if message.author.bot:
+            return
+    
+        text = (message.content or "").strip()
+        if not text:
+            return
+    
+        gid = message.guild.id
+        cid = message.channel.id
+        uid = message.author.id
+    
+        gm = self._guild_memory[gid]
+        cm = self._channel_memory[cid]
+    
+        gm["last_active"] = _now()
+        cm["last_active"] = _now()
+    
+        gm["important_members"][str(uid)] = gm["important_members"].get(str(uid), 0) + 1
+    
+        kws = [w for w in _words(text) if len(w) >= 4][:10]
+        for kw in kws:
+            gm["topics"][kw] = gm["topics"].get(kw, 0) + 1
+            cm["topics"][kw] = cm["topics"].get(kw, 0) + 1
+    
+        tl = text.lower()
+    
+        if not cm.get("purpose"):
+            if any(x in tl for x in ("python", "code", "bug", "error", "function", "traceback", "json", "api")):
+                cm["purpose"] = "technical"
+            elif any(x in tl for x in ("lol", "lmao", "😂", "😭", "💀", "meme")):
+                cm["purpose"] = "social/funny"
+            else:
+                cm["purpose"] = "general"
+    
+        if any(x in tl for x in ("how do i", "how can i", "can someone", "stuck", "any idea", "what should i")):
+            loop = text[:160]
+            if loop not in cm["open_loops"]:
+                cm["open_loops"].append(loop)
+                cm["open_loops"] = cm["open_loops"][-12:]
+    def get_guild_memory_hint(self, guild_id: int | None) -> str:
+        if not guild_id:
+            return ""
+        gm = self._guild_memory.get(guild_id)
+        if not gm:
+            return ""
+    
+        top_topics = sorted(gm.get("topics", {}).items(), key=lambda kv: kv[1], reverse=True)[:6]
+        topic_list = [k for k, _ in top_topics]
+    
+        lines = []
+        if topic_list:
+            lines.append(f"- guild topics: {topic_list}")
+        if gm.get("summary"):
+            lines.append(f"- guild summary: {gm['summary']}")
+    
+        return "guild context:\n" + "\n".join(lines) + "\n" if lines else ""
+    
+    def get_channel_memory_hint(self, channel_id: int) -> str:
+        cm = self._channel_memory.get(channel_id)
+        if not cm:
+            return ""
+    
+        top_topics = sorted(cm.get("topics", {}).items(), key=lambda kv: kv[1], reverse=True)[:6]
+        topic_list = [k for k, _ in top_topics]
+    
+        lines = []
+        if cm.get("purpose"):
+            lines.append(f"- channel purpose: {cm['purpose']}")
+        if topic_list:
+            lines.append(f"- channel topics: {topic_list}")
+        if cm.get("open_loops"):
+            lines.append(f"- recent unresolved questions: {cm['open_loops'][-3:]}")
+    
+        return "channel context:\n" + "\n".join(lines) + "\n" if lines else ""
     def remember_user_engagement(self, user_id: int, channel_id: int, content: str) -> None:
         content = re.sub(r"\s+", " ", content).strip()
         if len(content) > 220:
@@ -1293,7 +1402,6 @@ class HumanBrain:
         if not content or _low_effort(content):
             return
         self._maybe_shift_mood()
-        self.observe_channel_message(message.channel.id, content, message.id)
         self._update_channel_state(message.channel.id)
         if self._should_scroll_past(message.channel.id):
             return
@@ -1864,8 +1972,11 @@ class BrainRuntime:
         alias = mentions_fusbot(message.content)
 
         mentioned = explicit or alias
-
-
+        content = (message.content or "").strip()
+        if message.guild and content and not message.author.bot:
+            if not (content and content[0] in IGNORE_PREFIXES):
+                self.brain.observe_channel_message(message.channel.id, content, message.id)
+                self.brain.observe_semantic_memory(message)
         result = await self.brain.maybe_react(message, mentioned=mentioned)
 
         if result and result.get("type") == "regret_react":
@@ -1903,7 +2014,7 @@ class BrainRuntime:
             if intent == "roast_request" and mode:
                 reply = await self.roast_fn(message.content, uid, mode)
             else:
-                reply = await self.chat_fn(message.content, uid, cid)
+                reply = await self.chat_fn(message.content, uid, cid, message.guild.id if message.guild else None)
         
             if reply:
                 await self.brain.human_delay(message.channel, reply)
