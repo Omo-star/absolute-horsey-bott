@@ -382,6 +382,21 @@ openrouter_client = OpenAI(
         "X-Title": "Discord Roast Bot",
     },
 )
+def enforce_support_links(text: str) -> str:
+    support = "https://discord.gg/M5YVbMDydP"
+    vote = "https://top.gg/discord/servers/8344532105913425"
+
+    # fix common model mistakes
+    text = text.replace("discord.gg/M5YVbMDydP", support)
+    text = text.replace("top.gg/discord/servers/8344532105913425", vote)
+
+    # force spaces around full links
+    text = re.sub(rf"\s*{re.escape(support)}\s*", f" {support} ", text)
+    text = re.sub(rf"\s*{re.escape(vote)}\s*", f" {vote} ", text)
+
+    # clean double spaces
+    text = re.sub(r" {2,}", " ", text).strip()
+    return text
 def compute_user_spice(uid: int) -> float:
     mem = get_user_memory(uid)
 
@@ -1346,6 +1361,7 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
             if resp:
                 raw = extract_text_with_logging(model, resp)
                 text = strip_reasoning(raw)
+                text = enforce_support_links(text)
                 if text and len(text.strip()) > 1:
                     CHAT_HISTORY[hist_key].append({"role": "user", "content": msg})
                     CHAT_HISTORY[hist_key].append({"role": "assistant", "content": text})
