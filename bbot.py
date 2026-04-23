@@ -1315,6 +1315,7 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
                 "mention the link when mentioning the server\n"
                 "when mentioning the server, casually request the user to vote for the server on https://top.gg/discord/servers/8344532105913425\n"
                 "mention the top.gg link when asking to vote for the server\n"
+                "keep the https:// when mentioning the links, or in other words use the full link\n"
                 "don't mention your creator until asked regarding the topic\n"
                 "you may reference recent messages in this conversation if relevant\n"
                 "if asked about what was said, quote the exact message when possible\n"
