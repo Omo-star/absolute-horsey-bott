@@ -368,7 +368,7 @@ def make_embed(topic: str, user: discord.abc.User):
 
     embed = discord.Embed(
         title="👋 help • getting started",
-        description=f"hey {user.mention}, this bot does a lot, so here’s the clean way to start without staring at the slash menu. check out our support server if you're still confused https://discord.gg/M5YVbMDydP",
+        description=f"hey {user.mention}, this bot does a lot, so here’s the clean way to start without staring at the slash menu. you can check out our support server if you're still confused: https://discord.gg/M5YVbMDydP",
         color=discord.Color.blurple(),
         timestamp=datetime.datetime.now(datetime.timezone.utc)
     )
