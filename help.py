@@ -54,6 +54,7 @@ def make_embed(topic: str, user: discord.abc.User):
             value=(
                 "`/balance` see your horsenncy\n"
                 "`/daily` claim free money\n"
+                "`/recommend` or `/whatsnext` get your best next move\n"
                 "`/work` do jobs\n"
                 "`/give` send money to someone\n"
                 "`/pray` gain prayer points\n"
@@ -123,6 +124,7 @@ def make_embed(topic: str, user: discord.abc.User):
             name="Account and Progress Tracking",
             value=(
                 "`/profile`\n"
+                "`/recommend` or `/whatsnext`\n"
                 "`/achievements`\n"
                 "`/quests`\n"
                 "`/titles`\n"
@@ -353,6 +355,7 @@ def make_embed(topic: str, user: discord.abc.User):
             name="Best New User Route",
             value=(
                 "`/profile`\n"
+                "`/recommend` or `/whatsnext`\n"
                 "`/daily`\n"
                 "`/work`\n"
                 "`/help economy`\n"
@@ -374,7 +377,7 @@ def make_embed(topic: str, user: discord.abc.User):
         value=(
             "`/profile` see your account\n"
             "`/balance` check your money\n"
-            "`/recommend` shows the smartest next move\n"
+            "`/recommend` or `/whatsnext` get your best next move\n"
             "`/daily` claim free horsenncy\n"
             "`/work` earn more\n"
             "`/help economy` or `/help adventure`"
@@ -392,6 +395,8 @@ def make_embed(topic: str, user: discord.abc.User):
             "`/dungeon` or `/voidmaze` or `/arena`\n\n"
             "**ai route**\n"
             "`/roast` or `/code_list` → `/hack`"
+            "**stuck?**\n"
+            "`/recommend` or `/whatsnext`"
         ),
         inline=False
     )
@@ -449,8 +454,10 @@ STARTER_ROUTES = {
         "desc": "fast start for economy and progression",
         "steps": [
             "/profile",
+            "/recommend",
             "/daily",
             "/work",
+            "/whatsnext",
             "/shop",
             "/help economy",
         ],
@@ -460,9 +467,11 @@ STARTER_ROUTES = {
         "desc": "build a team and start fighting things",
         "steps": [
             "/profile",
+            "/recommend",
             "/hunt",
             "/team list",
             "/battle",
+            "/whatsnext",
             "/help adventure",
         ],
     },
@@ -470,10 +479,12 @@ STARTER_ROUTES = {
         "title": "🤖 ai route",
         "desc": "jump into the bot's ai side first",
         "steps": [
+            "/recommend",
             "/roast",
             "/roastmode",
             "/code_list",
             "/hack",
+            "/whatsnext",
             "/help ai",
         ],
     },
