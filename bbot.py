@@ -1001,10 +1001,50 @@ auto_roast = normalize_id_keys(_memory["auto_roast"])
 roast_mode = normalize_id_keys(_memory["roast_mode"])
 spice_cache = _memory["spice_cache"]
 
+def default_user_profile():
+    return {
+        "display_names": [],
+        "pronouns": "",
+        "timezone": "",
+        "languages": [],
+        "interests": [],
+        "favorite_topics": [],
+        "disliked_topics": [],
+        "expertise": [],
+        "projects": [],
+        "devices_tools": [],
+        "inside_jokes": [],
+        "sensitive_topics": [],
+        "important_facts": [],
+    }
+
+def default_user_prefs():
+    return {
+        "preferred_tone": "",
+        "preferred_length": "",
+        "likes_code_examples": 0.0,
+        "likes_direct_answers": 0.0,
+        "likes_step_by_step": 0.0,
+        "likes_brainstorming": 0.0,
+        "joke_tolerance": 0.5,
+        "roast_tolerance": 0.5,
+    }
+
+def default_user_context():
+    return {
+        "active_topics": [],
+        "topic_counts": {},
+        "open_loops": [],
+        "recent_questions": [],
+        "recent_messages": [],
+        "last_seen": 0,
+        "last_channel_id": 0,
+    }
+
 def get_user_memory(uid):
     if uid not in user_memory:
         user_memory[uid] = {
-            "LF": {  
+            "LF": {
                 "slang": 0.0,
                 "formality": 0.0,
                 "emoji_rate": 0.0,
@@ -1013,13 +1053,13 @@ def get_user_memory(uid):
                 "avg_len": 0.0,
                 "msg_samples": [],
             },
-            "EB": { 
+            "EB": {
                 "anger": 0.0,
                 "sadness": 0.0,
                 "hype": 0.0,
                 "chaos": 0.0,
             },
-            "HP": { 
+            "HP": {
                 "dark": 0.0,
                 "mean": 0.0,
                 "petty": 0.0,
@@ -1027,7 +1067,7 @@ def get_user_memory(uid):
                 "goofy": 0.0,
                 "meta": 0.0,
             },
-            "IS": {  
+            "IS": {
                 "bot_mentions": 0,
                 "roast_requests": 0,
                 "self_roasts": 0,
@@ -1035,16 +1075,29 @@ def get_user_memory(uid):
             },
             "SPM": {
                 "embeddings": [],
-                "texts": [],  
+                "texts": [],
             },
-            "LTS": "", 
+            "LTS": "",
             "msg_count": 0,
             "last_summary_update": time.time(),
+
+            # new
+            "profile": default_user_profile(),
+            "prefs": default_user_prefs(),
+            "context": default_user_context(),
+            "episodes": [],
         }
         save_roast_memory()
-    return user_memory[uid]
 
+    mem = user_memory[uid]
 
+    # migration for old users already in json
+    mem.setdefault("profile", default_user_profile())
+    mem.setdefault("prefs", default_user_prefs())
+    mem.setdefault("context", default_user_context())
+    mem.setdefault("episodes", [])
+
+    return mem
 def analyze_user_message(text):
     text = text.lower()
     traits = []
@@ -1067,6 +1120,201 @@ def extract_keywords(text):
         w for w in words if w not in ["the", "and", "you", "but", "are", "this", "that"]
     ]
 
+def _push_recent(lst, item, limit):
+    lst.append(item)
+    if len(lst) > limit:
+        del lst[:-limit]
+
+def _push_unique_recent(lst, item, limit):
+    item = (item or "").strip()
+    if not item:
+        return
+    if item in lst:
+        lst.remove(item)
+    lst.append(item)
+    if len(lst) > limit:
+        del lst[:-limit]
+
+def _bump_pref(d, key, amount=0.12):
+    d[key] = round(min(1.0, max(0.0, d.get(key, 0.0) + amount)), 3)
+
+def refresh_user_summary(uid):
+    mem = get_user_memory(uid)
+    profile = mem["profile"]
+    prefs = mem["prefs"]
+    context = mem["context"]
+
+    parts = []
+
+    if profile["projects"]:
+        parts.append("often talks about " + ", ".join(profile["projects"][:3]))
+
+    if profile["interests"]:
+        parts.append("interested in " + ", ".join(profile["interests"][:4]))
+
+    if context["active_topics"]:
+        parts.append("recent topics: " + ", ".join(context["active_topics"][:5]))
+
+    if prefs["preferred_length"]:
+        parts.append(f"prefers {prefs['preferred_length']} answers")
+
+    if prefs["likes_code_examples"] >= 0.55:
+        parts.append("usually likes code examples")
+
+    if prefs["likes_direct_answers"] >= 0.55:
+        parts.append("usually likes direct answers")
+
+    if prefs["likes_step_by_step"] >= 0.55:
+        parts.append("often wants step-by-step help")
+
+    mem["LTS"] = "; ".join(parts) if parts else "casual chatter, no strong long-term patterns yet"
+    mem["last_summary_update"] = time.time()
+
+def update_user_memory_from_message(message):
+    text = (message.content or "").strip()
+    if not text:
+        return
+
+    mem = get_user_memory(message.author.id)
+    profile = mem["profile"]
+    prefs = mem["prefs"]
+    context = mem["context"]
+
+    now = time.time()
+    low = text.lower()
+
+    mem["msg_count"] += 1
+    context["last_seen"] = now
+    context["last_channel_id"] = message.channel.id
+
+    _push_recent(
+        context["recent_messages"],
+        {
+            "ts": now,
+            "channel_id": message.channel.id,
+            "text": text[:220],
+        },
+        25,
+    )
+
+    # display name history
+    display_name = getattr(message.author, "display_name", None) or getattr(message.author, "name", "")
+    if display_name:
+        _push_unique_recent(profile["display_names"], display_name, 8)
+
+    # recent questions / open loops
+    if "?" in text:
+        _push_unique_recent(context["recent_questions"], text[:160], 10)
+
+    if any(x in low for x in (
+        "how do i", "how can i", "can you help", "i'm stuck", "im stuck",
+        "trying to", "any idea", "what should i"
+    )):
+        _push_unique_recent(context["open_loops"], text[:160], 12)
+
+    # topic tracking
+    keywords = extract_keywords(text)[:12]
+    tc = context.setdefault("topic_counts", {})
+    for kw in keywords:
+        tc[kw] = tc.get(kw, 0) + 1
+
+    top_topics = sorted(tc.items(), key=lambda kv: kv[1], reverse=True)[:8]
+    context["active_topics"] = [k for k, _ in top_topics]
+
+    # project-ish lines
+    if any(x in low for x in ("working on", "building", "making", "coding", "creating", "writing")):
+        _push_unique_recent(profile["projects"], text[:120], 12)
+        _push_recent(
+            mem["episodes"],
+            {
+                "ts": now,
+                "type": "project_update",
+                "topic": keywords[0] if keywords else "",
+                "summary": text[:180],
+                "importance": 0.75,
+            },
+            40,
+        )
+
+    # explicit interests
+    m = re.search(r"\bi like ([a-z0-9 ,'\-]{2,60})", low)
+    if m:
+        _push_unique_recent(profile["interests"], m.group(1).strip(), 20)
+
+    m = re.search(r"\bmy favorite(?: thing)? is ([a-z0-9 ,'\-]{2,60})", low)
+    if m:
+        _push_unique_recent(profile["favorite_topics"], m.group(1).strip(), 20)
+
+    # tools / stack
+    tool_hits = [x for x in ("python", "discord.py", "json", "sqlite", "postgres", "openai", "groq", "gemini", "api")
+                 if x in low]
+    for hit in tool_hits:
+        _push_unique_recent(profile["devices_tools"], hit, 20)
+
+    # response preference inference
+    if any(x in low for x in ("keep it short", "short answer", "be brief", "shorter")):
+        prefs["preferred_length"] = "short"
+
+    if any(x in low for x in ("be detailed", "more detail", "go deeper", "longer answer")):
+        prefs["preferred_length"] = "long"
+
+    if any(x in low for x in ("step by step", "walk me through", "explain each step")):
+        _bump_pref(prefs, "likes_step_by_step")
+
+    if any(x in low for x in ("show code", "send code", "code example", "example code")):
+        _bump_pref(prefs, "likes_code_examples")
+
+    if any(x in low for x in ("be direct", "straight up", "no fluff", "just tell me")):
+        _bump_pref(prefs, "likes_direct_answers")
+
+    if any(x in low for x in ("brainstorm", "throw ideas", "what else could", "give me ideas")):
+        _bump_pref(prefs, "likes_brainstorming")
+
+    # lightweight summary refresh
+    if mem["msg_count"] % 15 == 0 or (now - mem.get("last_summary_update", 0)) > 1800:
+        refresh_user_summary(message.author.id)
+
+    save_roast_memory()
+
+def build_chat_personalization_prompt(uid):
+    mem = get_user_memory(uid)
+    profile = mem["profile"]
+    prefs = mem["prefs"]
+    context = mem["context"]
+
+    lines = []
+
+    if mem.get("LTS"):
+        lines.append(f"- summary: {mem['LTS']}")
+
+    if profile["projects"]:
+        lines.append(f"- active projects: {profile['projects'][:3]}")
+
+    if profile["interests"]:
+        lines.append(f"- interests: {profile['interests'][:5]}")
+
+    if context["active_topics"]:
+        lines.append(f"- active topics: {context['active_topics'][:6]}")
+
+    if context["open_loops"]:
+        lines.append(f"- open loops: {context['open_loops'][-3:]}")
+
+    if prefs["preferred_length"]:
+        lines.append(f"- preferred answer length: {prefs['preferred_length']}")
+
+    if prefs["likes_code_examples"] >= 0.55:
+        lines.append("- likes code examples")
+
+    if prefs["likes_direct_answers"] >= 0.55:
+        lines.append("- likes direct answers")
+
+    if prefs["likes_step_by_step"] >= 0.55:
+        lines.append("- often wants step-by-step help")
+
+    if not lines:
+        return ""
+
+    return "user personalization hints:\n" + "\n".join(lines) + "\nuse subtly. do not mention memory directly.\n"
 
 def build_memory_prompt(uid):
     mem = get_user_memory(uid)
@@ -1302,12 +1550,15 @@ async def ai_is_followup(last_bot_msg: str, user_msg: str) -> bool:
         log(f"[FOLLOWUP:{FOLLOWUP_MODEL}] error: {e}")
         return False
 
-async def bot_chat(msg: str, uid: int, channel_id: int):
+async def bot_chat(msg: str, uid: int, channel_id: int, guild_id: int | None = None):
     log(f"[CHAT] Normal convo: {msg}")
 
     hist_key = session_key(channel_id, uid)
 
     mem_lines = brain_runtime.brain.get_user_engagement_memory(uid, limit=15)
+    structured_hint = build_chat_personalization_prompt(uid)
+    guild_hint = brain_runtime.brain.get_guild_memory_hint(guild_id) if guild_id else ""
+    channel_hint = brain_runtime.brain.get_channel_memory_hint(channel_id)
 
     memory_hint = ""
     if mem_lines:
@@ -1362,7 +1613,7 @@ async def bot_chat(msg: str, uid: int, channel_id: int):
                 "do not guess or invent past messages\n"
                 "output only the message\n"
                 "\n"
-                f"{memory_hint}"
+                f"{structured_hint}\n{guild_hint}\n{channel_hint}\n{memory_hint}"
             ),
         },
         *CHAT_HISTORY[hist_key],
@@ -1740,6 +1991,13 @@ async def on_message(message):
         handled = await automod_cog.engine.handle_message(message)
         if handled:
             return
+    # add this block
+    if brain_allowed(message):
+        try:
+            update_user_memory_from_message(message)
+        except Exception as e:
+            log(f"[MEMORY] update_user_memory_from_message failed: {e}")
+            
     if brain_allowed(message) and bot_was_pinged(message) and auto_roast_enabled_for_guild(message):
         target = pick_roast_target(message)
 
@@ -1773,7 +2031,7 @@ async def on_message(message):
             is_followup = await ai_is_followup(last_bot, message.content)
     
         if is_followup:
-            reply = await bot_chat(message.content, uid, cid)
+            reply = await bot_chat(message.content, uid, cid, message.guild.id if message.guild else None)
             if reply:
                 await message.channel.send(reply)
                 LAST_BOT_MESSAGE[skey] = reply
