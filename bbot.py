@@ -386,15 +386,27 @@ def enforce_support_links(text: str) -> str:
     support = "https://discord.gg/M5YVbMDydP"
     vote = "https://top.gg/discord/servers/8344532105913425"
 
-    # fix common model mistakes
-    text = text.replace("discord.gg/M5YVbMDydP", support)
-    text = text.replace("top.gg/discord/servers/8344532105913425", vote)
+    # normalize any support-server mention to the exact full URL
+    text = re.sub(
+        r"(?:https?://\s*)?discord\.gg/M5YVbMDydP",
+        support,
+        text,
+        flags=re.IGNORECASE,
+    )
 
-    # force spaces around full links
+    # normalize any top.gg mention to the exact full URL
+    text = re.sub(
+        r"(?:https?://\s*)?top\.gg/discord/servers/8344532105913425",
+        vote,
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    # ensure exactly one space before and after the URLs
     text = re.sub(rf"\s*{re.escape(support)}\s*", f" {support} ", text)
     text = re.sub(rf"\s*{re.escape(vote)}\s*", f" {vote} ", text)
 
-    # clean double spaces
+    # cleanup
     text = re.sub(r" {2,}", " ", text).strip()
     return text
 def compute_user_spice(uid: int) -> float:
