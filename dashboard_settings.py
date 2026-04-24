@@ -1,10 +1,11 @@
+# dashboard_settings.py
 import copy
 import json
 import os
 import time
-from urllib.parse import quote
 
 import aiohttp
+
 
 DEFAULT_GUILD_SETTINGS = {
     "setup": {
@@ -53,38 +54,44 @@ def _deep_merge(defaults, incoming):
     return output
 
 
-def _settings_key(guild_id: int | str) -> str:
+def guild_settings_key(guild_id: int | str) -> str:
     return f"fusbot:guild:{guild_id}:settings"
 
 
-async def _redis_get(key: str):
+async def _redis_command(*parts):
     rest_url = os.getenv("UPSTASH_REDIS_REST_URL")
     token = os.getenv("UPSTASH_REDIS_REST_TOKEN")
 
     if not rest_url or not token:
         return None
 
-    url = f"{rest_url.rstrip('/')}/get/{quote(key, safe='')}"
-    headers = {"Authorization": f"Bearer {token}"}
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
 
     timeout = aiohttp.ClientTimeout(total=5)
 
     async with aiohttp.ClientSession(timeout=timeout) as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.post(
+            rest_url.rstrip("/"),
+            headers=headers,
+            json=list(parts),
+        ) as response:
             response.raise_for_status()
             data = await response.json()
             return data.get("result")
 
 
 async def get_guild_settings(guild_id: int | str):
-    key = _settings_key(guild_id)
+    key = guild_settings_key(guild_id)
     now = time.time()
 
     cached = _CACHE.get(key)
     if cached and now - cached["time"] < _CACHE_TTL_SECONDS:
         return cached["settings"]
 
-    raw = await _redis_get(key)
+    raw = await _redis_command("GET", key)
 
     if not raw:
         settings = copy.deepcopy(DEFAULT_GUILD_SETTINGS)
@@ -101,3 +108,60 @@ async def get_guild_settings(guild_id: int | str):
     }
 
     return settings
+
+
+async def save_guild_settings(guild_id: int | str, settings: dict):
+    key = guild_settings_key(guild_id)
+    merged = _deep_merge(DEFAULT_GUILD_SETTINGS, settings)
+
+    await _redis_command("SET", key, json.dumps(merged))
+
+    _CACHE[key] = {
+        "time": time.time(),
+        "settings": merged,
+    }
+
+    return merged
+
+
+async def update_guild_setting(guild_id: int | str, section: str, key: str, value):
+    settings = await get_guild_settings(guild_id)
+
+    if section not in settings or not isinstance(settings[section], dict):
+        settings[section] = {}
+
+    settings[section][key] = value
+
+    return await save_guild_settings(guild_id, settings)
+
+
+async def guild_feature_enabled(
+    guild_id: int | str | None,
+    section: str,
+    key: str,
+    fallback: bool = True,
+):
+    if not guild_id:
+        return fallback
+
+    settings = await get_guild_settings(guild_id)
+    return bool(settings.get(section, {}).get(key, fallback))
+
+
+async def guard_interaction(interaction, section: str, key: str, label: str):
+    if not interaction.guild:
+        return True
+
+    enabled = await guild_feature_enabled(interaction.guild.id, section, key)
+
+    if enabled:
+        return True
+
+    message = f"{label} is disabled for this server in the dashboard."
+
+    if interaction.response.is_done():
+        await interaction.followup.send(message, ephemeral=True)
+    else:
+        await interaction.response.send_message(message, ephemeral=True)
+
+    return False
